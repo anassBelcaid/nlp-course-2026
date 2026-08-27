@@ -101,7 +101,7 @@ The course has **ten teaching weeks** followed by **four weeks of student projec
       <li><span class="required-badge">Practice</span><a href="https://docs.pytorch.org/tutorials/intermediate/seq2seq_translation_tutorial.html">PyTorch · Seq2seq translation tutorial</a></li>
     </ul>
   </td>
-  <td><a class="project-link" href="coding-projects.html">Project 03 · start</a></td>
+  <td><a class="project-link" href="projects/03-neural-sequence-lab/index.html">Project 03 · start</a></td>
 </tr>
 <tr class="era-sequences">
   <td>06</td>

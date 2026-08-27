@@ -41,4 +41,20 @@ Explore pretrained vectors, train Word2Vec with PyTorch, and complete a highly g
 :::
 :::
 
+:::{.project-card}
+[![Character tokens flowing through recurrent states into newly generated names](projects/03-neural-sequence-lab/images/preview.svg){.project-preview}](projects/03-neural-sequence-lab/index.qmd)
+
+:::{.project-card-body}
+:::{.project-number}
+PROJECT 03 · THREE SESSIONS
+:::
+
+### [The Neural Sequence Laboratory](projects/03-neural-sequence-lab/index.qmd)
+
+Build and compare character-level RNN, LSTM, GRU, and Transformer models—then transfer them from baby names to recipe generation.
+
+`RNNs`{.project-tag} `Generation`{.project-tag} `PyTorch`{.project-tag}
+:::
+:::
+
 :::

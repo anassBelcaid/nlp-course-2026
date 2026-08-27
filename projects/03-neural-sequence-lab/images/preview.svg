@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 675" role="img" aria-labelledby="title desc">
+  <title id="title">Character-level recurrent name generator</title>
+  <desc id="desc">Letters enter a sequence of shared recurrent cells and produce a branching set of newly generated names.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#eef7f6"/><stop offset="1" stop-color="#f7f1fb"/></linearGradient>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0 0 10 5 0 10z" fill="#188f8a"/></marker>
+  </defs>
+  <rect width="1200" height="675" rx="34" fill="url(#bg)"/>
+  <text x="70" y="95" fill="#17364a" font-family="sans-serif" font-size="30" font-weight="800">CHARACTER-LEVEL SEQUENCE LAB</text>
+  <g fill="none" stroke="#188f8a" stroke-width="8" marker-end="url(#arrow)">
+    <path d="M150 330H315"/><path d="M420 330H555"/><path d="M660 330H795"/><path d="M900 330H1040"/>
+  </g>
+  <g font-family="serif" font-size="45" font-weight="800" text-anchor="middle">
+    <g><rect x="70" y="265" width="110" height="130" rx="20" fill="#fff" stroke="#8b5bb5" stroke-width="7"/><text x="125" y="346" fill="#17364a">a</text></g>
+    <g><rect x="315" y="265" width="110" height="130" rx="20" fill="#fff" stroke="#d95f43" stroke-width="7"/><text x="370" y="346" fill="#17364a">h₁</text></g>
+    <g><rect x="555" y="265" width="110" height="130" rx="20" fill="#fff" stroke="#d95f43" stroke-width="7"/><text x="610" y="346" fill="#17364a">h₂</text></g>
+    <g><rect x="795" y="265" width="110" height="130" rx="20" fill="#fff" stroke="#d95f43" stroke-width="7"/><text x="850" y="346" fill="#17364a">h₃</text></g>
+  </g>
+  <g font-family="sans-serif" fill="#17364a">
+    <text x="1015" y="250" font-size="32" font-weight="800">ashiah</text>
+    <text x="1035" y="320" font-size="32" font-weight="800">maylon</text>
+    <text x="1005" y="390" font-size="32" font-weight="800">theilyn</text>
+    <text x="1035" y="460" font-size="32" font-weight="800">jahelina</text>
+  </g>
+  <text x="600" y="565" fill="#8b5bb5" font-family="sans-serif" font-size="29" font-weight="800" text-anchor="middle">learn the transition · train through time · sample something new</text>
+</svg>
+
