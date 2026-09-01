@@ -1,0 +1,23 @@
+/* Slide 31: keep the PAUSE formulas legible even before the math renderer loads. */
+.pause-score-givens span,.pause-score-tasks span{
+  display:grid;
+  grid-template-rows:auto 1fr;
+  place-items:center;
+  min-height:75px;
+  padding:12px 16px;
+  border-radius:10px;
+  background:white;
+  color:var(--navy);
+  font-family:Georgia,serif;
+}
+.pause-score-givens small,.pause-score-tasks small{
+  color:var(--muted);
+  font:950 15px sans-serif;
+  letter-spacing:.06em;
+}
+.pause-score-givens b,.pause-score-tasks b{
+  align-self:center;
+  color:var(--navy);
+  font:950 27px Georgia,serif;
+}
+.pause-score-givens sub{font-size:.7em}

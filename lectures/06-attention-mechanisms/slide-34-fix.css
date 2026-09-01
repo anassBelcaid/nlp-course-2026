@@ -1,0 +1,10 @@
+/* Slide 34: preserve every cell in the fourth causal-mask row. */
+.mask-matrix>div.open.mask-cell{
+  display:grid;
+  place-items:center;
+  border-radius:7px;
+  background:#dff1ed;
+  color:#17665e;
+  font-size:25px;
+  font-weight:950;
+}

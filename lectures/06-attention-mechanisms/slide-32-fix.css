@@ -1,0 +1,21 @@
+/* Slide 32: place weight labels outside the bars and separate the formula. */
+.scaling-solution .weight-bars{
+  padding-right:52px;
+}
+.scaling-solution .weight-bars span{
+  position:relative;
+  overflow:visible;
+}
+.scaling-solution .weight-bars i{
+  position:absolute;
+  left:calc(100% + 10px);
+  top:0;
+  min-width:38px;
+  padding:0;
+  color:var(--navy);
+  font:950 17px/30px Georgia,serif;
+  text-align:left;
+}
+.scaled-attention-formula{
+  margin-top:32px;
+}

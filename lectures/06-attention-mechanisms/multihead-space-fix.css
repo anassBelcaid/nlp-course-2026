@@ -1,0 +1,20 @@
+/* Keep the complete multi-head reveal comfortably inside one slide. */
+.multihead-sentence-lead{
+  min-height:54px;
+  padding:8px 22px;
+}
+.multihead-sentence-lead p{
+  margin:.08em 0;
+}
+.multihead-visual-stage{
+  height:405px;
+}
+.mh-reading{
+  font-size:16px;
+}
+.multihead-visual-takeaway{
+  min-height:58px;
+  margin:-.08em auto .01em;
+  padding:9px 22px;
+  font-size:18px;
+}

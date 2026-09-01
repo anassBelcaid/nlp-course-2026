@@ -1,0 +1,1054 @@
+---
+title: "Attention Mechanisms"
+subtitle: "Chapter 6 · Learning where to look"
+author: "Dr. A. Belcaid"
+description: "From the encoder bottleneck to soft lookup, cross-attention, self-attention, causal masking, multi-head attention, and the bridge to the Transformer block."
+bibliography: ../references.bib
+---
+
+:::{.course-note-masthead .content-visible when-format="html"}
+![](../../images/uae-logo.png)
+
+CS 351 · Introduction to Natural Language Processing<br>
+Chapter 6 · Attention mechanisms
+:::
+
+The recurrent encoder–decoder gave us a general recipe for conditional sequence generation: read an input sequence, compress it into a state, and generate an output sequence. Its central weakness was equally simple: **every source detail had to cross one fixed-size vector**. Attention repairs this bottleneck by allowing a prediction to retrieve information directly from all available source states.
+
+This chapter develops attention as an inspectable soft lookup. We will keep one small translation example visible while deriving scores, weights, and context vectors; then we will reuse the same mechanism inside a single sequence. The chapter ends at the boundary of the Transformer architecture. We will identify what a complete model still needs, but leave the construction of the Transformer block to the next chapter.
+
+![The chapter journey from a recurrent bottleneck through soft lookup, cross-attention, self-attention, scaled and masked multi-head attention, and an unfinished bridge toward the Transformer block.](../../lectures/06-attention-mechanisms/images/attention-overview.png){#fig-attention-overview .chapter-overview-image width=94% fig-align="center"}
+
+```{mermaid}
+%%| label: fig-attention-route
+%%| fig-cap: "Each part keeps the same score–normalize–retrieve operation while changing where queries, keys, and values come from."
+%%| fig-width: 7.4
+flowchart LR
+    A[One context<br/>bottleneck] --> B[Soft lookup]
+    B --> C[Cross-attention]
+    C --> D[Self-attention]
+    D --> E[Scale + mask<br/>+ many heads]
+    E --> F[Transformer<br/>block?]
+
+    classDef base fill:#e8f2f0,stroke:#0f6f78,color:#17364a
+    classDef attention fill:#f2e9f7,stroke:#8b5bb5,color:#17364a
+    classDef bridge fill:#fff3d6,stroke:#b98a1d,color:#17364a
+    class A base
+    class B,C,D,E attention
+    class F bridge
+```
+
+:::{.callout-note}
+## Learning objectives
+
+After this chapter, you should be able to:
+
+1. explain why one encoder state creates both a storage and an access bottleneck;
+2. calculate attention scores, softmax weights, and a weighted context vector;
+3. distinguish queries, keys, and values by their computational roles;
+4. distinguish cross-attention from self-attention;
+5. derive the matrix form of scaled dot-product attention;
+6. construct and interpret a causal mask;
+7. explain what multiple heads add beyond one attention distribution;
+8. interpret attention visualizations cautiously; and
+9. identify the missing ingredients that motivate a Transformer block.
+:::
+
+# The encoder bottleneck {#sec-attention-bottleneck}
+
+## Recall: one RNN reads, another writes {#sec-recall-seq2seq}
+
+Let the source sentence be:
+
+```text
+Le colis arrivera demain
+```
+
+and the desired translation be:
+
+```text
+The package will arrive tomorrow
+```
+
+An encoder RNN reads the source one token at a time:
+
+$$
+h_i=f_{\text{enc}}(h_{i-1},x_i),
+\qquad i=1,\ldots,n.
+$$ {#eq-encoder-recurrence}
+
+In the simplest recurrent encoder–decoder, only the final state is passed to the decoder:
+
+$$
+c=h_n,
+\qquad
+s_0=c.
+$$ {#eq-fixed-context}
+
+The decoder then produces one target state and token distribution at a time:
+
+$$
+s_t=f_{\text{dec}}(s_{t-1},y_{t-1}),
+\qquad
+p(y_t\mid y_{<t},x)=\operatorname{softmax}(W_o s_t+b_o).
+$$ {#eq-decoder-recurrence}
+
+```{mermaid}
+%%| label: fig-fixed-context-seq2seq
+%%| fig-cap: "The entire source sequence reaches every decoder step through the single context vector $c=h_4$."
+%%| fig-width: 7.2
+flowchart LR
+    x1[Le] --> h1[h₁]
+    h1 --> h2[h₂]
+    x2[colis] --> h2
+    h2 --> h3[h₃]
+    x3[arrivera] --> h3
+    h3 --> h4[h₄]
+    x4[demain] --> h4
+    h4 --> c((c))
+    c --> s1[s₁]
+    s1 --> s2[s₂]
+    s2 --> s3[s₃]
+    s3 --> s4[s₄]
+    s1 --> y1[The]
+    s2 --> y2[package]
+    s3 --> y3[will arrive]
+    s4 --> y4[tomorrow]
+
+    classDef enc fill:#e8f2f0,stroke:#356fa8,color:#17364a
+    classDef dec fill:#f8e5df,stroke:#d95f43,color:#17364a
+    classDef context fill:#f2e9f7,stroke:#8b5bb5,color:#17364a
+    class h1,h2,h3,h4,x1,x2,x3,x4 enc
+    class s1,s2,s3,s4,y1,y2,y3,y4 dec
+    class c context
+```
+
+This architecture was historically important: sequence-to-sequence learning showed that a neural model could learn variable-length mappings end to end [@sutskever2014sequence]. The fixed vector, however, forces every source detail—content, order, syntax, entities, and ambiguities—through the same narrow channel.
+
+## The bottleneck is storage and access {#sec-storage-access}
+
+The problem is often described as insufficient storage: one vector must remember an entire sentence. That is true, but incomplete. Even if a large vector could store every detail, the decoder would still receive the **same undifferentiated vector at every output step**.
+
+| Decoder step | Desired output | Most relevant source evidence |
+|---:|---|---|
+| 1 | *The* | source noun phrase and target syntax |
+| 2 | *package* | *colis* |
+| 3 | *will arrive* | *arrivera* |
+| 4 | *tomorrow* | *demain* |
+
+: Different target predictions need different parts of the source. {#tbl-decoder-needs}
+
+The decoder should not have to unpack the same vector in the same way for every token. It needs an **access mechanism**: at step $t$, form a request that selects the source information useful for that prediction.
+
+:::{.callout-important}
+## The change in one sentence
+
+Do not discard $h_1,\ldots,h_n$. Keep every encoder state available, and let each decoder step retrieve a different weighted combination.
+:::
+
+```{mermaid}
+%%| label: fig-bottleneck-to-access
+%%| fig-cap: "Attention replaces one mandatory path through $h_n$ with direct, prediction-dependent access to all encoder memories."
+%%| fig-width: 6.8
+flowchart LR
+    subgraph Before[Fixed context]
+      A1[h₁] --> A4[hₙ]
+      A2[h₂] --> A4
+      A3[⋯] --> A4
+      A4 --> D1[decoder step t]
+    end
+    subgraph After[Direct access]
+      B1[h₁] --> C[weighted context cₜ]
+      B2[h₂] --> C
+      B3[⋯] --> C
+      B4[hₙ] --> C
+      Q[decoder request sₜ₋₁] --> C
+      C --> D2[predict yₜ]
+    end
+
+    classDef old fill:#f8e5df,stroke:#d95f43,color:#17364a
+    classDef new fill:#e8f2f0,stroke:#0f6f78,color:#17364a
+    class A1,A2,A3,A4,D1 old
+    class B1,B2,B3,B4,C,Q,D2 new
+```
+
+Bahdanau, Cho, and Bengio introduced this learned alignment mechanism for neural machine translation [@bahdanau2015align]. Luong, Pham, and Manning later systematized several global and local variants [@luong2015effective].
+
+## Section synthesis {#sec-bottleneck-synthesis}
+
+The recurrent encoder–decoder compresses because it discards intermediate states. Attention begins with a simple reversal of that decision: preserve the states and learn how to access them.
+
+The next question is computational: **how can a model select one memory while remaining differentiable end to end?**
+
+# Attention as soft lookup {#sec-soft-lookup}
+
+## Keep every source memory {#sec-keep-memories}
+
+After encoding four tokens, retain the matrix of source states:
+
+$$
+H=
+\begin{bmatrix}
+h_1^\top\\
+h_2^\top\\
+h_3^\top\\
+h_4^\top
+\end{bmatrix}
+\in\mathbb{R}^{4\times d_h}.
+$$ {#eq-encoder-memory-matrix}
+
+At decoder step $t$, the previous decoder state $s_{t-1}$ summarizes what has already been generated. It therefore acts as a request. Informally:
+
+> “Given what I have translated so far, which source memory should influence the next word?”
+
+A hard lookup would choose one index $i$. That discrete choice is awkward to train with ordinary backpropagation. Attention instead performs a **soft lookup**: assign every memory a nonnegative weight, make the weights sum to one, and retrieve their weighted average.
+
+```{mermaid}
+%%| label: fig-soft-lookup-concept
+%%| fig-cap: "A query compares with every key; normalized weights determine how much of every value is retrieved."
+%%| fig-width: 6.8
+flowchart LR
+    Q[request<br/>query q] --> S{compare}
+    K1[key k₁] --> S
+    K2[key k₂] --> S
+    K3[key k₃] --> S
+    S --> W[weights α₁, α₂, α₃]
+    V1[value v₁] --> C[weighted sum c]
+    V2[value v₂] --> C
+    V3[value v₃] --> C
+    W --> C
+
+    classDef query fill:#f8e5df,stroke:#d95f43,color:#17364a
+    classDef memory fill:#e8f2f0,stroke:#356fa8,color:#17364a
+    classDef operation fill:#f2e9f7,stroke:#8b5bb5,color:#17364a
+    class Q query
+    class K1,K2,K3,V1,V2,V3 memory
+    class S,W,C operation
+```
+
+## Three operations: score, normalize, retrieve {#sec-three-operations}
+
+For a query $q$ and memory pairs $(k_i,v_i)$:
+
+1. **Score** each query–key pair:
+
+   $$
+   e_i=\operatorname{score}(q,k_i).
+   $$ {#eq-attention-score}
+
+2. **Normalize** all scores with softmax:
+
+   $$
+   \alpha_i=\frac{\exp(e_i)}{\sum_j\exp(e_j)}.
+   $$ {#eq-attention-weight}
+
+3. **Retrieve** a weighted combination of values:
+
+   $$
+   c=\sum_i \alpha_i v_i.
+   $$ {#eq-attention-context}
+
+The weights satisfy $\alpha_i\ge0$ and $\sum_i\alpha_i=1$. The context is therefore a convex combination of values.
+
+:::{.callout-important}
+## Pause · exact calculation
+
+Suppose one query produces the scores
+
+$$
+e=[1,3,0,2]
+$$
+
+for four scalar values
+
+$$
+v=[2,5,-1,3].
+$$
+
+1. Calculate $\alpha=\operatorname{softmax}(e)$.
+2. Calculate $c=\sum_i\alpha_i v_i$.
+3. Which value contributes most, and why?
+:::
+
+## Worked soft lookup {#sec-soft-lookup-worked}
+
+First exponentiate the scores:
+
+| Memory $i$ | Score $e_i$ | $\exp(e_i)$ | Weight $\alpha_i$ | Value $v_i$ | Contribution $\alpha_i v_i$ |
+|---:|---:|---:|---:|---:|---:|
+| 1 | 1 | 2.718 | 0.087 | 2 | 0.174 |
+| 2 | 3 | 20.086 | 0.644 | 5 | 3.220 |
+| 3 | 0 | 1.000 | 0.032 | −1 | −0.032 |
+| 4 | 2 | 7.389 | 0.237 | 3 | 0.711 |
+| **Total** |  | **31.193** | **1.000** |  | **4.073** |
+
+: Every intermediate quantity in the soft lookup. Values are rounded to three decimals. {#tbl-soft-lookup}
+
+Thus,
+
+$$
+\alpha\approx[0.087,0.644,0.032,0.237]
+$$
+
+and
+
+$$
+c\approx
+0.087(2)+0.644(5)+0.032(-1)+0.237(3)
+=4.073.
+$$
+
+Memory 2 contributes most because it has the largest compatibility score. Notice that the other memories are not discarded: a soft lookup can combine evidence.
+
+:::{.callout-tip}
+## Numerical stability
+
+Implement softmax after subtracting the maximum score:
+
+$$
+\operatorname{softmax}(e)_i
+=
+\frac{\exp(e_i-\max_j e_j)}{\sum_k\exp(e_k-\max_j e_j)}.
+$$
+
+This leaves the probabilities unchanged while preventing unnecessarily large exponentials.
+:::
+
+## What learning changes {#sec-learned-lookup}
+
+No human assigns the scores in @tbl-soft-lookup. The scoring parameters are trained through the final task loss. If attending to *demain* helps predict *tomorrow*, backpropagation adjusts the projections so that similar query–key pairs receive larger scores in future examples.
+
+The attention weights are intermediate differentiable variables:
+
+```{mermaid}
+%%| label: fig-attention-gradient-path
+%%| fig-cap: "The translation loss supervises the attention mechanism through the context vector."
+%%| fig-width: 6.5
+flowchart LR
+    P[projection parameters] --> E[scores e]
+    E --> A[weights α]
+    A --> C[context c]
+    C --> Y[next-token distribution]
+    Y --> L[loss]
+    L -. gradient .-> Y
+    Y -. gradient .-> C
+    C -. gradient .-> A
+    A -. gradient .-> E
+    E -. gradient .-> P
+
+    classDef forward fill:#e8f2f0,stroke:#0f6f78,color:#17364a
+    classDef loss fill:#f8e5df,stroke:#d95f43,color:#17364a
+    class P,E,A,C,Y forward
+    class L loss
+```
+
+## Section synthesis {#sec-soft-lookup-synthesis}
+
+Attention is not a mysterious new memory type. It is a differentiable retrieval rule:
+
+$$
+\boxed{\text{score} \rightarrow \text{normalize} \rightarrow \text{retrieve}}.
+$$
+
+We have not yet specified what the query, keys, and values represent. Cross-attention gives those roles a concrete meaning in translation.
+
+# Cross-attention {#sec-cross-attention}
+
+## Queries, keys, and values are roles {#sec-qkv-roles}
+
+In encoder–decoder attention:
+
+| Role | Comes from | Question answered |
+|---|---|---|
+| Query $q_t$ | current or previous decoder state | What information is needed now? |
+| Keys $k_i$ | encoder states | Which source position matches the request? |
+| Values $v_i$ | encoder states | What content should be retrieved? |
+
+: The same source state can be projected once as a key and once as a value. {#tbl-cross-attention-roles}
+
+A common projected form is
+
+$$
+q_t=s_{t-1}W_Q,
+\qquad
+k_i=h_iW_K,
+\qquad
+v_i=h_iW_V.
+$$ {#eq-cross-projections}
+
+The key and value originate from the same source state but serve different purposes. A useful analogy is a library:
+
+- the **key** is the catalog description used to decide relevance;
+- the **value** is the book content retrieved after the match.
+
+## Scoring functions {#sec-scoring-functions}
+
+Several differentiable compatibility functions are possible.
+
+### Dot product
+
+$$
+e_{ti}=q_t^\top k_i.
+$$ {#eq-dot-score}
+
+Dot products are efficient and become the standard form in the Transformer.
+
+### Additive attention
+
+$$
+e_{ti}=v_a^\top\tanh(W_q q_t+W_k k_i+b_a).
+$$ {#eq-additive-score}
+
+This small neural network was used in the original alignment model [@bahdanau2015align]. Additive and multiplicative variants can learn similar behaviors, but their dimensions, parameter counts, and computational profiles differ [@luong2015effective].
+
+## One decoder query creates one alignment {#sec-one-alignment}
+
+Suppose the decoder is ready to produce *tomorrow*. Its query is compared with all French source keys:
+
+| Source position $i$ | 1 | 2 | 3 | 4 |
+|---:|---|---|---|---|
+| Token | Le | colis | arrivera | demain |
+| Score $e_{ti}$ | 0.2 | 0.1 | 0.8 | 2.6 |
+| Weight $\alpha_{ti}$ | 0.069 | 0.062 | 0.126 | **0.743** |
+
+: A plausible alignment for generating *tomorrow*. {#tbl-tomorrow-alignment}
+
+The context for this decoder step is
+
+$$
+c_t=\sum_{i=1}^{4}\alpha_{ti}v_i.
+$$ {#eq-cross-context}
+
+The next-token distribution can use both decoder state and retrieved context:
+
+$$
+p(y_t\mid y_{<t},x)
+=
+\operatorname{softmax}\!\left(W_o[s_t;c_t]+b_o\right).
+$$ {#eq-attentive-decoder-output}
+
+```{mermaid}
+%%| label: fig-cross-attention-tomorrow
+%%| fig-cap: "The decoder query for the next target token assigns most weight to the source position containing *demain*."
+%%| fig-width: 6.9
+flowchart LR
+    Q[decoder query<br/>need next word] --> S{scores}
+    L[Le<br/>.069] --> C[context cₜ]
+    P[colis<br/>.062] --> C
+    A[arrivera<br/>.126] --> C
+    D[demain<br/>.743] ==> C
+    S --> L
+    S --> P
+    S --> A
+    S --> D
+    C --> T[tomorrow]
+
+    classDef query fill:#f8e5df,stroke:#d95f43,color:#17364a
+    classDef memory fill:#e8f2f0,stroke:#356fa8,color:#17364a
+    classDef focus fill:#fff3d6,stroke:#b98a1d,color:#17364a
+    class Q,S,T query
+    class L,P,A memory
+    class D,C focus
+```
+
+## A new query creates a new alignment {#sec-changing-query}
+
+When the decoder moves from *package* to *will arrive* to *tomorrow*, the source keys and values stay fixed, but the query changes. Therefore the attention distribution changes:
+
+$$
+\alpha_t
+=
+\operatorname{softmax}(q_tK^\top).
+$$ {#eq-query-specific-alignment}
+
+| Target step | Query intent | Likely strongest source key |
+|---|---|---|
+| *package* | retrieve the translated entity | *colis* |
+| *will arrive* | retrieve the event | *arrivera* |
+| *tomorrow* | retrieve the time expression | *demain* |
+
+: Cross-attention is conditional retrieval, not one global sentence summary. {#tbl-changing-alignments}
+
+An attention matrix places one decoder query on each row and one source key on each column. Heatmaps of this matrix can reveal plausible alignments, diffuse uncertainty, repeated coverage, or systematic errors.
+
+:::{.callout-warning}
+## An attention heatmap is evidence—not a proof of reasoning
+
+Weights show how values are mixed at a particular attention operation. They do not, by themselves, establish a complete causal explanation of the model prediction. Alternative weight patterns can sometimes produce similar outputs [@jain2019attention]. Use heatmaps as diagnostic evidence together with interventions, errors, and other analyses.
+:::
+
+## Section synthesis {#sec-cross-attention-synthesis}
+
+Cross-attention links two sequences:
+
+- queries come from the decoder;
+- keys and values come from the encoder;
+- each target step retrieves a different source context.
+
+The same lookup can operate without a separate encoder and decoder. If queries, keys, and values all come from one sequence, we obtain self-attention.
+
+# Self-attention {#sec-self-attention}
+
+## Change the origin, keep the mechanism {#sec-self-origin}
+
+Cross-attention and self-attention use the same score–normalize–retrieve rule. Only the source of the roles changes.
+
+| Mechanism | Queries | Keys | Values |
+|---|---|---|---|
+| Cross-attention | target/decoder sequence | source/encoder sequence | source/encoder sequence |
+| Self-attention | one sequence | the same sequence | the same sequence |
+
+: Attention is named by where its roles originate. {#tbl-cross-self}
+
+For an input matrix $X\in\mathbb{R}^{n\times d_{model}}$,
+
+$$
+Q=XW_Q,
+\qquad
+K=XW_K,
+\qquad
+V=XW_V.
+$$ {#eq-self-projections}
+
+The same token vector therefore produces three different learned views: what it asks for, how it advertises itself for matching, and what content it offers if selected.
+
+## A pronoun performs a lookup {#sec-pronoun-example}
+
+Keep the sentence visible:
+
+> The **animal** was tired because **it** ran.
+
+The token *it* is ambiguous in isolation. Its query can compare against every key in the sentence. A plausible distribution is:
+
+| Key token | The | animal | was | tired | because | it | ran |
+|---|---:|---:|---:|---:|---:|---:|---:|
+| Weight from query *it* | .05 | **.55** | .05 | .15 | .05 | .10 | .05 |
+
+: An illustrative self-attention distribution for contextualizing *it*. {#tbl-pronoun-weights}
+
+The contextual output is
+
+$$
+z_{it}
+=
+.05v_{The}+.55v_{animal}+.05v_{was}
++.15v_{tired}+.05v_{because}+.10v_{it}+.05v_{ran}.
+$$ {#eq-pronoun-context}
+
+```{mermaid}
+%%| label: fig-pronoun-self-attention
+%%| fig-cap: "The query at *it* retrieves a weighted mixture from the same sentence, with the strongest illustrative connection to *animal*."
+%%| fig-width: 7.0
+flowchart TB
+    T[The · .05] --> Z[contextual “it” z₆]
+    A[animal · .55] ==> Z
+    W[was · .05] --> Z
+    R[tired · .15] --> Z
+    B[because · .05] --> Z
+    I[it · .10] --> Z
+    N[ran · .05] --> Z
+
+    classDef ordinary fill:#e8f2f0,stroke:#356fa8,color:#17364a
+    classDef focus fill:#fff3d6,stroke:#b98a1d,color:#17364a
+    classDef output fill:#f2e9f7,stroke:#8b5bb5,color:#17364a
+    class T,W,R,B,I,N ordinary
+    class A focus
+    class Z output
+```
+
+The output at position 6 is no longer a representation of *it* alone. It is *it interpreted in this sentence*.
+
+## Every token asks its own question {#sec-every-token}
+
+Self-attention does not only contextualize the pronoun. Every position $i$ supplies its own query $q_i$, produces its own distribution over all keys, and receives its own output $z_i$:
+
+$$
+z_i=\sum_{j=1}^{n}\alpha_{ij}v_j.
+$$ {#eq-every-token-context}
+
+All $n^2$ scores can be computed together:
+
+$$
+S=QK^\top
+\in\mathbb{R}^{n\times n},
+$$ {#eq-score-matrix}
+
+$$
+A=\operatorname{softmax}_{row}(S),
+\qquad
+Z=AV.
+$$ {#eq-self-attention-matrix}
+
+For our seven-token sentence, the dimensions are inspectable:
+
+```{mermaid}
+%%| label: fig-self-attention-matrices
+%%| fig-cap: "Matrix multiplication performs all seven self-attention lookups together."
+%%| fig-width: 7.2
+%%{init: {"themeVariables": {"fontSize": "18px"}, "flowchart": {"nodeSpacing": 28, "rankSpacing": 48, "curve": "basis"}}}%%
+flowchart LR
+    X["INPUTS<br/><b>X</b><br/>7 × d_model"] --> P(("PROJECT"))
+
+    subgraph Roles["LEARNED ROLES"]
+      direction TB
+      Q["QUERIES<br/><b>Q = XWQ</b><br/>7 × dₖ"]
+      K["KEYS<br/><b>K = XWK</b><br/>7 × dₖ"]
+      V["VALUES<br/><b>V = XWV</b><br/>7 × dᵥ"]
+    end
+
+    P --> Q
+    P --> K
+    P --> V
+    Q --> S["ALL SCORES<br/><b>S = QKᵀ</b><br/>7 × 7"]
+    K --> S
+    S --> A["ROW-WISE SOFTMAX<br/><b>A = softmax(S)</b><br/>rows sum to 1"]
+    A --> Z["ALL OUTPUTS<br/><b>Z = AV</b><br/>7 × d_v"]
+    V --> Z
+
+    classDef input fill:#eef4fa,stroke:#356fa8,stroke-width:3px,color:#17364a,font-size:18px
+    classDef query fill:#ffffff,stroke:#356fa8,stroke-width:3px,color:#17364a,font-size:18px
+    classDef key fill:#f7f1fb,stroke:#9a63c7,stroke-width:3px,color:#17364a,font-size:18px
+    classDef value fill:#fff8e7,stroke:#dca51e,stroke-width:3px,color:#17364a,font-size:18px
+    classDef operation fill:#f7f1fb,stroke:#9a63c7,stroke-width:3px,color:#17364a,font-size:18px
+    classDef output fill:#eef7f6,stroke:#178f91,stroke-width:3px,color:#17364a,font-size:18px
+    class X,P input
+    class Q query
+    class K key
+    class V value
+    class S,A operation
+    class Z output
+    style Roles fill:transparent,stroke:#b8c3c8,stroke-width:2px,stroke-dasharray:6 5,color:#62747d
+```
+
+Row $i$ of $A$ contains the weights produced by query $q_i$. Row $i$ of $Z$ is the context retrieved for position $i$.
+
+## Shorter paths and parallel computation {#sec-short-paths}
+
+In a recurrent network, information from position 2 to position 6 crosses four sequential state updates. In one self-attention layer, a learned edge can connect those positions directly.
+
+| Property | Recurrent layer | Self-attention layer |
+|---|---|---|
+| Long-range path length | grows with distance | one attention edge |
+| Training across positions | sequential | parallel matrix operations |
+| Pairwise interaction cost | linear per recurrent step | quadratic in sequence length |
+| Explicit notion of order | recurrence provides it | must be supplied separately |
+
+: Self-attention changes both the information path and the computational trade-off. {#tbl-rnn-self-attention}
+
+The quadratic $n\times n$ score matrix is powerful but can become expensive for very long sequences. This limitation motivates later work on sparse, local, linear, and memory-efficient attention. It does not change the basic lookup derived here.
+
+## Section synthesis {#sec-self-synthesis}
+
+Self-attention creates direct, context-dependent token representations and evaluates all queries in parallel. Two practical questions remain:
+
+1. Why do dot products become unstable as vector width grows?
+2. How can a language model prevent a position from reading future tokens?
+
+A third modeling question will follow: can one attention distribution capture every useful relation?
+
+# Modern attention {#sec-modern-attention}
+
+## Why scale dot products? {#sec-attention-scaling}
+
+Consider a query and key with four matching coordinates:
+
+$$
+q=[1,1,1,1],
+\qquad
+k=[1,1,1,1].
+$$
+
+Their dot product is
+
+$$
+q^\top k=1+1+1+1=4.
+$$
+
+With wider random vectors, more products are summed. Under common independence assumptions, if query and key coordinates have mean zero and variance one, the dot product has variance proportional to $d_k$:
+
+$$
+\operatorname{Var}(q^\top k)=d_k.
+$$
+
+Dividing by $\sqrt{d_k}$ restores an approximately unit variance:
+
+$$
+\operatorname{Var}\!\left(\frac{q^\top k}{\sqrt{d_k}}\right)\approx1.
+$$
+
+This matters because large logits make softmax extremely sharp. Probabilities approach zero or one, where useful gradients may become small [@vaswani2017attention].
+
+:::{.callout-important}
+## Pause · compare two distributions
+
+Given scores $[4,2,0]$ and $d_k=4$, compare:
+
+$$
+\operatorname{softmax}([4,2,0])
+$$
+
+with
+
+$$
+\operatorname{softmax}\!\left(\frac{[4,2,0]}{\sqrt4}\right).
+$$
+
+Which distribution leaves more probability for alternatives?
+:::
+
+## Worked scaling example {#sec-scaling-worked}
+
+Since $\sqrt{d_k}=2$, the scaled scores are $[2,1,0]$.
+
+| Candidate | Unscaled score | Unscaled weight | Scaled score | Scaled weight |
+|---:|---:|---:|---:|---:|
+| 1 | 4 | **0.867** | 2 | **0.665** |
+| 2 | 2 | 0.117 | 1 | 0.245 |
+| 3 | 0 | 0.016 | 0 | 0.090 |
+
+: Scaling preserves the score ranking but reduces accidental overconfidence. {#tbl-scaled-softmax}
+
+The complete operator is therefore
+
+$$
+\operatorname{Attention}(Q,K,V)
+=
+\operatorname{softmax}\!\left(
+\frac{QK^\top}{\sqrt{d_k}}
+\right)V.
+$$ {#eq-scaled-dot-product-attention}
+
+## Causal masking: do not read tomorrow {#sec-causal-mask}
+
+Suppose an autoregressive language model is trained on:
+
+```text
+The animal ran home
+```
+
+At position 3, the task is to predict the next token *home* from the prefix *The animal ran*. Unrestricted self-attention would allow the query at position 3 to inspect position 4, leaking the answer.
+
+The causal rule is:
+
+$$
+\text{query position }i\text{ may attend to key position }j
+\quad\text{only if}\quad j\le i.
+$$ {#eq-causal-rule}
+
+Define an additive mask $M$:
+
+$$
+M_{ij}=
+\begin{cases}
+0, & j\le i,\\
+-\infty, & j>i.
+\end{cases}
+$$ {#eq-causal-mask}
+
+For four positions:
+
+| Query $i$ \ Key $j$ | 1 | 2 | 3 | 4 |
+|---:|:---:|:---:|:---:|:---:|
+| 1 | ✓ | $-\infty$ | $-\infty$ | $-\infty$ |
+| 2 | ✓ | ✓ | $-\infty$ | $-\infty$ |
+| 3 | ✓ | ✓ | ✓ | $-\infty$ |
+| 4 | ✓ | ✓ | ✓ | ✓ |
+
+: The lower-triangular causal mask. {#tbl-causal-mask}
+
+The masked operation is
+
+$$
+\widetilde S
+=
+\frac{QK^\top}{\sqrt{d_k}}+M,
+$$
+
+$$
+A=\operatorname{softmax}_{row}(\widetilde S),
+\qquad
+Z=AV.
+$$ {#eq-masked-attention}
+
+Because $\exp(-\infty)=0$, every forbidden future weight becomes zero. All positions can still be processed in parallel during training; the mask controls information, not execution order.
+
+```{mermaid}
+%%| label: fig-causal-mask-flow
+%%| fig-cap: "Masking occurs before softmax, converting forbidden future connections into zero attention weight."
+%%| fig-width: 6.6
+flowchart LR
+    S[scaled scores<br/>QKᵀ / √dₖ] --> P[add triangular mask M]
+    P --> N[row-wise softmax]
+    N --> A[future weights = 0]
+    A --> Z[weighted values Z]
+
+    classDef score fill:#e8f2f0,stroke:#356fa8,color:#17364a
+    classDef mask fill:#f8e5df,stroke:#d95f43,color:#17364a
+    classDef output fill:#e8f2f0,stroke:#0f6f78,color:#17364a
+    class S score
+    class P mask
+    class N,A,Z output
+```
+
+## Why use multiple heads? {#sec-multihead-motivation}
+
+Consider:
+
+> The **animal** did not **cross** the **street** because **it** was **wide**.
+
+For the token *it*, several relations may be useful:
+
+- reference: *it* $\rightarrow$ *street*;
+- description: *it* $\rightarrow$ *wide*;
+- event participants: *cross* $\rightarrow$ *animal*, *street*.
+
+A single head produces one attention distribution per query. It can mix several signals, but a multi-head layer provides distinct learned projection spaces:
+
+$$
+head_r
+=
+\operatorname{Attention}(QW_r^Q,KW_r^K,VW_r^V),
+$$ {#eq-one-head}
+
+$$
+\operatorname{MultiHead}(Q,K,V)
+=
+\operatorname{Concat}(head_1,\ldots,head_h)W^O.
+$$ {#eq-multihead}
+
+```{mermaid}
+%%| label: fig-multihead-parallel
+%%| fig-cap: "Every head receives the same input but learns separate query, key, and value projections before the results are concatenated and mixed."
+%%| fig-width: 7.2
+%%{init: {"themeVariables": {"fontSize": "18px"}, "flowchart": {"nodeSpacing": 30, "rankSpacing": 52, "curve": "basis"}}}%%
+flowchart LR
+    X["SAME INPUT<br/><b>X</b>"] --> B(("SPLIT"))
+
+    subgraph Heads["PARALLEL HEADS"]
+      direction TB
+      H1["<b>HEAD 1</b><br/>own WQ¹, WK¹, WV¹<br/>reference view"]
+      H2["<b>HEAD 2</b><br/>own WQ², WK², WV²<br/>description view"]
+      H3["<b>HEAD 3</b><br/>own WQ³, WK³, WV³<br/>participant view"]
+    end
+
+    B --> H1
+    B --> H2
+    B --> H3
+    H1 --> C["<b>CONCATENATE</b><br/>[head₁ ; head₂ ; head₃]"]
+    H2 --> C
+    H3 --> C
+    C --> O["<b>MIX</b><br/>multiply by Wᴼ"]
+    O --> Z["ONE OUTPUT<br/><b>Z</b><br/>per token"]
+
+    classDef input fill:#eef4fa,stroke:#356fa8,stroke-width:3px,color:#17364a,font-size:18px
+    classDef h1 fill:#f7f1fb,stroke:#9a63c7,stroke-width:3px,color:#17364a,font-size:18px
+    classDef h2 fill:#eef7f6,stroke:#178f91,stroke-width:3px,color:#17364a,font-size:18px
+    classDef h3 fill:#fff8e7,stroke:#dca51e,stroke-width:3px,color:#17364a,font-size:18px
+    classDef merge fill:#fff0ec,stroke:#d95f43,stroke-width:3px,color:#17364a,font-size:18px
+    class X input
+    class B input
+    class H1 h1
+    class H2 h2
+    class H3 h3
+    class C,O merge
+    class Z input
+    style Heads fill:transparent,stroke:#b8c3c8,stroke-width:2px,stroke-dasharray:6 5,color:#62747d
+```
+
+The colored linguistic roles are an explanatory possibility, not a constraint. The architecture does not label a head “coreference” or “syntax.” Analyses have nevertheless found heads correlated with positional patterns, delimiters, syntactic dependencies, and coreference [@clark2019bert].
+
+## Reading attention visualizations {#sec-attention-visualization}
+
+Two common views are useful.
+
+### Attention heatmap
+
+Rows represent queries, columns represent keys, and color intensity represents $\alpha_{ij}$. A heatmap is effective for inspecting all pairwise weights in one head.
+
+### Connection view
+
+Tokens are connected by lines whose opacity or width represents attention strength. This view makes a small number of strong relations visually immediate.
+
+[BertViz](https://github.com/jessevig/bertviz) provides head, model, and neuron-oriented views for Transformer attention [@vig2019multiscale]. For a research example connecting heads with linguistic relations, read [Clark et al., *What Does BERT Look At?*](https://aclanthology.org/W19-4828/) [@clark2019bert].
+
+:::{.callout-warning}
+## Interpret with care
+
+An attractive attention line is not automatically the reason for a prediction. Inspect:
+
+- several heads and layers, not one selected picture;
+- whether the pattern is stable across examples;
+- how changing or removing attended tokens changes the output;
+- whether value vectors and downstream layers preserve the apparent relation; and
+- whether another attention distribution produces a similar result.
+
+Attention visualization is a valuable microscope, not a complete theory of model reasoning [@jain2019attention].
+:::
+
+## Modern attention in one view {#sec-modern-synthesis}
+
+| Mechanism | Operation | Problem addressed |
+|---|---|---|
+| Scaling | divide logits by $\sqrt{d_k}$ | softmax saturation as width grows |
+| Causal mask | add $-\infty$ above the diagonal | future-token leakage |
+| Multiple heads | parallel projected lookups | reliance on one similarity space |
+
+: Three additions that form the modern attention operator. {#tbl-modern-attention}
+
+The operator is now stable, information-valid, and able to learn several views. It is still not a complete sequence model.
+
+# The Transformer bridge {#sec-transformer-bridge}
+
+## Self-attention has no order by itself {#sec-position-gap}
+
+Compare:
+
+```text
+dog bites man
+man bites dog
+```
+
+The token set is the same, but the meanings differ. If $P$ is a permutation matrix that reorders positions, self-attention without positional information is permutation equivariant:
+
+$$
+\operatorname{Attn}(PX)
+=
+P\operatorname{Attn}(X).
+$$ {#eq-permutation-equivariance}
+
+Reordering inputs merely reorders outputs. The operation has no independent signal that position 1 came before position 3. A sequence architecture must therefore inject position information. The next chapter will compare ways to do so.
+
+## Attention mixes positions, not features deeply {#sec-feature-gap}
+
+Attention answers:
+
+> Which positions should exchange information?
+
+After that exchange, each token also needs a nonlinear transformation of its features:
+
+> How should this position transform the information it received?
+
+```{mermaid}
+%%| label: fig-attention-feature-gap
+%%| fig-cap: "Attention supplies cross-position communication; a complete block also needs position-wise feature transformation."
+%%| fig-width: 6.8
+flowchart LR
+    X[token representations] --> A[multi-head attention]
+    A --> M[mixed information<br/>across positions]
+    M --> Q{what transforms<br/>features locally?}
+    Q --> Z[updated representations]
+
+    classDef known fill:#f2e9f7,stroke:#8b5bb5,color:#17364a
+    classDef open fill:#fff3d6,stroke:#b98a1d,color:#17364a
+    class X,A,M,Z known
+    class Q open
+```
+
+The Transformer answers this with a position-wise feed-forward sublayer, but its exact equations and placement belong to the architecture chapter.
+
+## Deep stacks need safe routes {#sec-depth-gap}
+
+One attention layer creates one round of interaction. Rich models stack many layers, which raises two questions:
+
+1. Can an original representation survive repeated transformations?
+2. Can activation and gradient scales remain controlled across depth?
+
+```{mermaid}
+%%| label: fig-depth-open-question
+%%| fig-cap: "Repeated attention and transformation require a safe route for information and stable activation scales."
+%%| fig-width: 6.8
+flowchart LR
+    X[input x] --> L1[layer 1]
+    L1 --> L2[layer 2]
+    L2 --> L3[layer 3]
+    L3 --> D[⋯ deeper]
+    D --> Z[output z]
+    X -. preserve information? .-> Z
+
+    classDef layer fill:#f2e9f7,stroke:#8b5bb5,color:#17364a
+    classDef endpoint fill:#e8f2f0,stroke:#356fa8,color:#17364a
+    class L1,L2,L3,D layer
+    class X,Z endpoint
+```
+
+Residual pathways and normalization address these requirements in practical Transformer blocks [@vaswani2017attention]. For now, retain the requirements rather than memorizing a block diagram.
+
+## Final visual bridge {#sec-final-bridge}
+
+```{mermaid}
+%%| label: fig-transformer-bridge
+%%| fig-cap: "Attention is the core operation, but order, position-wise transformation, and safe depth must be assembled around it."
+%%| fig-width: 7.4
+flowchart LR
+    X[Tokens X] --> P{Order?}
+    P --> A[Attention<br/>who interacts?]
+    A --> T{Feature<br/>transformation?}
+    T --> D{Safe<br/>depth?}
+    D --> Z[Contextual<br/>representations Z]
+
+    classDef known fill:#f2e9f7,stroke:#8b5bb5,color:#17364a
+    classDef open fill:#fff3d6,stroke:#b98a1d,color:#17364a
+    classDef endpoint fill:#e8f2f0,stroke:#356fa8,color:#17364a
+    class A known
+    class P,T,D open
+    class X,Z endpoint
+```
+
+:::{.callout-important}
+## Question to carry into the next chapter
+
+How do we assemble order, attention, position-wise transformation, and safe depth into one reusable Transformer block?
+:::
+
+# Chapter summary {#sec-attention-summary}
+
+The full conceptual chain is now visible:
+
+1. A fixed encoder context creates a storage and access bottleneck.
+2. Attention keeps all memories and performs a differentiable soft lookup.
+3. Cross-attention lets each decoder query retrieve a different source context.
+4. Self-attention lets every token retrieve context from its own sequence.
+5. Matrix operations compute all token-to-token scores and weighted sums together.
+6. Scaling controls dot-product magnitude.
+7. Causal masking prevents future-token leakage.
+8. Multiple heads learn parallel projection and retrieval spaces.
+9. Attention still needs order, position-wise transformation, and safe depth to become a full architecture.
+
+The most important reusable formula is:
+
+$$
+\boxed{
+\operatorname{Attention}(Q,K,V)
+=
+\operatorname{softmax}\!\left(
+\frac{QK^\top}{\sqrt{d_k}}+M
+\right)V
+}
+$$ {#eq-final-attention}
+
+where $M=0$ when every connection is permitted and $M$ is a causal or task-specific mask otherwise.
+
+# Further reading and exploration {#sec-attention-reading}
+
+## Defining papers
+
+- [Bahdanau, Cho, and Bengio · *Neural Machine Translation by Jointly Learning to Align and Translate*](https://arxiv.org/abs/1409.0473) introduces learned soft alignment in recurrent encoder–decoder translation [@bahdanau2015align].
+- [Luong, Pham, and Manning · *Effective Approaches to Attention-based Neural Machine Translation*](https://aclanthology.org/D15-1166/) compares global/local and scoring variants [@luong2015effective].
+- [Vaswani et al. · *Attention Is All You Need*](https://proceedings.neurips.cc/paper/7181-attention-is-all-you-need) introduces scaled dot-product and multi-head attention within the Transformer [@vaswani2017attention].
+
+## Visual explanations
+
+- [Jay Alammar · *The Illustrated Transformer*](https://jalammar.github.io/illustrated-transformer/) provides a visual walkthrough from attention to the architecture.
+- [BertViz](https://github.com/jessevig/bertviz) provides interactive head, model, and neuron views [@vig2019multiscale].
+- [Tensor2Tensor visualization and implementation](https://github.com/tensorflow/tensor2tensor) preserves an influential historical implementation. The repository is archived and should be treated as legacy code.
+
+## Attention patterns and interpretation
+
+- [Clark et al. · *What Does BERT Look At?*](https://aclanthology.org/W19-4828/) studies positional, syntactic, and coreference patterns in BERT heads [@clark2019bert].
+- [Jain and Wallace · *Attention is not Explanation*](https://aclanthology.org/N19-1357/) explains why attention weights alone should not be treated as a faithful explanation [@jain2019attention].
+- [Stanford CS224N · Attention and Transformers](https://web.stanford.edu/class/cs224n/slides_w26/cs224n-2026-lecture05-transformers.pdf) offers a complementary lecture treatment.
+
+## References
+
+::: {#refs}
+:::

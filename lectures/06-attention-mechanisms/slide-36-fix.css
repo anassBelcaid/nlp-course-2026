@@ -1,0 +1,18 @@
+/* Slide 36: give the output projection enough room for its full formula. */
+.multihead-stage{
+  grid-template-columns:145px minmax(0,1fr) 355px;
+  gap:24px;
+  width:95%;
+}
+.head-merge{
+  min-height:220px;
+  padding:24px 26px;
+}
+.head-merge small{
+  font-size:16px;
+}
+.head-merge b{
+  margin-top:20px;
+  font-size:23px;
+  line-height:1.45;
+}

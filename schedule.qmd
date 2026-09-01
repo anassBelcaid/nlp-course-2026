@@ -107,8 +107,17 @@ The course has **ten teaching weeks** followed by **four weeks of student projec
   <td>06</td>
   <td><span class="era-label">Neural sequences</span></td>
   <td><strong>Attention Mechanisms</strong><br><span class="topic-detail">Encoder-decoder models, queries, keys, values, and multi-head attention</span></td>
-  <td><span class="resource-pending">Lecture</span> <span class="resource-pending">Notes</span></td>
-  <td><span class="link-pending">Coming soon</span></td>
+  <td><a class="project-link" href="lectures/06-attention-mechanisms/index.html">Lecture</a> <a class="project-link" href="notes/06-attention-mechanisms/index.html">Notes</a> <a class="project-link" href="notes/06-attention-mechanisms/index.pdf">PDF</a></td>
+  <td>
+    <ul class="course-link-list">
+      <li><span class="required-badge">Read</span><a href="https://web.stanford.edu/class/cs224n/slides_w26/cs224n-2026-lecture05-transformers.pdf">CS224N · Attention and Transformers</a></li>
+      <li><span class="required-badge">Paper</span><a href="https://proceedings.neurips.cc/paper/7181-attention-is-all-you-need">Vaswani et al. · Attention Is All You Need</a></li>
+      <li><span class="required-badge">Visual</span><a href="https://jalammar.github.io/illustrated-transformer/">Alammar · The Illustrated Transformer</a></li>
+      <li><span class="required-badge">Code</span><a href="https://github.com/tensorflow/tensor2tensor">Tensor2Tensor · Transformer implementation (legacy)</a></li>
+      <li><span class="required-badge">Visual</span><a href="https://github.com/jessevig/bertviz">BertViz · Explore attention heads interactively</a></li>
+      <li><span class="required-badge">Read</span><a href="https://aclanthology.org/W19-4828/">Clark et al. · What Does BERT Look At?</a></li>
+    </ul>
+  </td>
   <td><a class="project-link" href="coding-projects.html">Project 03 · finish</a></td>
 </tr>
 <tr class="era-transformers era-start">
