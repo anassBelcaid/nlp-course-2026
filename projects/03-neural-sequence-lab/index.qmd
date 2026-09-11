@@ -64,12 +64,23 @@ PyTorch constructs backpropagation through time from your forward operations. A 
 
 ## Session 3
 
-| Session | Models | Final outcome |
-|---|---|---|
-| 3 | causal Transformer, then recipes | compare attention with recurrence and generate structured text |
+The third notebook makes every important Transformer operation inspectable. You will implement:
 
-:::{.callout-note}
-Sessions 1 and 2 are ready. The Transformer and recipe notebook will appear here after review.
+- sinusoidal positional embeddings and their combination with token embeddings;
+- causal multi-head self-attention in five separate stages;
+- readable head reshaping with `einops`;
+- the position-wise MLP;
+- pre-norm residual Transformer blocks with `LayerNorm` and dropout;
+- padded next-token loss and token error;
+- a complete optimization loop; and
+- temperature-controlled categorical sampling.
+
+[Open Session 3 · Build a causal Transformer](starter/03_causal_transformer.ipynb){.btn .btn-primary}
+
+[Download the Session 3 starter ZIP](starter/neural-sequence-lab-session-3.zip){.btn .btn-secondary download="neural-sequence-lab-session-3.zip"}
+
+:::{.callout-important}
+The attention exercise deliberately does not use `nn.MultiheadAttention`. Projection, head reshaping, score multiplication, masking, softmax, value retrieval, and output projection remain visible and are tested independently.
 :::
 
 ## Local setup
@@ -80,4 +91,4 @@ uv sync
 uv run jupyter lab
 ```
 
-The notebook may also be uploaded directly to Google Colab.
+The notebooks may also be uploaded directly to Google Colab.

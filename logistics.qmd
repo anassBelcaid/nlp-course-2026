@@ -45,6 +45,18 @@ The assessment balance will be confirmed before graded work begins. Detailed rub
 - **Coding Projects** contain the brief, starter bundle, tests, and submission checklist.
 - **Student Projects** will contain themes, milestones, presentation times, and the final rubric.
 
+## Be active on Ed Discussion
+
+[Ed Discussion](https://edstem.org/us/courses/101704/discussion) is our shared course space between class meetings. Use it to ask questions, discuss lecture ideas and coding projects, share useful resources, and help classmates work through difficulties.
+
+You are encouraged to participate regularly: read existing threads before posting, write questions with enough context to reproduce the issue, and contribute explanations or constructive follow-up questions when you can. Thoughtful attempts are welcome—even when they are incomplete—and often lead to the most useful discussions.
+
+:::{.callout-tip title="A strong Ed post"}
+Give your thread a specific title, state what you are trying to do, show the relevant code, output, or error, and explain what you have already tried. When replying, offer a hint or explanation that helps others learn rather than only posting a final answer.
+:::
+
+[Join the CS 351 discussion on Ed →](https://edstem.org/us/courses/101704/discussion){.discussion-button}
+
 ## Details to be announced
 
 - Meeting times and classroom

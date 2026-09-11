@@ -124,8 +124,16 @@ The course has **ten teaching weeks** followed by **four weeks of student projec
   <td>07</td>
   <td><span class="era-label">Transformers</span></td>
   <td><strong>Transformer Architecture</strong><br><span class="topic-detail">Transformer blocks, positions, residual connections, normalization, and training</span></td>
-  <td><span class="resource-pending">Lecture</span> <span class="resource-pending">Notes</span></td>
-  <td><span class="link-pending">Coming soon</span></td>
+  <td><a class="project-link" href="lectures/07-transformer-architecture/index.html">Lecture</a> <a class="project-link" href="notes/07-transformer-architecture/index.html">Notes</a> <a class="project-link" href="notes/07-transformer-architecture/index.pdf">PDF</a></td>
+  <td>
+    <ul class="course-link-list">
+      <li><span class="required-badge">Read</span><a href="https://web.stanford.edu/class/cs224n/slides_w26/cs224n-2026-lecture05-transformers.pdf">CS224N · Transformer architecture</a></li>
+      <li><span class="required-badge">Paper</span><a href="https://papers.neurips.cc/paper/7181-attention-is-all-you-need">Vaswani et al. · Attention Is All You Need</a></li>
+      <li><span class="required-badge">Visual</span><a href="https://jalammar.github.io/illustrated-transformer/">Alammar · The Illustrated Transformer</a></li>
+      <li><span class="required-badge">Code</span><a href="https://nlp.seas.harvard.edu/annotated-transformer/">Harvard NLP · The Annotated Transformer</a></li>
+      <li><span class="required-badge">Docs</span><a href="https://pytorch.org/docs/stable/generated/torch.nn.Transformer.html">PyTorch · nn.Transformer</a></li>
+    </ul>
+  </td>
   <td><a class="project-link" href="coding-projects.html">Project 04 · start</a></td>
 </tr>
 <tr class="era-transformers">

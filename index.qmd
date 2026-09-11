@@ -50,6 +50,20 @@ This course provides a comprehensive introduction to Natural Language Processing
 
 :::
 
+:::{.discussion-card}
+:::{.discussion-logo-wrap}
+![Ed Discussion logo](./images/ed-discussion-logo.svg){.discussion-logo}
+:::
+
+:::{.discussion-copy}
+## Continue the conversation on Ed
+
+Ask questions, compare approaches, help your classmates, and follow course announcements between sessions.
+
+[Open our Ed Discussion course page →](https://edstem.org/us/courses/101704/discussion){.discussion-button}
+:::
+:::
+
 ## Reference Books
 
 :::{.book-container}
@@ -82,9 +96,7 @@ A practical companion for building, fine-tuning, evaluating, and optimizing tran
 
 :::{.instructor-card}
 
-:::{.instructor-photo-placeholder aria-label="Instructor photograph placeholder"}
-&nbsp;
-:::
+![Portrait of Dr. A. Belcaid, course instructor](./photo.jpg){.instructor-photo}
 
 :::{.instructor-details}
 ### Dr. A. Belcaid

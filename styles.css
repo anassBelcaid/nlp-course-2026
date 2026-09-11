@@ -686,6 +686,66 @@ a:focus-visible, button:focus-visible, .email-button:focus-visible {
   text-align: left;
 }
 
+.discussion-card {
+  display: grid;
+  grid-template-columns: 108px minmax(0, 1fr);
+  align-items: center;
+  gap: 1.6rem;
+  max-width: 900px;
+  padding: 1.5rem;
+  margin: 0 0 4rem;
+  color: var(--raised);
+  background: var(--ink);
+  border-left: 7px solid var(--electric);
+}
+
+.discussion-logo-wrap,
+.discussion-logo-wrap p {
+  margin: 0;
+}
+
+.discussion-logo {
+  display: block;
+  width: 96px;
+  height: 96px;
+  margin: 0;
+}
+
+.discussion-copy h2 {
+  margin: 0 0 .55rem;
+  padding: 0;
+  color: var(--raised);
+  border: 0;
+  font-size: clamp(1.7rem, 3vw, 2.35rem);
+}
+
+.discussion-copy p {
+  max-width: 650px;
+  margin: 0 0 1rem;
+  color: #d9dee2;
+  line-height: 1.6;
+}
+
+.discussion-button {
+  display: inline-block;
+  padding: .65rem .85rem;
+  color: white !important;
+  background: var(--electric);
+  border: 1px solid var(--electric);
+  font-family: "DM Mono", monospace;
+  font-size: .72rem;
+  font-weight: 500;
+  letter-spacing: .035em;
+  text-decoration: none;
+  text-transform: uppercase;
+}
+
+.discussion-button:hover {
+  color: var(--ink) !important;
+  background: var(--raised);
+  border-color: var(--raised);
+}
+
 .book-container {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -765,8 +825,13 @@ a:focus-visible, button:focus-visible, .email-button:focus-visible {
   border-top: 5px solid var(--signal);
 }
 
-.instructor-photo-placeholder {
-  background: repeating-linear-gradient(45deg, var(--raised), var(--raised) 10px, #eae5da 10px, #eae5da 11px);
+.instructor-photo {
+  flex: 0 0 150px;
+  width: 150px;
+  height: 180px;
+  margin: 0;
+  object-fit: cover;
+  object-position: center top;
   border: 1px solid var(--line);
   border-radius: 0;
 }
@@ -870,6 +935,15 @@ a:focus-visible, button:focus-visible, .email-button:focus-visible {
 }
 
 @media (max-width: 520px) {
+  .discussion-card {
+    grid-template-columns: 1fr;
+  }
+
+  .discussion-logo {
+    width: 76px;
+    height: 76px;
+  }
+
   .book-card {
     grid-template-columns: 1fr;
   }
