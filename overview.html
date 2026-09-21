@@ -1,0 +1,2011 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.10.18">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="author" content="A.Belcaid">
+<meta name="dcterms.date" content="2025-09-01">
+
+<title>Introduction to Natural Language Processing Course – CS 351 · NLP</title>
+<style>
+/* Default styles provided by pandoc.
+** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+*/
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: 1.5em;}
+div.column{flex: auto;}
+@media screen {
+div.columns{gap: min(4vw, 1.5em);}
+div.column{overflow-x: auto;}
+}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+<script src="site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="site_libs/clipboard/clipboard.min.js"></script>
+<script src="site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="site_libs/quarto-search/fuse.min.js"></script>
+<script src="site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="./">
+<script src="site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="site_libs/quarto-html/popper.min.js"></script>
+<script src="site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="site_libs/quarto-html/anchor.min.js"></script>
+<link href="site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="site_libs/quarto-html/quarto-syntax-highlighting-095245003bb80bd2beb305de39928752.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="site_libs/bootstrap/bootstrap-2e7c9b518fe54fcaa4a8b379123416fc.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<script id="quarto-search-options" type="application/json">{
+  "location": "navbar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "end",
+  "type": "overlay",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script>
+<style>html{ scroll-behavior: smooth; }</style>
+<script src="site_libs/quarto-diagram/mermaid.min.js"></script>
+<script src="site_libs/quarto-diagram/mermaid-init.js"></script>
+<link href="site_libs/quarto-diagram/mermaid.css" rel="stylesheet">
+
+  <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
+  <script defer="" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-chtml.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN" && texText && texText.data) {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script>
+
+<link rel="stylesheet" href="styles.css">
+</head>
+
+<body class="floating nav-fixed quarto-light">
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+    <nav class="navbar navbar-expand-lg " data-bs-theme="dark">
+      <div class="navbar-container container-fluid">
+      <div class="navbar-brand-container mx-auto">
+    <a class="navbar-brand" href="./index.html">
+    <span class="navbar-title">CS 351 · NLP</span>
+    </a>
+  </div>
+            <div id="quarto-search" class="" title="Search"></div>
+          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse" aria-controls="navbarCollapse" role="menu" aria-expanded="false" aria-label="Toggle navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+  <span class="navbar-toggler-icon"></span>
+</button>
+          <div class="collapse navbar-collapse" id="navbarCollapse">
+            <ul class="navbar-nav navbar-nav-scroll me-auto">
+  <li class="nav-item">
+    <a class="nav-link" href="./index.html"> 
+<span class="menu-text">Home</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="./logistics.html"> 
+<span class="menu-text">Logistics</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="./schedule.html"> 
+<span class="menu-text">Schedule</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="./coding-projects.html"> 
+<span class="menu-text">Coding Projects</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="./student-projects.html"> 
+<span class="menu-text">Student Projects</span></a>
+  </li>  
+</ul>
+            <ul class="navbar-nav navbar-nav-scroll ms-auto">
+  <li class="nav-item compact">
+    <a class="nav-link" href="https://github.com/anassBelcaid"> <i class="bi bi-github" role="img" aria-label="Instructor GitHub profile">
+</i> 
+<span class="menu-text"></span></a>
+  </li>  
+</ul>
+          </div> <!-- /navcollapse -->
+            <div class="quarto-navbar-tools">
+</div>
+      </div> <!-- /container-fluid -->
+    </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
+<!-- sidebar -->
+  <nav id="quarto-sidebar" class="sidebar collapse collapse-horizontal quarto-sidebar-collapse-item sidebar-navigation floating overflow-auto">
+    <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">On this page</h2>
+   
+  <ul>
+  <li><a href="#sec-overview" id="toc-sec-overview" class="nav-link active" data-scroll-target="#sec-overview"><span class="header-section-number">1</span> Course Overview</a></li>
+  <li><a href="#sec-topics" id="toc-sec-topics" class="nav-link" data-scroll-target="#sec-topics"><span class="header-section-number">2</span> Part I: Weekly Topics for Student Presentations</a>
+  <ul class="collapse">
+  <li><a href="#sec-week1" id="toc-sec-week1" class="nav-link" data-scroll-target="#sec-week1"><span class="header-section-number">2.1</span> Week 1: Fundamentals of Natural Language Processing</a>
+  <ul class="collapse">
+  <li><a href="#topic-overview" id="toc-topic-overview" class="nav-link" data-scroll-target="#topic-overview"><span class="header-section-number">2.1.1</span> Topic Overview</a></li>
+  <li><a href="#learning-objectives" id="toc-learning-objectives" class="nav-link" data-scroll-target="#learning-objectives"><span class="header-section-number">2.1.2</span> Learning Objectives</a></li>
+  <li><a href="#hands-on-session" id="toc-hands-on-session" class="nav-link" data-scroll-target="#hands-on-session"><span class="header-section-number">2.1.3</span> Hands-on Session</a></li>
+  </ul></li>
+  <li><a href="#sec-week2" id="toc-sec-week2" class="nav-link" data-scroll-target="#sec-week2"><span class="header-section-number">2.2</span> Week 2: Statistical Language Models and N-grams</a>
+  <ul class="collapse">
+  <li><a href="#topic-overview-1" id="toc-topic-overview-1" class="nav-link" data-scroll-target="#topic-overview-1"><span class="header-section-number">2.2.1</span> Topic Overview</a></li>
+  <li><a href="#learning-objectives-1" id="toc-learning-objectives-1" class="nav-link" data-scroll-target="#learning-objectives-1"><span class="header-section-number">2.2.2</span> Learning Objectives</a></li>
+  <li><a href="#hands-on-session-1" id="toc-hands-on-session-1" class="nav-link" data-scroll-target="#hands-on-session-1"><span class="header-section-number">2.2.3</span> Hands-on Session</a></li>
+  </ul></li>
+  <li><a href="#sec-week3" id="toc-sec-week3" class="nav-link" data-scroll-target="#sec-week3"><span class="header-section-number">2.3</span> Week 3: Word Representations and Embeddings</a>
+  <ul class="collapse">
+  <li><a href="#topic-overview-2" id="toc-topic-overview-2" class="nav-link" data-scroll-target="#topic-overview-2"><span class="header-section-number">2.3.1</span> Topic Overview</a></li>
+  <li><a href="#key-resources-1" id="toc-key-resources-1" class="nav-link" data-scroll-target="#key-resources-1"><span class="header-section-number">2.3.2</span> Key Resources</a></li>
+  <li><a href="#learning-objectives-2" id="toc-learning-objectives-2" class="nav-link" data-scroll-target="#learning-objectives-2"><span class="header-section-number">2.3.3</span> Learning Objectives</a></li>
+  <li><a href="#hands-on-session-2" id="toc-hands-on-session-2" class="nav-link" data-scroll-target="#hands-on-session-2"><span class="header-section-number">2.3.4</span> Hands-on Session</a></li>
+  </ul></li>
+  <li><a href="#sec-week4" id="toc-sec-week4" class="nav-link" data-scroll-target="#sec-week4"><span class="header-section-number">2.4</span> Week 4: Neural Networks for NLP</a>
+  <ul class="collapse">
+  <li><a href="#topic-overview-3" id="toc-topic-overview-3" class="nav-link" data-scroll-target="#topic-overview-3"><span class="header-section-number">2.4.1</span> Topic Overview</a></li>
+  <li><a href="#learning-objectives-3" id="toc-learning-objectives-3" class="nav-link" data-scroll-target="#learning-objectives-3"><span class="header-section-number">2.4.2</span> Learning Objectives</a></li>
+  <li><a href="#hands-on-session-3" id="toc-hands-on-session-3" class="nav-link" data-scroll-target="#hands-on-session-3"><span class="header-section-number">2.4.3</span> Hands-on Session</a></li>
+  </ul></li>
+  <li><a href="#sec-week5" id="toc-sec-week5" class="nav-link" data-scroll-target="#sec-week5"><span class="header-section-number">2.5</span> Week 5: Attention Mechanisms and Transformers</a>
+  <ul class="collapse">
+  <li><a href="#topic-overview-4" id="toc-topic-overview-4" class="nav-link" data-scroll-target="#topic-overview-4"><span class="header-section-number">2.5.1</span> Topic Overview</a></li>
+  <li><a href="#key-resources-2" id="toc-key-resources-2" class="nav-link" data-scroll-target="#key-resources-2"><span class="header-section-number">2.5.2</span> Key Resources</a></li>
+  <li><a href="#learning-objectives-4" id="toc-learning-objectives-4" class="nav-link" data-scroll-target="#learning-objectives-4"><span class="header-section-number">2.5.3</span> Learning Objectives</a></li>
+  <li><a href="#hands-on-session-4" id="toc-hands-on-session-4" class="nav-link" data-scroll-target="#hands-on-session-4"><span class="header-section-number">2.5.4</span> Hands-on Session</a></li>
+  </ul></li>
+  <li><a href="#sec-week6" id="toc-sec-week6" class="nav-link" data-scroll-target="#sec-week6"><span class="header-section-number">2.6</span> Week 6: Large Language Models and Pre-training</a>
+  <ul class="collapse">
+  <li><a href="#topic-overview-5" id="toc-topic-overview-5" class="nav-link" data-scroll-target="#topic-overview-5"><span class="header-section-number">2.6.1</span> Topic Overview</a></li>
+  <li><a href="#learning-objectives-5" id="toc-learning-objectives-5" class="nav-link" data-scroll-target="#learning-objectives-5"><span class="header-section-number">2.6.2</span> Learning Objectives</a></li>
+  <li><a href="#hands-on-session-5" id="toc-hands-on-session-5" class="nav-link" data-scroll-target="#hands-on-session-5"><span class="header-section-number">2.6.3</span> Hands-on Session</a></li>
+  </ul></li>
+  <li><a href="#sec-week8" id="toc-sec-week8" class="nav-link" data-scroll-target="#sec-week8"><span class="header-section-number">2.7</span> Week 8: Large Language Models II — Alignment and Advanced Applications</a>
+  <ul class="collapse">
+  <li><a href="#topic-overview-6" id="toc-topic-overview-6" class="nav-link" data-scroll-target="#topic-overview-6"><span class="header-section-number">2.7.1</span> Topic Overview</a></li>
+  <li><a href="#learning-objectives-6" id="toc-learning-objectives-6" class="nav-link" data-scroll-target="#learning-objectives-6"><span class="header-section-number">2.7.2</span> Learning Objectives</a></li>
+  <li><a href="#hands-on-session-6" id="toc-hands-on-session-6" class="nav-link" data-scroll-target="#hands-on-session-6"><span class="header-section-number">2.7.3</span> Hands-on Session</a></li>
+  </ul></li>
+  <li><a href="#sec-week7" id="toc-sec-week7" class="nav-link" data-scroll-target="#sec-week7"><span class="header-section-number">2.8</span> Week 8: Evaluation and Ethics in NLP</a>
+  <ul class="collapse">
+  <li><a href="#topic-overview-7" id="toc-topic-overview-7" class="nav-link" data-scroll-target="#topic-overview-7"><span class="header-section-number">2.8.1</span> Topic Overview</a></li>
+  <li><a href="#key-resources-3" id="toc-key-resources-3" class="nav-link" data-scroll-target="#key-resources-3"><span class="header-section-number">2.8.2</span> Key Resources</a></li>
+  <li><a href="#learning-objectives-7" id="toc-learning-objectives-7" class="nav-link" data-scroll-target="#learning-objectives-7"><span class="header-section-number">2.8.3</span> Learning Objectives</a></li>
+  <li><a href="#hands-on-session-7" id="toc-hands-on-session-7" class="nav-link" data-scroll-target="#hands-on-session-7"><span class="header-section-number">2.8.4</span> Hands-on Session</a></li>
+  </ul></li>
+  </ul></li>
+  <li><a href="#sec-projects" id="toc-sec-projects" class="nav-link" data-scroll-target="#sec-projects"><span class="header-section-number">3</span> Part II: Student Project Presentations</a>
+  <ul class="collapse">
+  <li><a href="#project-categories-and-detailed-descriptions" id="toc-project-categories-and-detailed-descriptions" class="nav-link" data-scroll-target="#project-categories-and-detailed-descriptions"><span class="header-section-number">3.1</span> Project Categories and Detailed Descriptions</a>
+  <ul class="collapse">
+  <li><a href="#sec-classification" id="toc-sec-classification" class="nav-link" data-scroll-target="#sec-classification"><span class="header-section-number">3.1.1</span> Category A: Text Classification and Analysis</a></li>
+  <li><a href="#sec-extraction" id="toc-sec-extraction" class="nav-link" data-scroll-target="#sec-extraction"><span class="header-section-number">3.1.2</span> Category B: Information Extraction and Retrieval</a></li>
+  <li><a href="#sec-generation" id="toc-sec-generation" class="nav-link" data-scroll-target="#sec-generation"><span class="header-section-number">3.1.3</span> Category C: Text Generation and Summarization</a></li>
+  <li><a href="#sec-multilingual" id="toc-sec-multilingual" class="nav-link" data-scroll-target="#sec-multilingual"><span class="header-section-number">3.1.4</span> Category D: Multilingual and Low-Resource NLP</a></li>
+  <li><a href="#sec-specialized" id="toc-sec-specialized" class="nav-link" data-scroll-target="#sec-specialized"><span class="header-section-number">3.1.5</span> Category E: Specialized Applications</a></li>
+  </ul></li>
+  </ul></li>
+  <li><a href="#sec-assessment" id="toc-sec-assessment" class="nav-link" data-scroll-target="#sec-assessment"><span class="header-section-number">4</span> Assessment Criteria</a>
+  <ul class="collapse">
+  <li><a href="#sec-topic-assessment" id="toc-sec-topic-assessment" class="nav-link" data-scroll-target="#sec-topic-assessment"><span class="header-section-number">4.1</span> Topic Presentations (Weeks 1-7)</a></li>
+  <li><a href="#sec-project-assessment" id="toc-sec-project-assessment" class="nav-link" data-scroll-target="#sec-project-assessment"><span class="header-section-number">4.2</span> Project Presentations (Weeks 8-14)</a></li>
+  </ul></li>
+  <li><a href="#sec-resources" id="toc-sec-resources" class="nav-link" data-scroll-target="#sec-resources"><span class="header-section-number">5</span> Resources and Tools</a>
+  <ul class="collapse">
+  <li><a href="#essential-python-libraries" id="toc-essential-python-libraries" class="nav-link" data-scroll-target="#essential-python-libraries"><span class="header-section-number">5.1</span> Essential Python Libraries</a></li>
+  <li><a href="#dataset-repositories" id="toc-dataset-repositories" class="nav-link" data-scroll-target="#dataset-repositories"><span class="header-section-number">5.2</span> Dataset Repositories</a></li>
+  <li><a href="#evaluation-tools-and-metrics" id="toc-evaluation-tools-and-metrics" class="nav-link" data-scroll-target="#evaluation-tools-and-metrics"><span class="header-section-number">5.3</span> Evaluation Tools and Metrics</a></li>
+  </ul></li>
+  <li><a href="#sec-timeline" id="toc-sec-timeline" class="nav-link" data-scroll-target="#sec-timeline"><span class="header-section-number">6</span> Timeline and Milestones</a>
+  <ul class="collapse">
+  <li><a href="#key-milestones" id="toc-key-milestones" class="nav-link" data-scroll-target="#key-milestones"><span class="header-section-number">6.1</span> Key Milestones</a></li>
+  </ul></li>
+  <li><a href="#sec-additional" id="toc-sec-additional" class="nav-link" data-scroll-target="#sec-additional"><span class="header-section-number">7</span> Additional Course Information</a>
+  <ul class="collapse">
+  <li><a href="#collaboration-and-academic-integrity" id="toc-collaboration-and-academic-integrity" class="nav-link" data-scroll-target="#collaboration-and-academic-integrity"><span class="header-section-number">7.1</span> Collaboration and Academic Integrity</a></li>
+  <li><a href="#technical-requirements" id="toc-technical-requirements" class="nav-link" data-scroll-target="#technical-requirements"><span class="header-section-number">7.2</span> Technical Requirements</a></li>
+  <li><a href="#support-and-office-hours" id="toc-support-and-office-hours" class="nav-link" data-scroll-target="#support-and-office-hours"><span class="header-section-number">7.3</span> Support and Office Hours</a></li>
+  <li><a href="#computing-resources" id="toc-computing-resources" class="nav-link" data-scroll-target="#computing-resources"><span class="header-section-number">7.4</span> Computing Resources</a></li>
+  </ul></li>
+  </ul>
+</nav>
+</nav>
+<div id="quarto-sidebar-glass" class="quarto-sidebar-collapse-item" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item"></div>
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar zindex-bottom">
+    </div>
+<!-- main -->
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title">Introduction to Natural Language Processing Course</h1>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    <div>
+    <div class="quarto-title-meta-heading">Author</div>
+    <div class="quarto-title-meta-contents">
+             <p>A.Belcaid </p>
+          </div>
+  </div>
+    
+    <div>
+    <div class="quarto-title-meta-heading">Published</div>
+    <div class="quarto-title-meta-contents">
+      <p class="date">September 1, 2025</p>
+    </div>
+  </div>
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<section id="sec-overview" class="level1" data-number="1">
+<h1 data-number="1"><span class="header-section-number">1</span> Course Overview</h1>
+<div class="callout callout-style-default callout-note callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>Course Structure
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<ul>
+<li><strong>Duration</strong>: 14 weeks total</li>
+<li><strong>Format</strong>: Student-led research presentations + practical sessions</li>
+<li><strong>Target</strong>: Fifth-year computer science students</li>
+<li><strong>Prerequisites</strong>: Machine Learning, Python programming, Linear Algebra</li>
+</ul>
+</div>
+</div>
+<div class="cell" data-layout-align="default">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode default code-with-copy"><code class="sourceCode default"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>gantt</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>    title Course Timeline</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>    dateFormat  YYYY-MM-DD</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>    section Topic Presentations</span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>    Week 1 - NLP Fundamentals     :active, w1, 2024-09-01, 7d</span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>    Week 2 - Language Models      :w2, after w1, 7d</span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>    Week 3 - Word Embeddings      :w3, after w2, 7d</span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>    Week 4 - Neural Networks      :w4, after w3, 7d</span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>    Week 5 - Transformers         :w5, after w4, 7d</span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>    Week 6 - Large LMs            :w6, after w5, 7d</span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a>    Week 7 - Ethics &amp; Evaluation  :w7, after w6, 7d</span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a>    section Project Phase</span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a>    Project Development           :p1, after w7, 21d</span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a>    Final Presentations          :p2, after p1, 21d</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output-display">
+<div id="fig-timeline" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-timeline-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<div>
+<pre class="mermaid mermaid-js" data-label="fig-timeline">gantt
+    title Course Timeline
+    dateFormat  YYYY-MM-DD
+    section Topic Presentations
+    Week 1 - NLP Fundamentals     :active, w1, 2024-09-01, 7d
+    Week 2 - Language Models      :w2, after w1, 7d
+    Week 3 - Word Embeddings      :w3, after w2, 7d
+    Week 4 - Neural Networks      :w4, after w3, 7d
+    Week 5 - Transformers         :w5, after w4, 7d
+    Week 6 - Large LMs            :w6, after w5, 7d
+    Week 7 - Ethics &amp; Evaluation  :w7, after w6, 7d
+    section Project Phase
+    Project Development           :p1, after w7, 21d
+    Final Presentations          :p2, after p1, 21d
+</pre>
+</div>
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-timeline-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;1: Course Timeline and Structure
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<p><strong>First 7 weeks</strong>: Student presentations (2 hours) + Hands-on practice (1 hour)<br>
+<strong>Last 7 weeks</strong>: Project presentations and peer evaluation</p>
+</section>
+<section id="sec-topics" class="level1" data-number="2">
+<h1 data-number="2"><span class="header-section-number">2</span> Part I: Weekly Topics for Student Presentations</h1>
+<section id="sec-week1" class="level2" data-number="2.1">
+<h2 data-number="2.1" class="anchored" data-anchor-id="sec-week1"><span class="header-section-number">2.1</span> Week 1: Fundamentals of Natural Language Processing</h2>
+<div id="fig-nlp-pipeline" class="quarto-float quarto-figure quarto-figure-center anchored" alt="A flowchart showing the typical NLP processing pipeline from raw text to applications">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-nlp-pipeline-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="https://media.geeksforgeeks.org/wp-content/uploads/20230118132334/NLP-Pipeline-GIF.gif" class="img-fluid figure-img" alt="A flowchart showing the typical NLP processing pipeline from raw text to applications">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-nlp-pipeline-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;2: NLP Pipeline Overview
+</figcaption>
+</figure>
+</div>
+<section id="topic-overview" class="level3" data-number="2.1.1">
+<h3 data-number="2.1.1" class="anchored" data-anchor-id="topic-overview"><span class="header-section-number">2.1.1</span> Topic Overview</h3>
+<ul>
+<li><strong>History and Evolution</strong>: From rule-based systems to modern neural approaches</li>
+<li><strong>Core Challenges</strong>: Ambiguity, context, pragmatics, and world knowledge</li>
+<li><strong>Text Preprocessing</strong>: Tokenization, normalization, and cleaning techniques</li>
+<li><strong>Linguistic Foundations</strong>: Morphology, syntax, semantics, and pragmatics</li>
+</ul>
+<div class="callout callout-style-default callout-important callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Important</span>Key Resources
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<ul>
+<li><a href="https://www.nltk.org/book/">NLTK Book</a> - Comprehensive introduction</li>
+<li><a href="https://spacy.io/">spaCy Documentation</a> - Industrial-strength NLP</li>
+<li><a href="https://nlp.stanford.edu/">Stanford NLP Group</a> - Research papers and resources</li>
+</ul>
+</div>
+</div>
+</section>
+<section id="learning-objectives" class="level3" data-number="2.1.2">
+<h3 data-number="2.1.2" class="anchored" data-anchor-id="learning-objectives"><span class="header-section-number">2.1.2</span> Learning Objectives</h3>
+<ol type="1">
+<li>Understand the <strong>scope and applications</strong> of NLP across industries</li>
+<li>Master the <strong>text preprocessing pipeline</strong> using industry-standard tools</li>
+<li>Identify and analyze <strong>linguistic ambiguities</strong> and computational challenges</li>
+<li>Implement <strong>tokenization algorithms</strong> for different languages and domains</li>
+</ol>
+</section>
+<section id="hands-on-session" class="level3" data-number="2.1.3">
+<h3 data-number="2.1.3" class="anchored" data-anchor-id="hands-on-session"><span class="header-section-number">2.1.3</span> Hands-on Session</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Sample preprocessing pipeline</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> nltk</span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> spacy</span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> nltk.tokenize <span class="im">import</span> word_tokenize</span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> nltk.stem <span class="im">import</span> PorterStemmer, WordNetLemmatizer</span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a><span class="co"># Text preprocessing demonstration</span></span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>text <span class="op">=</span> <span class="st">"The researchers are researching research papers."</span></span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a><span class="co"># Expected output: tokens, stems, lemmas, POS tags</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><strong>Activities</strong>: - Building a custom tokenizer for social media text - Comparing stemming vs.&nbsp;lemmatization performance - Multilingual preprocessing challenges</p>
+</section>
+</section>
+<section id="sec-week2" class="level2" data-number="2.2">
+<h2 data-number="2.2" class="anchored" data-anchor-id="sec-week2"><span class="header-section-number">2.2</span> Week 2: Statistical Language Models and N-grams</h2>
+<section id="topic-overview-1" class="level3" data-number="2.2.1">
+<h3 data-number="2.2.1" class="anchored" data-anchor-id="topic-overview-1"><span class="header-section-number">2.2.1</span> Topic Overview</h3>
+<p>Statistical language modeling forms the foundation of modern NLP. This week covers:</p>
+<ul>
+<li><strong>Probability Theory</strong> in language: Chain rule, independence assumptions</li>
+<li><strong>N-gram Models</strong>: Mathematical formulation and implementation details<br>
+</li>
+<li><strong>Smoothing Techniques</strong>: Handling zero probabilities and data sparsity</li>
+<li><strong>Evaluation Metrics</strong>: Perplexity, cross-entropy, and information theory</li>
+</ul>
+<div class="cell" data-layout-align="default">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode default code-with-copy"><code class="sourceCode default"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>graph TD</span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>    # A[Unigram Model&lt;br/&gt;P(w)] --&gt; B[Bigram Model&lt;br/&gt;P(w|w-1)]</span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>    # B --&gt; C[Trigram Model&lt;br/&gt;P(w|w-2,w-1)]</span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>    # C --&gt; D[N-gram Model&lt;br/&gt;P(w|w-n+1...w-1)]</span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>    A --&gt; E[Independence&lt;br/&gt;High bias, Low variance]</span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a>    D --&gt; F[Context Dependence&lt;br/&gt;Low bias, High variance]</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output-display">
+<div id="fig-ngrams" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-ngrams-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<div>
+<pre class="mermaid mermaid-js" data-label="fig-ngrams">graph TD
+    # A[Unigram Model&lt;br/&gt;P(w)] --&gt; B[Bigram Model&lt;br/&gt;P(w|w-1)]
+    # B --&gt; C[Trigram Model&lt;br/&gt;P(w|w-2,w-1)]
+    # C --&gt; D[N-gram Model&lt;br/&gt;P(w|w-n+1...w-1)]
+
+    A --&gt; E[Independence&lt;br/&gt;High bias, Low variance]
+    D --&gt; F[Context Dependence&lt;br/&gt;Low bias, High variance]
+</pre>
+</div>
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-ngrams-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;3: N-gram Model Hierarchy
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<div class="callout callout-style-default callout-tip callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Tip</span>Mathematical Foundation
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>The n-gram probability is calculated as: <span class="math display">\[P(w_i|w_{i-n+1}^{i-1}) = \frac{C(w_{i-n+1}^{i})}{C(w_{i-n+1}^{i-1})}\]</span></p>
+<p>Where <span class="math inline">\(C(·)\)</span> represents the count function in the training corpus.</p>
+</div>
+</div>
+</section>
+<section id="learning-objectives-1" class="level3" data-number="2.2.2">
+<h3 data-number="2.2.2" class="anchored" data-anchor-id="learning-objectives-1"><span class="header-section-number">2.2.2</span> Learning Objectives</h3>
+<ul>
+<li>Build and evaluate n-gram language models from scratch</li>
+<li>Understand the <strong>bias-variance tradeoff</strong> in model complexity</li>
+<li>Apply various smoothing techniques (Laplace, Good-Turing, Kneser-Ney)</li>
+<li>Calculate and interpret perplexity scores</li>
+</ul>
+</section>
+<section id="hands-on-session-1" class="level3" data-number="2.2.3">
+<h3 data-number="2.2.3" class="anchored" data-anchor-id="hands-on-session-1"><span class="header-section-number">2.2.3</span> Hands-on Session</h3>
+<p><strong>Implementation Tasks</strong>: - N-gram model training on different corpus sizes - Perplexity calculation and analysis - Smoothing method comparison study - Text generation using trained models</p>
+</section>
+</section>
+<section id="sec-week3" class="level2" data-number="2.3">
+<h2 data-number="2.3" class="anchored" data-anchor-id="sec-week3"><span class="header-section-number">2.3</span> Week 3: Word Representations and Embeddings</h2>
+<div id="fig-embeddings" class="quarto-float quarto-figure quarto-figure-center anchored" alt="Visualization of word embeddings showing semantic relationships in vector space">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-embeddings-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="https://via.placeholder.com/500x400/2196F3/FFFFFF?text=Word+Vectors+in+Semantic+Space:+King+−+Man+%2B+Woman+≈+Queen.png" class="img-fluid figure-img" alt="Visualization of word embeddings showing semantic relationships in vector space">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-embeddings-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;4: Word Embedding Space
+</figcaption>
+</figure>
+</div>
+<section id="topic-overview-2" class="level3" data-number="2.3.1">
+<h3 data-number="2.3.1" class="anchored" data-anchor-id="topic-overview-2"><span class="header-section-number">2.3.1</span> Topic Overview</h3>
+<p>The transition from sparse to dense word representations revolutionized NLP:</p>
+<ul>
+<li><strong>Distributional Semantics</strong>: “You shall know a word by the company it keeps”</li>
+<li><strong>Word2Vec Algorithms</strong>: Skip-gram and Continuous Bag of Words (CBOW)</li>
+<li><strong>Global Vectors (GloVe)</strong>: Matrix factorization approach to embeddings</li>
+<li><strong>FastText</strong>: Subword information and out-of-vocabulary handling</li>
+</ul>
+<div class="callout callout-style-default callout-note callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>Word2Vec Intuition
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<ul>
+<li><strong>Skip-gram</strong>: Predicts context words given target word</li>
+<li><strong>CBOW</strong>: Predicts target word given context words</li>
+<li>Both use hierarchical softmax or negative sampling for efficiency</li>
+</ul>
+</div>
+</div>
+</section>
+<section id="key-resources-1" class="level3" data-number="2.3.2">
+<h3 data-number="2.3.2" class="anchored" data-anchor-id="key-resources-1"><span class="header-section-number">2.3.2</span> Key Resources</h3>
+<ul>
+<li><a href="https://arxiv.org/abs/1301.3781">Word2Vec Paper</a> - Original Mikolov et al.&nbsp;work</li>
+<li><a href="https://nlp.stanford.edu/projects/glove/">GloVe: Global Vectors</a> - Stanford implementation</li>
+<li><a href="https://fasttext.cc/">FastText</a> - Facebook’s subword embeddings</li>
+</ul>
+</section>
+<section id="learning-objectives-2" class="level3" data-number="2.3.3">
+<h3 data-number="2.3.3" class="anchored" data-anchor-id="learning-objectives-2"><span class="header-section-number">2.3.3</span> Learning Objectives</h3>
+<ol type="1">
+<li>Understand limitations of <strong>one-hot encoding</strong> and sparse representations</li>
+<li>Master the mathematics behind <strong>Word2Vec training objectives</strong></li>
+<li>Implement <strong>embedding evaluation</strong> using intrinsic and extrinsic methods</li>
+<li>Analyze <strong>semantic and syntactic</strong> relationships in embedding spaces</li>
+</ol>
+</section>
+<section id="hands-on-session-2" class="level3" data-number="2.3.4">
+<h3 data-number="2.3.4" class="anchored" data-anchor-id="hands-on-session-2"><span class="header-section-number">2.3.4</span> Hands-on Session</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Word2Vec training example</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> gensim.models <span class="im">import</span> Word2Vec</span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> matplotlib.pyplot <span class="im">as</span> plt</span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> sklearn.manifold <span class="im">import</span> TSNE</span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a><span class="co"># Training and visualization pipeline</span></span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a>model <span class="op">=</span> Word2Vec(sentences, vector_size<span class="op">=</span><span class="dv">100</span>, window<span class="op">=</span><span class="dv">5</span>, min_count<span class="op">=</span><span class="dv">1</span>)</span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a><span class="co"># Visualize embeddings with t-SNE</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><strong>Practical Exercises</strong>: - Training Word2Vec on domain-specific corpora - t-SNE visualization of embedding clusters - Word analogy tasks: “king - man + woman = ?” - Cross-lingual embedding alignment</p>
+</section>
+</section>
+<section id="sec-week4" class="level2" data-number="2.4">
+<h2 data-number="2.4" class="anchored" data-anchor-id="sec-week4"><span class="header-section-number">2.4</span> Week 4: Neural Networks for NLP</h2>
+<section id="topic-overview-3" class="level3" data-number="2.4.1">
+<h3 data-number="2.4.1" class="anchored" data-anchor-id="topic-overview-3"><span class="header-section-number">2.4.1</span> Topic Overview</h3>
+<p>The neural revolution in NLP began with architectures designed for sequential data:</p>
+<ul>
+<li><strong>Recurrent Neural Networks (RNNs)</strong>: Processing variable-length sequences</li>
+<li><strong>Long Short-Term Memory (LSTM)</strong>: Solving the vanishing gradient problem</li>
+<li><strong>Gated Recurrent Units (GRUs)</strong>: Simplified gating mechanisms</li>
+<li><strong>Bidirectional Networks</strong>: Capturing both forward and backward context</li>
+</ul>
+<div class="cell" data-layout-align="default">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode default code-with-copy"><code class="sourceCode default"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>graph LR</span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>    A[Vanilla RNN&lt;br/&gt;Vanishing Gradients] --&gt; B[LSTM&lt;br/&gt;Forget Gate + Input Gate + Output Gate]</span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>    B --&gt; C[GRU&lt;br/&gt;Reset Gate + Update Gate]</span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>    C --&gt; D[BiLSTM&lt;br/&gt;Forward + Backward Processing]</span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>    B --&gt; E[Applications:&lt;br/&gt;Language Modeling&lt;br/&gt;Sequence Classification&lt;br/&gt;Named Entity Recognition]</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output-display">
+<div id="fig-rnn-evolution" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-rnn-evolution-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<div>
+<pre class="mermaid mermaid-js" data-label="fig-rnn-evolution">graph LR
+    A[Vanilla RNN&lt;br/&gt;Vanishing Gradients] --&gt; B[LSTM&lt;br/&gt;Forget Gate + Input Gate + Output Gate]
+    B --&gt; C[GRU&lt;br/&gt;Reset Gate + Update Gate]
+    C --&gt; D[BiLSTM&lt;br/&gt;Forward + Backward Processing]
+    
+    B --&gt; E[Applications:&lt;br/&gt;Language Modeling&lt;br/&gt;Sequence Classification&lt;br/&gt;Named Entity Recognition]
+</pre>
+</div>
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-rnn-evolution-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;5: RNN Architecture Evolution
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+</section>
+<section id="learning-objectives-3" class="level3" data-number="2.4.2">
+<h3 data-number="2.4.2" class="anchored" data-anchor-id="learning-objectives-3"><span class="header-section-number">2.4.2</span> Learning Objectives</h3>
+<ul>
+<li>Design neural architectures for <strong>sequence processing</strong> tasks</li>
+<li>Understand <strong>gradient flow</strong> in recurrent connections</li>
+<li>Implement <strong>bidirectional processing</strong> for improved context modeling</li>
+<li>Apply <strong>regularization techniques</strong> specific to sequential data</li>
+</ul>
+</section>
+<section id="hands-on-session-3" class="level3" data-number="2.4.3">
+<h3 data-number="2.4.3" class="anchored" data-anchor-id="hands-on-session-3"><span class="header-section-number">2.4.3</span> Hands-on Session</h3>
+<p><strong>Implementation Focus</strong>: - RNN-based language model implementation - LSTM vs.&nbsp;GRU comparison on sequence classification - Gradient clipping and other training stabilization techniques - Attention visualization in sequence-to-sequence models</p>
+</section>
+</section>
+<section id="sec-week5" class="level2" data-number="2.5">
+<h2 data-number="2.5" class="anchored" data-anchor-id="sec-week5"><span class="header-section-number">2.5</span> Week 5: Attention Mechanisms and Transformers</h2>
+<div id="fig-transformer" class="quarto-float quarto-figure quarto-figure-center anchored" alt="Detailed diagram of the Transformer architecture showing encoder-decoder structure">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-transformer-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="https://via.placeholder.com/600x450/FF9800/FFFFFF?text=Transformer+Architecture:+Self-Attention+%2B+Feed-Forward+%2B+Residual+Connections.png" class="img-fluid figure-img" alt="Detailed diagram of the Transformer architecture showing encoder-decoder structure">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-transformer-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;6: Transformer Architecture
+</figcaption>
+</figure>
+</div>
+<section id="topic-overview-4" class="level3" data-number="2.5.1">
+<h3 data-number="2.5.1" class="anchored" data-anchor-id="topic-overview-4"><span class="header-section-number">2.5.1</span> Topic Overview</h3>
+<p>The attention mechanism fundamentally changed how we process sequences:</p>
+<ul>
+<li><strong>Attention Intuition</strong>: Differentiable dictionary lookup mechanism</li>
+<li><strong>Self-Attention</strong>: Query, Key, Value matrices and scaled dot-product</li>
+<li><strong>Multi-Head Attention</strong>: Parallel attention computations with different representations</li>
+<li><strong>Transformer Architecture</strong>: Complete replacement of recurrence with attention</li>
+</ul>
+<div class="callout callout-style-default callout-important callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Important</span>Attention Formula
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>The scaled dot-product attention is computed as: <span class="math display">\[\text{Attention}(Q,K,V) = \text{softmax}\left(\frac{QK^T}{\sqrt{d_k}}\right)V\]</span></p>
+<p>Where <span class="math inline">\(Q\)</span>, <span class="math inline">\(K\)</span>, <span class="math inline">\(V\)</span> are query, key, and value matrices respectively.</p>
+</div>
+</div>
+</section>
+<section id="key-resources-2" class="level3" data-number="2.5.2">
+<h3 data-number="2.5.2" class="anchored" data-anchor-id="key-resources-2"><span class="header-section-number">2.5.2</span> Key Resources</h3>
+<ul>
+<li><a href="https://arxiv.org/abs/1706.03762">Attention Is All You Need</a> - Original Transformer paper</li>
+<li><a href="http://jalammar.github.io/illustrated-transformer/">The Illustrated Transformer</a> - Visual explanation</li>
+<li><a href="https://github.com/tensorflow/tensor2tensor">Tensor2Tensor</a> - Reference implementation</li>
+</ul>
+</section>
+<section id="learning-objectives-4" class="level3" data-number="2.5.3">
+<h3 data-number="2.5.3" class="anchored" data-anchor-id="learning-objectives-4"><span class="header-section-number">2.5.3</span> Learning Objectives</h3>
+<ol type="1">
+<li>Grasp the <strong>mathematical intuition</strong> behind attention mechanisms</li>
+<li>Understand <strong>positional encoding</strong> and why it’s necessary</li>
+<li>Implement <strong>multi-head attention</strong> from scratch</li>
+<li>Analyze <strong>computational complexity</strong> advantages over RNNs</li>
+</ol>
+</section>
+<section id="hands-on-session-4" class="level3" data-number="2.5.4">
+<h3 data-number="2.5.4" class="anchored" data-anchor-id="hands-on-session-4"><span class="header-section-number">2.5.4</span> Hands-on Session</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb6"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Self-attention implementation</span></span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> torch</span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> torch.nn <span class="im">as</span> nn</span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a><span class="kw">class</span> MultiHeadAttention(nn.Module):</span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> <span class="fu">__init__</span>(<span class="va">self</span>, d_model, num_heads):</span>
+<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a>        <span class="bu">super</span>().<span class="fu">__init__</span>()</span>
+<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>.d_model <span class="op">=</span> d_model</span>
+<span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>.num_heads <span class="op">=</span> num_heads</span>
+<span id="cb6-10"><a href="#cb6-10" aria-hidden="true" tabindex="-1"></a>        <span class="co"># Implementation details...</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><strong>Practical Tasks</strong>: - Implementing scaled dot-product attention - Building a mini-Transformer for sequence classification - Attention weight visualization and interpretation - Positional encoding analysis</p>
+</section>
+</section>
+<section id="sec-week6" class="level2" data-number="2.6">
+<h2 data-number="2.6" class="anchored" data-anchor-id="sec-week6"><span class="header-section-number">2.6</span> Week 6: Large Language Models and Pre-training</h2>
+<section id="topic-overview-5" class="level3" data-number="2.6.1">
+<h3 data-number="2.6.1" class="anchored" data-anchor-id="topic-overview-5"><span class="header-section-number">2.6.1</span> Topic Overview</h3>
+<p>The era of large-scale pre-trained models has transformed NLP applications:</p>
+<ul>
+<li><strong>Pre-training Paradigms</strong>: From word prediction to masked language modeling</li>
+<li><strong>BERT Family</strong>: Bidirectional encoder representations from transformers</li>
+<li><strong>GPT Series</strong>: Autoregressive language model scaling</li>
+<li><strong>Transfer Learning</strong>: Fine-tuning strategies for downstream tasks</li>
+</ul>
+<div class="cell" data-layout-align="default">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode default code-with-copy"><code class="sourceCode default"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>timeline</span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>    title LLM Evolution Timeline</span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>    2018 : BERT (Google)</span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>         : GPT-1 (OpenAI)</span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a>         : ELMo (AllenNLP)</span>
+<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a>    2019 : GPT-2</span>
+<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a>         : RoBERTa</span>
+<span id="cb7-8"><a href="#cb7-8" aria-hidden="true" tabindex="-1"></a>         : XLNet</span>
+<span id="cb7-9"><a href="#cb7-9" aria-hidden="true" tabindex="-1"></a>    2020 : GPT-3</span>
+<span id="cb7-10"><a href="#cb7-10" aria-hidden="true" tabindex="-1"></a>         : T5</span>
+<span id="cb7-11"><a href="#cb7-11" aria-hidden="true" tabindex="-1"></a>         : ELECTRA</span>
+<span id="cb7-12"><a href="#cb7-12" aria-hidden="true" tabindex="-1"></a>    2021 : PaLM</span>
+<span id="cb7-13"><a href="#cb7-13" aria-hidden="true" tabindex="-1"></a>         : Codex</span>
+<span id="cb7-14"><a href="#cb7-14" aria-hidden="true" tabindex="-1"></a>         : WebGPT</span>
+<span id="cb7-15"><a href="#cb7-15" aria-hidden="true" tabindex="-1"></a>    2022 : ChatGPT</span>
+<span id="cb7-16"><a href="#cb7-16" aria-hidden="true" tabindex="-1"></a>         : InstructGPT</span>
+<span id="cb7-17"><a href="#cb7-17" aria-hidden="true" tabindex="-1"></a>         : LaMDA</span>
+<span id="cb7-18"><a href="#cb7-18" aria-hidden="true" tabindex="-1"></a>    2023 : GPT-4</span>
+<span id="cb7-19"><a href="#cb7-19" aria-hidden="true" tabindex="-1"></a>         : Claude</span>
+<span id="cb7-20"><a href="#cb7-20" aria-hidden="true" tabindex="-1"></a>         : LLaMA</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output-display">
+<div id="fig-llm-timeline" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-llm-timeline-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<div>
+<pre class="mermaid mermaid-js" data-label="fig-llm-timeline">timeline
+    title LLM Evolution Timeline
+    2018 : BERT (Google)
+         : GPT-1 (OpenAI)
+         : ELMo (AllenNLP)
+    2019 : GPT-2
+         : RoBERTa
+         : XLNet
+    2020 : GPT-3
+         : T5
+         : ELECTRA
+    2021 : PaLM
+         : Codex
+         : WebGPT
+    2022 : ChatGPT
+         : InstructGPT
+         : LaMDA
+    2023 : GPT-4
+         : Claude
+         : LLaMA
+</pre>
+</div>
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-llm-timeline-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;7: Evolution of Large Language Models
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<div class="callout callout-style-default callout-note callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>Pre-training Objectives
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<ul>
+<li><strong>Masked Language Modeling (MLM)</strong>: Predict masked tokens (BERT)</li>
+<li><strong>Causal Language Modeling (CLM)</strong>: Predict next token (GPT)</li>
+<li><strong>Prefix Language Modeling</strong>: Hybrid approach (GLM, PaLM)</li>
+</ul>
+</div>
+</div>
+</section>
+<section id="learning-objectives-5" class="level3" data-number="2.6.2">
+<h3 data-number="2.6.2" class="anchored" data-anchor-id="learning-objectives-5"><span class="header-section-number">2.6.2</span> Learning Objectives</h3>
+<ul>
+<li>Understand different <strong>pre-training strategies</strong> and their trade-offs</li>
+<li>Master <strong>transfer learning</strong> concepts for NLP applications</li>
+<li>Analyze <strong>scaling laws</strong> and emergent capabilities in large models</li>
+<li>Implement <strong>fine-tuning pipelines</strong> for specific tasks</li>
+</ul>
+</section>
+<section id="hands-on-session-5" class="level3" data-number="2.6.3">
+<h3 data-number="2.6.3" class="anchored" data-anchor-id="hands-on-session-5"><span class="header-section-number">2.6.3</span> Hands-on Session</h3>
+<p><strong>Practical Applications</strong>: - Fine-tuning BERT for text classification using <a href="https://huggingface.co/">Hugging Face</a> - Prompt engineering with GPT models - Model comparison across different architectures - Efficient fine-tuning with parameter-efficient methods (LoRA, adapters)</p>
+</section>
+</section>
+<section id="sec-week8" class="level2" data-number="2.7">
+<h2 data-number="2.7" class="anchored" data-anchor-id="sec-week8"><span class="header-section-number">2.7</span> Week 8: Large Language Models II — Alignment and Advanced Applications</h2>
+<section id="topic-overview-6" class="level3" data-number="2.7.1">
+<h3 data-number="2.7.1" class="anchored" data-anchor-id="topic-overview-6"><span class="header-section-number">2.7.1</span> Topic Overview</h3>
+<p>This module extends the study of LLMs from pre-training and fine-tuning (Week 6) toward <strong>practical alignment methods and advanced deployment techniques</strong>:</p>
+<ul>
+<li><strong>Instruction and Preference Tuning</strong>
+<ul>
+<li>Supervised fine-tuning for following instructions<br>
+</li>
+<li>Reinforcement Learning from Human Feedback (RLHF)<br>
+</li>
+<li>Direct Preference Optimization (DPO) as a lightweight alternative</li>
+</ul></li>
+<li><strong>Parameter-Efficient Methods</strong>
+<ul>
+<li>LoRA and adapters<br>
+</li>
+<li>Prompt-tuning and prefix-tuning<br>
+</li>
+<li>Efficient training at scale</li>
+</ul></li>
+<li><strong>Deployment and Applications</strong>
+<ul>
+<li>Retrieval-Augmented Generation (RAG) for factual grounding<br>
+</li>
+<li>Agents and tool integration (planning, external APIs, memory)<br>
+</li>
+<li>Multi-modal LLMs (text + vision + speech)</li>
+</ul></li>
+</ul>
+<div class="callout callout-style-default callout-note callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>Alignment &amp; Deployment Techniques
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<ul>
+<li><strong>Instruction Tuning</strong>: Supervised adaptation to human instructions<br>
+</li>
+<li><strong>Reinforcement Learning from Human Feedback (RLHF)</strong>: Aligning models with preference data
+<ul>
+<li><a href="https://arxiv.org/abs/1706.03741">Christiano et al., 2017</a><br>
+</li>
+<li><a href="https://arxiv.org/abs/2203.02155">Ouyang et al., 2022</a><br>
+</li>
+</ul></li>
+<li><strong>Direct Preference Optimization (DPO)</strong>: Lightweight preference alignment
+<ul>
+<li><a href="https://arxiv.org/abs/2305.18290">Rafailov et al., 2023</a><br>
+</li>
+</ul></li>
+<li><strong>Parameter-Efficient Fine-tuning</strong>:
+<ul>
+<li>LoRA (<a href="https://arxiv.org/abs/2106.09685">Hu et al., 2021</a>), adapters, prefix-tuning<br>
+</li>
+</ul></li>
+<li><strong>Model Compression &amp; Acceleration</strong>: Distillation, pruning, quantization for efficient inference<br>
+</li>
+<li><strong>Retrieval-Augmented Generation (RAG)</strong>: Grounding LLMs with external knowledge
+<ul>
+<li><a href="https://arxiv.org/abs/2005.11401">Lewis et al., 2020</a><br>
+</li>
+</ul></li>
+</ul>
+</div>
+</div>
+</section>
+<section id="learning-objectives-6" class="level3" data-number="2.7.2">
+<h3 data-number="2.7.2" class="anchored" data-anchor-id="learning-objectives-6"><span class="header-section-number">2.7.2</span> Learning Objectives</h3>
+<ul>
+<li>Understand <strong>instruction tuning and preference-based alignment</strong> strategies<br>
+</li>
+<li>Compare <strong>parameter-efficient fine-tuning approaches</strong><br>
+</li>
+<li>Explore <strong>model compression and acceleration</strong> for real-world deployment<br>
+</li>
+<li>Analyze <strong>emerging applications</strong> of LLMs in RAG, agents, and multi-modal systems</li>
+</ul>
+</section>
+<section id="hands-on-session-6" class="level3" data-number="2.7.3">
+<h3 data-number="2.7.3" class="anchored" data-anchor-id="hands-on-session-6"><span class="header-section-number">2.7.3</span> Hands-on Session</h3>
+<p><strong>Practical Applications</strong>: - Fine-tuning with <strong>LoRA</strong> for a downstream classification task<br>
+- Implementing a <strong>toy preference-based tuning pipeline (DPO)</strong><br>
+- Building a <strong>retrieval-augmented QA system</strong> with <a href="https://huggingface.co/">Hugging Face</a><br>
+- Experimenting with <strong>multi-modal models</strong> (e.g., <a href="https://llava-vl.github.io/">LLaVA</a>)</p>
+</section>
+</section>
+<section id="sec-week7" class="level2" data-number="2.8">
+<h2 data-number="2.8" class="anchored" data-anchor-id="sec-week7"><span class="header-section-number">2.8</span> Week 8: Evaluation and Ethics in NLP</h2>
+<section id="topic-overview-7" class="level3" data-number="2.8.1">
+<h3 data-number="2.8.1" class="anchored" data-anchor-id="topic-overview-7"><span class="header-section-number">2.8.1</span> Topic Overview</h3>
+<p>Responsible AI development requires comprehensive evaluation and ethical considerations:</p>
+<ul>
+<li><strong>Evaluation Methodologies</strong>: Intrinsic vs.&nbsp;extrinsic evaluation frameworks</li>
+<li><strong>Bias Detection</strong>: Identifying and measuring algorithmic bias</li>
+<li><strong>Fairness Metrics</strong>: Demographic parity, equalized odds, individual fairness</li>
+<li><strong>Environmental Impact</strong>: Carbon footprint of large model training</li>
+</ul>
+<div id="fig-bias" class="quarto-float quarto-figure quarto-figure-center anchored" alt="Diagram showing how bias enters NLP systems through data, algorithms, and applications">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-bias-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="https://via.placeholder.com/550x350/F44336/FFFFFF?text=Bias+Sources:+Data+%2B+Algorithms+%2B+Applications+%3D+Societal+Impact.png" class="img-fluid figure-img" alt="Diagram showing how bias enters NLP systems through data, algorithms, and applications">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-bias-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;8: Bias in NLP Systems
+</figcaption>
+</figure>
+</div>
+<div class="callout callout-style-default callout-warning callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Warning</span>Ethical Considerations
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<ul>
+<li><strong>Representation Bias</strong>: Training data may not represent all populations</li>
+<li><strong>Measurement Bias</strong>: Evaluation metrics may favor certain groups</li>
+<li><strong>Evaluation Bias</strong>: Test sets may contain demographic skews</li>
+<li><strong>Deployment Bias</strong>: Real-world usage may differ from intended applications</li>
+</ul>
+</div>
+</div>
+</section>
+<section id="key-resources-3" class="level3" data-number="2.8.2">
+<h3 data-number="2.8.2" class="anchored" data-anchor-id="key-resources-3"><span class="header-section-number">2.8.2</span> Key Resources</h3>
+<ul>
+<li><a href="https://aif360.readthedocs.io/">AI Fairness 360</a> - IBM’s bias detection toolkit</li>
+<li><a href="https://arxiv.org/abs/2109.09315">What We Can’t Measure, We Can’t Understand</a> - Measurement in ML</li>
+<li><a href="https://arxiv.org/abs/2005.14050">Blodgett et al., 2020</a> - Language models and bias</li>
+</ul>
+</section>
+<section id="learning-objectives-7" class="level3" data-number="2.8.3">
+<h3 data-number="2.8.3" class="anchored" data-anchor-id="learning-objectives-7"><span class="header-section-number">2.8.3</span> Learning Objectives</h3>
+<ol type="1">
+<li>Design <strong>comprehensive evaluation frameworks</strong> for NLP systems</li>
+<li>Identify and <strong>quantify algorithmic bias</strong> using statistical methods</li>
+<li>Implement <strong>bias mitigation techniques</strong> at different pipeline stages</li>
+<li>Consider <strong>broader societal implications</strong> of NLP deployment</li>
+</ol>
+</section>
+<section id="hands-on-session-7" class="level3" data-number="2.8.4">
+<h3 data-number="2.8.4" class="anchored" data-anchor-id="hands-on-session-7"><span class="header-section-number">2.8.4</span> Hands-on Session</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb8"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Bias evaluation example</span></span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> sklearn.metrics <span class="im">import</span> confusion_matrix</span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a><span class="co"># Fairness metric calculation</span></span>
+<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> demographic_parity_difference(y_true, y_pred, sensitive_attr):</span>
+<span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Implementation for measuring bias across groups</span></span>
+<span id="cb8-8"><a href="#cb8-8" aria-hidden="true" tabindex="-1"></a>    <span class="cf">pass</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><strong>Evaluation Tasks</strong>: - Word embedding bias testing (WEAT, SEAT) - Fairness evaluation across demographic groups - Carbon footprint estimation for model training - Adversarial testing for robustness</p>
+</section>
+</section>
+</section>
+<section id="sec-projects" class="level1" data-number="3">
+<h1 data-number="3"><span class="header-section-number">3</span> Part II: Student Project Presentations</h1>
+<section id="project-categories-and-detailed-descriptions" class="level2" data-number="3.1">
+<h2 data-number="3.1" class="anchored" data-anchor-id="project-categories-and-detailed-descriptions"><span class="header-section-number">3.1</span> Project Categories and Detailed Descriptions</h2>
+<section id="sec-classification" class="level3" data-number="3.1.1">
+<h3 data-number="3.1.1" class="anchored" data-anchor-id="sec-classification"><span class="header-section-number">3.1.1</span> Category A: Text Classification and Analysis</h3>
+<section id="sec-project1" class="level4" data-number="3.1.1.1">
+<h4 data-number="3.1.1.1" class="anchored" data-anchor-id="sec-project1"><span class="header-section-number">3.1.1.1</span> Project 1: Multi-label News Article Classification</h4>
+<p><strong>Objective</strong>: Build a robust multi-label classification system for news articles</p>
+<ul>
+<li><strong>Dataset</strong>: <a href="http://www.daviddlewis.com/resources/testcollections/reuters21578/">Reuters-21578</a> or <a href="https://www.kaggle.com/c/learn-ai-bbc">BBC News Dataset</a></li>
+<li><strong>Techniques</strong>: Compare traditional ML (TF-IDF + SVM) vs.&nbsp;modern approaches (BERT, RoBERTa)</li>
+<li><strong>Evaluation</strong>: Multi-label F1, Hamming loss, subset accuracy</li>
+<li><strong>Extensions</strong>: Hierarchical classification, active learning for label efficiency</li>
+</ul>
+<div class="callout callout-style-default callout-tip callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Tip</span>Technical Challenges
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<ul>
+<li><strong>Label Imbalance</strong>: Some categories have very few examples</li>
+<li><strong>Label Correlation</strong>: Economic news often overlaps with political news</li>
+<li><strong>Temporal Drift</strong>: News topics evolve over time</li>
+</ul>
+</div>
+</div>
+</section>
+<section id="sec-project2" class="level4" data-number="3.1.1.2">
+<h4 data-number="3.1.1.2" class="anchored" data-anchor-id="sec-project2"><span class="header-section-number">3.1.1.2</span> Project 2: Aspect-Based Sentiment Analysis</h4>
+<p><strong>Objective</strong>: Joint extraction of aspects and sentiment classification</p>
+<ul>
+<li><strong>Dataset</strong>: <a href="http://alt.qcri.org/semeval2016/task5/">SemEval ABSA datasets</a>, restaurant/hotel reviews</li>
+<li><strong>Techniques</strong>: Joint models for aspect extraction and sentiment classification</li>
+<li><strong>Evaluation</strong>: Aspect-level F1 scores, sentiment accuracy per aspect</li>
+<li><strong>Extensions</strong>: Cross-domain adaptation, multilingual ABSA</li>
+</ul>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb9"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Example aspect-sentiment pairs</span></span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>text <span class="op">=</span> <span class="st">"The pizza was delicious but the service was terrible."</span></span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>aspects <span class="op">=</span> [</span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a>    (<span class="st">"pizza"</span>, <span class="st">"positive"</span>),</span>
+<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a>    (<span class="st">"service"</span>, <span class="st">"negative"</span>)</span>
+<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a>]</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</section>
+<section id="sec-project3" class="level4" data-number="3.1.1.3">
+<h4 data-number="3.1.1.3" class="anchored" data-anchor-id="sec-project3"><span class="header-section-number">3.1.1.3</span> Project 3: Fake News Detection with Explainability</h4>
+<p><strong>Objective</strong>: Build interpretable fake news detection systems</p>
+<ul>
+<li><strong>Dataset</strong>: <a href="https://github.com/KaiDMML/FakeNewsNet">FakeNewsNet</a>, <a href="https://www.cs.ucsb.edu/~william/data/liar_dataset.zip">LIAR dataset</a></li>
+<li><strong>Techniques</strong>: Feature engineering + deep learning + attention visualization</li>
+<li><strong>Evaluation</strong>: Classification metrics + human evaluation of explanations</li>
+<li><strong>Extensions</strong>: Multi-modal fake news detection (text + images)</li>
+</ul>
+</section>
+</section>
+<section id="sec-extraction" class="level3" data-number="3.1.2">
+<h3 data-number="3.1.2" class="anchored" data-anchor-id="sec-extraction"><span class="header-section-number">3.1.2</span> Category B: Information Extraction and Retrieval</h3>
+<section id="sec-project4" class="level4" data-number="3.1.2.1">
+<h4 data-number="3.1.2.1" class="anchored" data-anchor-id="sec-project4"><span class="header-section-number">3.1.2.1</span> Project 4: Named Entity Recognition for Specialized Domains</h4>
+<p><strong>Objective</strong>: Develop domain-specific NER systems</p>
+<ul>
+<li><strong>Dataset</strong>: <a href="https://github.com/dmis-lab/biobert">BioBERT datasets</a> (biomedical) or financial NER</li>
+<li><strong>Techniques</strong>: CRF vs.&nbsp;BERT-based sequence labeling</li>
+<li><strong>Evaluation</strong>: Entity-level F1, error analysis by entity type</li>
+<li><strong>Extensions</strong>: Few-shot NER, nested entity recognition</li>
+</ul>
+</section>
+<section id="sec-project5" class="level4" data-number="3.1.2.2">
+<h4 data-number="3.1.2.2" class="anchored" data-anchor-id="sec-project5"><span class="header-section-number">3.1.2.2</span> Project 5: Open-Domain Question Answering System</h4>
+<p><strong>Objective</strong>: Build end-to-end question answering pipeline</p>
+<ul>
+<li><strong>Dataset</strong>: <a href="https://ai.google.com/research/NaturalQuestions/">Natural Questions</a>, <a href="https://microsoft.github.io/msmarco/">MS MARCO</a></li>
+<li><strong>Architecture</strong>: Dense Passage Retrieval + Reading Comprehension</li>
+<li><strong>Evaluation</strong>: Exact match, F1, answer coverage analysis</li>
+<li><strong>Extensions</strong>: Multi-hop reasoning, conversational QA</li>
+</ul>
+<div class="cell" data-layout-align="default">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb10"><pre class="sourceCode default code-with-copy"><code class="sourceCode default"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>graph TB</span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>    A[Question] --&gt; B[Query Encoder]</span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>    B --&gt; C[Passage Retrieval]</span>
+<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a>    C --&gt; D[Passage Encoder]</span>
+<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a>    D --&gt; E[Answer Extraction]</span>
+<span id="cb10-6"><a href="#cb10-6" aria-hidden="true" tabindex="-1"></a>    E --&gt; F[Answer]</span>
+<span id="cb10-7"><a href="#cb10-7" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb10-8"><a href="#cb10-8" aria-hidden="true" tabindex="-1"></a>    G[(Knowledge Base&lt;br/&gt;Wikipedia/Web)] --&gt; C</span>
+<span id="cb10-9"><a href="#cb10-9" aria-hidden="true" tabindex="-1"></a>    H[Retriever Model&lt;br/&gt;DPR/ColBERT] --&gt; C</span>
+<span id="cb10-10"><a href="#cb10-10" aria-hidden="true" tabindex="-1"></a>    I[Reader Model&lt;br/&gt;BERT/T5] --&gt; E</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output-display">
+<div id="fig-qa-system" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-qa-system-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<div>
+<pre class="mermaid mermaid-js" data-label="fig-qa-system">graph TB
+    A[Question] --&gt; B[Query Encoder]
+    B --&gt; C[Passage Retrieval]
+    C --&gt; D[Passage Encoder]
+    D --&gt; E[Answer Extraction]
+    E --&gt; F[Answer]
+    
+    G[(Knowledge Base&lt;br/&gt;Wikipedia/Web)] --&gt; C
+    H[Retriever Model&lt;br/&gt;DPR/ColBERT] --&gt; C
+    I[Reader Model&lt;br/&gt;BERT/T5] --&gt; E
+</pre>
+</div>
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-qa-system-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;9: Question Answering System Architecture
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+</section>
+<section id="sec-project6" class="level4" data-number="3.1.2.3">
+<h4 data-number="3.1.2.3" class="anchored" data-anchor-id="sec-project6"><span class="header-section-number">3.1.2.3</span> Project 6: Automatic Fact Verification</h4>
+<p><strong>Objective</strong>: Verify claims against evidence sources</p>
+<ul>
+<li><strong>Dataset</strong>: <a href="https://fever.ai/dataset/fever.html">FEVER</a> (Fact Extraction and VERification)</li>
+<li><strong>Pipeline</strong>: Evidence retrieval → Textual entailment → Verdict prediction</li>
+<li><strong>Evaluation</strong>: FEVER score, evidence selection accuracy</li>
+<li><strong>Extensions</strong>: Real-time fact-checking, claim generation</li>
+</ul>
+</section>
+</section>
+<section id="sec-generation" class="level3" data-number="3.1.3">
+<h3 data-number="3.1.3" class="anchored" data-anchor-id="sec-generation"><span class="header-section-number">3.1.3</span> Category C: Text Generation and Summarization</h3>
+<section id="sec-project7" class="level4" data-number="3.1.3.1">
+<h4 data-number="3.1.3.1" class="anchored" data-anchor-id="sec-project7"><span class="header-section-number">3.1.3.1</span> Project 7: Neural Abstractive Text Summarization</h4>
+<p><strong>Objective</strong>: Generate coherent abstractive summaries</p>
+<ul>
+<li><strong>Dataset</strong>: <a href="https://github.com/abisee/cnn-dailymail">CNN/DailyMail</a>, <a href="https://github.com/EdinburghNLP/XSum">XSum</a></li>
+<li><strong>Techniques</strong>: Encoder-decoder with attention, copy mechanisms, coverage</li>
+<li><strong>Evaluation</strong>: ROUGE scores, BERTScore, factual consistency</li>
+<li><strong>Extensions</strong>: Multi-document summarization, controllable length</li>
+</ul>
+</section>
+<section id="sec-project8" class="level4" data-number="3.1.3.2">
+<h4 data-number="3.1.3.2" class="anchored" data-anchor-id="sec-project8"><span class="header-section-number">3.1.3.2</span> Project 8: Dialogue System with Personality</h4>
+<p><strong>Objective</strong>: Develop persona-consistent chatbots</p>
+<ul>
+<li><strong>Dataset</strong>: <a href="https://github.com/facebookresearch/ParlAI/tree/main/projects/personachat">PersonaChat</a>, <a href="https://github.com/facebookresearch/ParlAI/tree/main/projects/blended_skill_talk">Blended Skill Talk</a></li>
+<li><strong>Techniques</strong>: Persona-aware generation, retrieval-augmented responses</li>
+<li><strong>Evaluation</strong>: Automatic metrics + human evaluation for consistency</li>
+<li><strong>Extensions</strong>: Emotional intelligence, long-term memory</li>
+</ul>
+</section>
+<section id="sec-project9" class="level4" data-number="3.1.3.3">
+<h4 data-number="3.1.3.3" class="anchored" data-anchor-id="sec-project9"><span class="header-section-number">3.1.3.3</span> Project 9: Creative Writing Assistant</h4>
+<p><strong>Objective</strong>: AI-powered creative content generation</p>
+<ul>
+<li><strong>Dataset</strong>: <a href="https://www.reddit.com/r/WritingPrompts/">WritingPrompts</a>, poetry corpora</li>
+<li><strong>Techniques</strong>: Fine-tuned GPT models with controlled generation</li>
+<li><strong>Evaluation</strong>: Creativity metrics, human preference studies, style analysis</li>
+<li><strong>Extensions</strong>: Interactive story writing, genre transfer</li>
+</ul>
+</section>
+</section>
+<section id="sec-multilingual" class="level3" data-number="3.1.4">
+<h3 data-number="3.1.4" class="anchored" data-anchor-id="sec-multilingual"><span class="header-section-number">3.1.4</span> Category D: Multilingual and Low-Resource NLP</h3>
+<section id="sec-project10" class="level4" data-number="3.1.4.1">
+<h4 data-number="3.1.4.1" class="anchored" data-anchor-id="sec-project10"><span class="header-section-number">3.1.4.1</span> Project 10: Cross-lingual Text Classification</h4>
+<p><strong>Objective</strong>: Zero-shot transfer across languages</p>
+<ul>
+<li><strong>Dataset</strong>: <a href="https://github.com/facebookresearch/MLDoc">MLDoc</a>, <a href="https://github.com/facebookresearch/XNLI">XNLI</a></li>
+<li><strong>Techniques</strong>: Multilingual BERT, cross-lingual word embeddings</li>
+<li><strong>Evaluation</strong>: Zero-shot transfer performance analysis</li>
+<li><strong>Extensions</strong>: Few-shot adaptation, code-switching handling</li>
+</ul>
+</section>
+<section id="sec-project11" class="level4" data-number="3.1.4.2">
+<h4 data-number="3.1.4.2" class="anchored" data-anchor-id="sec-project11"><span class="header-section-number">3.1.4.2</span> Project 11: Machine Translation for Low-Resource Languages</h4>
+<p><strong>Objective</strong>: Improve translation for under-resourced languages</p>
+<ul>
+<li><strong>Dataset</strong>: <a href="http://opus.nlpl.eu/">OPUS collections</a>, WMT shared tasks</li>
+<li><strong>Techniques</strong>: Transfer learning, back-translation, multilingual models</li>
+<li><strong>Evaluation</strong>: BLEU, chrF, human evaluation, error analysis</li>
+<li><strong>Extensions</strong>: Pivot translation, unsupervised MT</li>
+</ul>
+</section>
+</section>
+<section id="sec-specialized" class="level3" data-number="3.1.5">
+<h3 data-number="3.1.5" class="anchored" data-anchor-id="sec-specialized"><span class="header-section-number">3.1.5</span> Category E: Specialized Applications</h3>
+<section id="sec-project12" class="level4" data-number="3.1.5.1">
+<h4 data-number="3.1.5.1" class="anchored" data-anchor-id="sec-project12"><span class="header-section-number">3.1.5.1</span> Project 12: Legal Document Analysis</h4>
+<p><strong>Objective</strong>: Automated legal document processing</p>
+<ul>
+<li><strong>Dataset</strong>: Legal case documents, contracts, legislative texts</li>
+<li><strong>Techniques</strong>: Domain-adapted BERT, hierarchical document modeling</li>
+<li><strong>Evaluation</strong>: Legal expert evaluation, domain-specific metrics</li>
+<li><strong>Extensions</strong>: Legal precedent search, contract risk assessment</li>
+</ul>
+</section>
+<section id="sec-project13" class="level4" data-number="3.1.5.2">
+<h4 data-number="3.1.5.2" class="anchored" data-anchor-id="sec-project13"><span class="header-section-number">3.1.5.2</span> Project 13: Medical Text Mining</h4>
+<p><strong>Objective</strong>: Clinical decision support through NLP</p>
+<ul>
+<li><strong>Dataset</strong>: <a href="https://mimic.mit.edu/">MIMIC-III</a> clinical notes, PubMed abstracts</li>
+<li><strong>Techniques</strong>: BioBERT, clinical NER, relation extraction</li>
+<li><strong>Evaluation</strong>: Medical accuracy, clinical utility assessment</li>
+<li><strong>Extensions</strong>: Drug interaction prediction, diagnosis assistance</li>
+</ul>
+</section>
+<section id="sec-project14" class="level4" data-number="3.1.5.3">
+<h4 data-number="3.1.5.3" class="anchored" data-anchor-id="sec-project14"><span class="header-section-number">3.1.5.3</span> Project 14: Mental Health Detection in Social Media</h4>
+<p><strong>Objective</strong>: Early detection of mental health indicators</p>
+<ul>
+<li><strong>Dataset</strong>: Reddit mental health datasets, Twitter emotion data</li>
+<li><strong>Techniques</strong>: Multi-modal analysis, temporal pattern modeling</li>
+<li><strong>Evaluation</strong>: Precision/recall for sensitive detection, ethical review</li>
+<li><strong>Extensions</strong>: Crisis intervention systems, privacy-preserving methods</li>
+</ul>
+<div class="callout callout-style-default callout-warning callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Warning</span>Ethical Considerations for Mental Health Projects
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<ul>
+<li><strong>Privacy</strong>: Anonymization and consent requirements</li>
+<li><strong>Harm Prevention</strong>: Avoiding false positives in crisis detection</li>
+<li><strong>Professional Oversight</strong>: Collaboration with mental health professionals</li>
+<li><strong>Bias Mitigation</strong>: Ensuring fair representation across demographics</li>
+</ul>
+</div>
+</div>
+</section>
+</section>
+</section>
+</section>
+<section id="sec-assessment" class="level1" data-number="4">
+<h1 data-number="4"><span class="header-section-number">4</span> Assessment Criteria</h1>
+<section id="sec-topic-assessment" class="level2" data-number="4.1">
+<h2 data-number="4.1" class="anchored" data-anchor-id="sec-topic-assessment"><span class="header-section-number">4.1</span> Topic Presentations (Weeks 1-7)</h2>
+<div id="tbl-topic-rubric" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-tbl figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-topic-rubric-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Table&nbsp;1: Assessment rubric for weekly topic presentations
+</figcaption>
+<div aria-describedby="tbl-topic-rubric-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<table class="caption-top table">
+<colgroup>
+<col style="width: 34%">
+<col style="width: 25%">
+<col style="width: 40%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Criterion</th>
+<th>Weight</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><strong>Content Quality</strong></td>
+<td>40%</td>
+<td>Research depth, technical accuracy, concept coverage</td>
+</tr>
+<tr class="even">
+<td><strong>Presentation Skills</strong></td>
+<td>30%</td>
+<td>Communication clarity, visual aids, audience engagement</td>
+</tr>
+<tr class="odd">
+<td><strong>Technical Implementation</strong></td>
+<td>30%</td>
+<td>Code quality, demonstration effectiveness, innovation</td>
+</tr>
+</tbody>
+</table>
+</div>
+</figure>
+</div>
+</section>
+<section id="sec-project-assessment" class="level2" data-number="4.2">
+<h2 data-number="4.2" class="anchored" data-anchor-id="sec-project-assessment"><span class="header-section-number">4.2</span> Project Presentations (Weeks 8-14)</h2>
+<div id="tbl-project-rubric" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-tbl figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-project-rubric-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Table&nbsp;2: Assessment rubric for final project presentations
+</figcaption>
+<div aria-describedby="tbl-project-rubric-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<table class="caption-top table">
+<colgroup>
+<col style="width: 27%">
+<col style="width: 20%">
+<col style="width: 52%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Criterion</th>
+<th>Weight</th>
+<th>Key Evaluation Points</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><strong>Technical Rigor</strong></td>
+<td>35%</td>
+<td>Methodology selection, implementation quality, experimental design</td>
+</tr>
+<tr class="even">
+<td><strong>Innovation</strong></td>
+<td>25%</td>
+<td>Novel approaches, creative problem-solving, original insights</td>
+</tr>
+<tr class="odd">
+<td><strong>Results &amp; Analysis</strong></td>
+<td>25%</td>
+<td>Comprehensive evaluation, error analysis, baseline comparison</td>
+</tr>
+<tr class="even">
+<td><strong>Communication</strong></td>
+<td>15%</td>
+<td>Clear presentation, professional documentation, visualizations</td>
+</tr>
+</tbody>
+</table>
+</div>
+</figure>
+</div>
+<div class="callout callout-style-default callout-note callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>Peer Evaluation Component
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>Students will also evaluate their peers’ presentations using a structured rubric, contributing 10% to the final grade. This encourages active engagement and critical thinking.</p>
+</div>
+</div>
+</section>
+</section>
+<section id="sec-resources" class="level1" data-number="5">
+<h1 data-number="5"><span class="header-section-number">5</span> Resources and Tools</h1>
+<section id="essential-python-libraries" class="level2" data-number="5.1">
+<h2 data-number="5.1" class="anchored" data-anchor-id="essential-python-libraries"><span class="header-section-number">5.1</span> Essential Python Libraries</h2>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb11"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Core NLP libraries</span></span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> nltk              <span class="co"># Natural Language Toolkit</span></span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> spacy             <span class="co"># Industrial-strength NLP</span></span>
+<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> transformers      <span class="co"># Hugging Face Transformers</span></span>
+<span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> torch            <span class="co"># PyTorch for deep learning</span></span>
+<span id="cb11-6"><a href="#cb11-6" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> tensorflow <span class="im">as</span> tf <span class="co"># TensorFlow alternative</span></span>
+<span id="cb11-7"><a href="#cb11-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-8"><a href="#cb11-8" aria-hidden="true" tabindex="-1"></a><span class="co"># Specialized libraries</span></span>
+<span id="cb11-9"><a href="#cb11-9" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> gensim           <span class="co"># Topic modeling and word embeddings</span></span>
+<span id="cb11-10"><a href="#cb11-10" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> scikit<span class="op">-</span>learn     <span class="co"># Traditional ML algorithms</span></span>
+<span id="cb11-11"><a href="#cb11-11" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> datasets         <span class="co"># Hugging Face datasets</span></span>
+<span id="cb11-12"><a href="#cb11-12" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> evaluate         <span class="co"># Evaluation metrics</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</section>
+<section id="dataset-repositories" class="level2" data-number="5.2">
+<h2 data-number="5.2" class="anchored" data-anchor-id="dataset-repositories"><span class="header-section-number">5.2</span> Dataset Repositories</h2>
+<ul>
+<li><strong><a href="https://huggingface.co/datasets">Hugging Face Datasets</a></strong>: 10,000+ datasets for NLP</li>
+<li><strong><a href="https://paperswithcode.com/datasets">Papers with Code</a></strong>: Benchmark datasets with leaderboards</li>
+<li><strong><a href="https://datasetsearch.research.google.com/">Google Dataset Search</a></strong>: Comprehensive dataset discovery</li>
+<li><strong><a href="https://academictorrents.com/">Academic Torrents</a></strong>: Large-scale research datasets</li>
+</ul>
+</section>
+<section id="evaluation-tools-and-metrics" class="level2" data-number="5.3">
+<h2 data-number="5.3" class="anchored" data-anchor-id="evaluation-tools-and-metrics"><span class="header-section-number">5.3</span> Evaluation Tools and Metrics</h2>
+<ul>
+<li><strong>Text Generation</strong>: BLEU, ROUGE, BERTScore, METEOR</li>
+<li><strong>Classification</strong>: Precision, Recall, F1, AUC-ROC</li>
+<li><strong>Sequence Labeling</strong>: seqeval, entity-level F1</li>
+<li><strong>Bias and Fairness</strong>: Fairlearn, AI Fairness 360</li>
+</ul>
+</section>
+</section>
+<section id="sec-timeline" class="level1" data-number="6">
+<h1 data-number="6"><span class="header-section-number">6</span> Timeline and Milestones</h1>
+<div class="cell" data-layout-align="default">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb12"><pre class="sourceCode default code-with-copy"><code class="sourceCode default"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a>gantt</span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>    title Detailed Course Timeline</span>
+<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a>    dateFormat  YYYY-MM-DD</span>
+<span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a>    section Topic Presentations</span>
+<span id="cb12-5"><a href="#cb12-5" aria-hidden="true" tabindex="-1"></a>    Week 1: NLP Fundamentals      :active, t1, 2024-09-01, 7d</span>
+<span id="cb12-6"><a href="#cb12-6" aria-hidden="true" tabindex="-1"></a>    Week 2: Language Models       :t2, after t1, 7d</span>
+<span id="cb12-7"><a href="#cb12-7" aria-hidden="true" tabindex="-1"></a>    Week 3: Word Embeddings       :t3, after t2, 7d</span>
+<span id="cb12-8"><a href="#cb12-8" aria-hidden="true" tabindex="-1"></a>    Week 4: Neural Networks       :t4, after t3, 7d</span>
+<span id="cb12-9"><a href="#cb12-9" aria-hidden="true" tabindex="-1"></a>    Week 5: Transformers          :t5, after t4, 7d</span>
+<span id="cb12-10"><a href="#cb12-10" aria-hidden="true" tabindex="-1"></a>    Week 6: Large Language Models :t6, after t5, 7d</span>
+<span id="cb12-11"><a href="#cb12-11" aria-hidden="true" tabindex="-1"></a>    Week 7: Ethics &amp; Evaluation   :t7, after t6, 7d</span>
+<span id="cb12-12"><a href="#cb12-12" aria-hidden="true" tabindex="-1"></a>    section Milestones</span>
+<span id="cb12-13"><a href="#cb12-13" aria-hidden="true" tabindex="-1"></a>    Project Proposal Due          :milestone, m1, 2024-10-01, 0d</span>
+<span id="cb12-14"><a href="#cb12-14" aria-hidden="true" tabindex="-1"></a>    Progress Check Meeting        :milestone, m2, 2024-11-01, 0d</span>
+<span id="cb12-15"><a href="#cb12-15" aria-hidden="true" tabindex="-1"></a>    Final Presentation           :milestone, m3, 2024-12-01, 0d</span>
+<span id="cb12-16"><a href="#cb12-16" aria-hidden="true" tabindex="-1"></a>    section Project Development</span>
+<span id="cb12-17"><a href="#cb12-17" aria-hidden="true" tabindex="-1"></a>    Project Phase 1              :p1, after t7, 21d</span>
+<span id="cb12-18"><a href="#cb12-18" aria-hidden="true" tabindex="-1"></a>    Project Phase 2              :p2, after p1, 21d</span>
+<span id="cb12-19"><a href="#cb12-19" aria-hidden="true" tabindex="-1"></a>    Final Presentations          :p3, after p2, 14d</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output-display">
+<div id="fig-detailed-timeline" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-detailed-timeline-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<div>
+<pre class="mermaid mermaid-js" data-label="fig-detailed-timeline">gantt
+    title Detailed Course Timeline
+    dateFormat  YYYY-MM-DD
+    section Topic Presentations
+    Week 1: NLP Fundamentals      :active, t1, 2024-09-01, 7d
+    Week 2: Language Models       :t2, after t1, 7d
+    Week 3: Word Embeddings       :t3, after t2, 7d
+    Week 4: Neural Networks       :t4, after t3, 7d
+    Week 5: Transformers          :t5, after t4, 7d
+    Week 6: Large Language Models :t6, after t5, 7d
+    Week 7: Ethics &amp; Evaluation   :t7, after t6, 7d
+    section Milestones
+    Project Proposal Due          :milestone, m1, 2024-10-01, 0d
+    Progress Check Meeting        :milestone, m2, 2024-11-01, 0d
+    Final Presentation           :milestone, m3, 2024-12-01, 0d
+    section Project Development
+    Project Phase 1              :p1, after t7, 21d
+    Project Phase 2              :p2, after p1, 21d
+    Final Presentations          :p3, after p2, 14d
+</pre>
+</div>
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-detailed-timeline-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;10: Detailed Course Timeline with Milestones
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<section id="key-milestones" class="level2" data-number="6.1">
+<h2 data-number="6.1" class="anchored" data-anchor-id="key-milestones"><span class="header-section-number">6.1</span> Key Milestones</h2>
+<div class="tabset-margin-container"></div><div class="panel-tabset">
+<ul class="nav nav-tabs" role="tablist"><li class="nav-item" role="presentation"><a class="nav-link active" id="tabset-1-1-tab" data-bs-toggle="tab" data-bs-target="#tabset-1-1" role="tab" aria-controls="tabset-1-1" aria-selected="true" href="">Week 4: Mid-Course Checkpoint</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-1-2-tab" data-bs-toggle="tab" data-bs-target="#tabset-1-2" role="tab" aria-controls="tabset-1-2" aria-selected="false" href="">Week 7: Proposal Presentations</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-1-3-tab" data-bs-toggle="tab" data-bs-target="#tabset-1-3" role="tab" aria-controls="tabset-1-3" aria-selected="false" href="">Week 10: Progress Review</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-1-4-tab" data-bs-toggle="tab" data-bs-target="#tabset-1-4" role="tab" aria-controls="tabset-1-4" aria-selected="false" href="">Week 13-14: Final Presentations</a></li></ul>
+<div class="tab-content">
+<div id="tabset-1-1" class="tab-pane active" role="tabpanel" aria-labelledby="tabset-1-1-tab">
+<ul>
+<li><strong>Project proposal submission</strong> (2-page document)</li>
+<li><strong>Literature review</strong> progress check</li>
+<li><strong>Dataset acquisition</strong> and preliminary analysis</li>
+<li><strong>Technical approach</strong> validation with instructor</li>
+</ul>
+</div>
+<div id="tabset-1-2" class="tab-pane" role="tabpanel" aria-labelledby="tabset-1-2-tab">
+<ul>
+<li><strong>5-minute project pitches</strong> to class</li>
+<li><strong>Peer feedback</strong> and suggestions</li>
+<li><strong>Final project scope</strong> confirmation</li>
+<li><strong>Team formation</strong> (if applicable)</li>
+</ul>
+</div>
+<div id="tabset-1-3" class="tab-pane" role="tabpanel" aria-labelledby="tabset-1-3-tab">
+<ul>
+<li><strong>Interim results</strong> presentation</li>
+<li><strong>Technical challenges</strong> discussion</li>
+<li><strong>Methodology adjustments</strong> if needed</li>
+<li><strong>Timeline reassessment</strong> and planning</li>
+</ul>
+</div>
+<div id="tabset-1-4" class="tab-pane" role="tabpanel" aria-labelledby="tabset-1-4-tab">
+<ul>
+<li><strong>15-minute presentations</strong> with Q&amp;A</li>
+<li><strong>Live demonstrations</strong> of working systems</li>
+<li><strong>Peer evaluation</strong> and feedback</li>
+<li><strong>Industry guest evaluators</strong> (when possible)</li>
+</ul>
+</div>
+</div>
+</div>
+</section>
+</section>
+<section id="sec-additional" class="level1" data-number="7">
+<h1 data-number="7"><span class="header-section-number">7</span> Additional Course Information</h1>
+<section id="collaboration-and-academic-integrity" class="level2" data-number="7.1">
+<h2 data-number="7.1" class="anchored" data-anchor-id="collaboration-and-academic-integrity"><span class="header-section-number">7.1</span> Collaboration and Academic Integrity</h2>
+<ul>
+<li><strong>Individual Work</strong>: Weekly topic presentations must be completed individually</li>
+<li><strong>Team Projects</strong>: Final projects may be completed in teams of maximum 2 students</li>
+<li><strong>Code Sharing</strong>: All implementations must be original with proper attribution</li>
+<li><strong>Plagiarism Policy</strong>: Zero tolerance for academic dishonesty</li>
+</ul>
+</section>
+<section id="technical-requirements" class="level2" data-number="7.2">
+<h2 data-number="7.2" class="anchored" data-anchor-id="technical-requirements"><span class="header-section-number">7.2</span> Technical Requirements</h2>
+<div class="callout callout-style-default callout-important callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Important</span>Submission Requirements
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<ul>
+<li><strong>Version Control</strong>: All projects must use Git with clear commit history</li>
+<li><strong>Reproducibility</strong>: Include requirements.txt and detailed setup instructions</li>
+<li><strong>Documentation</strong>: README with project description, usage, and results</li>
+<li><strong>Public Repository</strong>: GitHub repository with appropriate license</li>
+</ul>
+</div>
+</div>
+</section>
+<section id="support-and-office-hours" class="level2" data-number="7.3">
+<h2 data-number="7.3" class="anchored" data-anchor-id="support-and-office-hours"><span class="header-section-number">7.3</span> Support and Office Hours</h2>
+<ul>
+<li><strong>Weekly Office Hours</strong>: Tuesdays 2-4 PM and Thursdays 10-12 PM</li>
+<li><strong>Online Forum</strong>: Course Slack workspace for peer discussion</li>
+<li><strong>Technical Support</strong>: TA sessions for implementation help</li>
+<li><strong>Guest Speakers</strong>: Industry professionals and researchers (select weeks)</li>
+</ul>
+</section>
+<section id="computing-resources" class="level2" data-number="7.4">
+<h2 data-number="7.4" class="anchored" data-anchor-id="computing-resources"><span class="header-section-number">7.4</span> Computing Resources</h2>
+<p>Students have access to: - <strong>Local GPUs</strong>: NVIDIA RTX 4090 for model training - <strong>Cloud Credits</strong>: $100 Google Cloud Platform credits per student - <strong>Cluster Access</strong>: University HPC cluster for large-scale experiments - <strong>Pretrained Models</strong>: Access to Hugging Face Pro for latest models</p>
+<hr>
+<p><em>This course syllabus is subject to updates based on student needs and emerging trends in NLP research. All changes will be communicated through the course management system.</em></p>
+
+
+</section>
+</section>
+
+</main> <!-- /main -->
+<script>
+(() => {
+  const padding = 24;
+
+  function cropMermaid(svg) {
+    const root = svg.querySelector(":scope > g, g.root");
+    if (!root) return;
+
+    let box;
+    try {
+      box = root.getBBox();
+    } catch (_) {
+      return;
+    }
+
+    if (!box.width || !box.height) return;
+
+    svg.setAttribute(
+      "viewBox",
+      `${box.x - padding} ${box.y - padding} ${box.width + 2 * padding} ${box.height + 2 * padding}`
+    );
+    svg.setAttribute("width", "100%");
+    svg.removeAttribute("height");
+    svg.style.width = "100%";
+    svg.style.height = "auto";
+    svg.style.maxWidth = "100%";
+    svg.style.display = "block";
+    svg.style.marginInline = "auto";
+    svg.dataset.cropped = "true";
+  }
+
+  function cropAllMermaid() {
+    document
+      .querySelectorAll("svg.mermaid-js:not([data-cropped])")
+      .forEach(cropMermaid);
+  }
+
+  const observer = new MutationObserver(cropAllMermaid);
+  observer.observe(document.documentElement, { childList: true, subtree: true });
+
+  window.addEventListener("load", () => {
+    cropAllMermaid();
+    window.setTimeout(cropAllMermaid, 250);
+    window.setTimeout(cropAllMermaid, 1000);
+  });
+})();
+</script>
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp("https:\/\/anassbelcaid\.github\.io\/nlp-course-2026\/");
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+            // target, if specified
+            link.setAttribute("target", "_blank");
+            if (link.getAttribute("rel") === null) {
+              link.setAttribute("rel", "noopener");
+            }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+</div> <!-- /content -->
+<footer class="footer">
+  <div class="nav-footer">
+    <div class="nav-footer-left">
+<p>Natural Language Processing · Université Abdelmalek Essaâdi</p>
+</div>   
+    <div class="nav-footer-center">
+      &nbsp;
+    </div>
+    <div class="nav-footer-right">
+<p>Built with Quarto</p>
+</div>
+  </div>
+</footer>
+
+
+
+
+<script src="site_libs/quarto-html/zenscroll-min.js"></script>
+</body></html>

@@ -1,0 +1,2341 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.10.18">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="author" content="Dr.&nbsp;A. Belcaid">
+<meta name="description" content="From the encoder bottleneck to soft lookup, cross-attention, self-attention, causal masking, multi-head attention, and the bridge to the Transformer block.">
+
+<title>Attention Mechanisms – CS 351 · NLP</title>
+<style>
+/* Default styles provided by pandoc.
+** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+*/
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: 1.5em;}
+div.column{flex: auto;}
+@media screen {
+div.columns{gap: min(4vw, 1.5em);}
+div.column{overflow-x: auto;}
+}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for citations */
+div.csl-bib-body { }
+div.csl-entry {
+  clear: both;
+}
+.hanging-indent div.csl-entry {
+  margin-left:2em;
+  text-indent:-2em;
+}
+div.csl-left-margin {
+  min-width:2em;
+  float:left;
+}
+div.csl-right-inline {
+  margin-left:2em;
+  padding-left:1em;
+}
+div.csl-indent {
+  margin-left: 2em;
+}</style>
+
+
+<script src="../../site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="../../site_libs/clipboard/clipboard.min.js"></script>
+<script src="../../site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="../../site_libs/quarto-search/fuse.min.js"></script>
+<script src="../../site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="../../">
+<script src="../../site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="../../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="../../site_libs/quarto-html/popper.min.js"></script>
+<script src="../../site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="../../site_libs/quarto-html/anchor.min.js"></script>
+<link href="../../site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="../../site_libs/quarto-html/quarto-syntax-highlighting-095245003bb80bd2beb305de39928752.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="../../site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="../../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="../../site_libs/bootstrap/bootstrap-bae81809e9689276853494912f89ea28.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<script id="quarto-search-options" type="application/json">{
+  "location": "navbar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "end",
+  "type": "overlay",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script>
+<style>html{ scroll-behavior: smooth; }</style>
+<script src="../../site_libs/quarto-diagram/mermaid.min.js"></script>
+<script src="../../site_libs/quarto-diagram/mermaid-init.js"></script>
+<link href="../../site_libs/quarto-diagram/mermaid.css" rel="stylesheet">
+
+  <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
+  <script defer="" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-chtml.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN" && texText && texText.data) {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script>
+
+<link rel="stylesheet" href="../../styles.css">
+</head>
+
+<body class="floating nav-fixed quarto-light">
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+    <nav class="navbar navbar-expand-lg " data-bs-theme="dark">
+      <div class="navbar-container container-fluid">
+      <div class="navbar-brand-container mx-auto">
+    <a class="navbar-brand" href="../../index.html">
+    <span class="navbar-title">CS 351 · NLP</span>
+    </a>
+  </div>
+            <div id="quarto-search" class="" title="Search"></div>
+          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse" aria-controls="navbarCollapse" role="menu" aria-expanded="false" aria-label="Toggle navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+  <span class="navbar-toggler-icon"></span>
+</button>
+          <div class="collapse navbar-collapse" id="navbarCollapse">
+            <ul class="navbar-nav navbar-nav-scroll me-auto">
+  <li class="nav-item">
+    <a class="nav-link" href="../../index.html"> 
+<span class="menu-text">Home</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../../logistics.html"> 
+<span class="menu-text">Logistics</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../../schedule.html"> 
+<span class="menu-text">Schedule</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../../coding-projects.html"> 
+<span class="menu-text">Coding Projects</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../../student-projects.html"> 
+<span class="menu-text">Student Projects</span></a>
+  </li>  
+</ul>
+            <ul class="navbar-nav navbar-nav-scroll ms-auto">
+  <li class="nav-item compact">
+    <a class="nav-link" href="https://github.com/anassBelcaid"> <i class="bi bi-github" role="img" aria-label="Instructor GitHub profile">
+</i> 
+<span class="menu-text"></span></a>
+  </li>  
+</ul>
+          </div> <!-- /navcollapse -->
+            <div class="quarto-navbar-tools">
+</div>
+      </div> <!-- /container-fluid -->
+    </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
+<!-- sidebar -->
+  <nav id="quarto-sidebar" class="sidebar collapse collapse-horizontal quarto-sidebar-collapse-item sidebar-navigation floating overflow-auto">
+    <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">On this page</h2>
+   
+  <ul>
+  <li><a href="#sec-attention-bottleneck" id="toc-sec-attention-bottleneck" class="nav-link active" data-scroll-target="#sec-attention-bottleneck"><span class="header-section-number">1</span> The encoder bottleneck</a>
+  <ul class="collapse">
+  <li><a href="#sec-recall-seq2seq" id="toc-sec-recall-seq2seq" class="nav-link" data-scroll-target="#sec-recall-seq2seq"><span class="header-section-number">1.1</span> Recall: one RNN reads, another writes</a></li>
+  <li><a href="#sec-storage-access" id="toc-sec-storage-access" class="nav-link" data-scroll-target="#sec-storage-access"><span class="header-section-number">1.2</span> The bottleneck is storage and access</a></li>
+  <li><a href="#sec-bottleneck-synthesis" id="toc-sec-bottleneck-synthesis" class="nav-link" data-scroll-target="#sec-bottleneck-synthesis"><span class="header-section-number">1.3</span> Section synthesis</a></li>
+  </ul></li>
+  <li><a href="#sec-soft-lookup" id="toc-sec-soft-lookup" class="nav-link" data-scroll-target="#sec-soft-lookup"><span class="header-section-number">2</span> Attention as soft lookup</a>
+  <ul class="collapse">
+  <li><a href="#sec-keep-memories" id="toc-sec-keep-memories" class="nav-link" data-scroll-target="#sec-keep-memories"><span class="header-section-number">2.1</span> Keep every source memory</a></li>
+  <li><a href="#sec-three-operations" id="toc-sec-three-operations" class="nav-link" data-scroll-target="#sec-three-operations"><span class="header-section-number">2.2</span> Three operations: score, normalize, retrieve</a></li>
+  <li><a href="#sec-soft-lookup-worked" id="toc-sec-soft-lookup-worked" class="nav-link" data-scroll-target="#sec-soft-lookup-worked"><span class="header-section-number">2.3</span> Worked soft lookup</a></li>
+  <li><a href="#sec-learned-lookup" id="toc-sec-learned-lookup" class="nav-link" data-scroll-target="#sec-learned-lookup"><span class="header-section-number">2.4</span> What learning changes</a></li>
+  <li><a href="#sec-soft-lookup-synthesis" id="toc-sec-soft-lookup-synthesis" class="nav-link" data-scroll-target="#sec-soft-lookup-synthesis"><span class="header-section-number">2.5</span> Section synthesis</a></li>
+  </ul></li>
+  <li><a href="#sec-cross-attention" id="toc-sec-cross-attention" class="nav-link" data-scroll-target="#sec-cross-attention"><span class="header-section-number">3</span> Cross-attention</a>
+  <ul class="collapse">
+  <li><a href="#sec-qkv-roles" id="toc-sec-qkv-roles" class="nav-link" data-scroll-target="#sec-qkv-roles"><span class="header-section-number">3.1</span> Queries, keys, and values are roles</a></li>
+  <li><a href="#sec-scoring-functions" id="toc-sec-scoring-functions" class="nav-link" data-scroll-target="#sec-scoring-functions"><span class="header-section-number">3.2</span> Scoring functions</a>
+  <ul class="collapse">
+  <li><a href="#dot-product" id="toc-dot-product" class="nav-link" data-scroll-target="#dot-product"><span class="header-section-number">3.2.1</span> Dot product</a></li>
+  <li><a href="#additive-attention" id="toc-additive-attention" class="nav-link" data-scroll-target="#additive-attention"><span class="header-section-number">3.2.2</span> Additive attention</a></li>
+  </ul></li>
+  <li><a href="#sec-one-alignment" id="toc-sec-one-alignment" class="nav-link" data-scroll-target="#sec-one-alignment"><span class="header-section-number">3.3</span> One decoder query creates one alignment</a></li>
+  <li><a href="#sec-changing-query" id="toc-sec-changing-query" class="nav-link" data-scroll-target="#sec-changing-query"><span class="header-section-number">3.4</span> A new query creates a new alignment</a></li>
+  <li><a href="#sec-cross-attention-synthesis" id="toc-sec-cross-attention-synthesis" class="nav-link" data-scroll-target="#sec-cross-attention-synthesis"><span class="header-section-number">3.5</span> Section synthesis</a></li>
+  </ul></li>
+  <li><a href="#sec-self-attention" id="toc-sec-self-attention" class="nav-link" data-scroll-target="#sec-self-attention"><span class="header-section-number">4</span> Self-attention</a>
+  <ul class="collapse">
+  <li><a href="#sec-self-origin" id="toc-sec-self-origin" class="nav-link" data-scroll-target="#sec-self-origin"><span class="header-section-number">4.1</span> Change the origin, keep the mechanism</a></li>
+  <li><a href="#sec-pronoun-example" id="toc-sec-pronoun-example" class="nav-link" data-scroll-target="#sec-pronoun-example"><span class="header-section-number">4.2</span> A pronoun performs a lookup</a></li>
+  <li><a href="#sec-every-token" id="toc-sec-every-token" class="nav-link" data-scroll-target="#sec-every-token"><span class="header-section-number">4.3</span> Every token asks its own question</a></li>
+  <li><a href="#sec-short-paths" id="toc-sec-short-paths" class="nav-link" data-scroll-target="#sec-short-paths"><span class="header-section-number">4.4</span> Shorter paths and parallel computation</a></li>
+  <li><a href="#sec-self-synthesis" id="toc-sec-self-synthesis" class="nav-link" data-scroll-target="#sec-self-synthesis"><span class="header-section-number">4.5</span> Section synthesis</a></li>
+  </ul></li>
+  <li><a href="#sec-modern-attention" id="toc-sec-modern-attention" class="nav-link" data-scroll-target="#sec-modern-attention"><span class="header-section-number">5</span> Modern attention</a>
+  <ul class="collapse">
+  <li><a href="#sec-attention-scaling" id="toc-sec-attention-scaling" class="nav-link" data-scroll-target="#sec-attention-scaling"><span class="header-section-number">5.1</span> Why scale dot products?</a></li>
+  <li><a href="#sec-scaling-worked" id="toc-sec-scaling-worked" class="nav-link" data-scroll-target="#sec-scaling-worked"><span class="header-section-number">5.2</span> Worked scaling example</a></li>
+  <li><a href="#sec-causal-mask" id="toc-sec-causal-mask" class="nav-link" data-scroll-target="#sec-causal-mask"><span class="header-section-number">5.3</span> Causal masking: do not read tomorrow</a></li>
+  <li><a href="#sec-multihead-motivation" id="toc-sec-multihead-motivation" class="nav-link" data-scroll-target="#sec-multihead-motivation"><span class="header-section-number">5.4</span> Why use multiple heads?</a></li>
+  <li><a href="#sec-attention-visualization" id="toc-sec-attention-visualization" class="nav-link" data-scroll-target="#sec-attention-visualization"><span class="header-section-number">5.5</span> Reading attention visualizations</a>
+  <ul class="collapse">
+  <li><a href="#attention-heatmap" id="toc-attention-heatmap" class="nav-link" data-scroll-target="#attention-heatmap"><span class="header-section-number">5.5.1</span> Attention heatmap</a></li>
+  <li><a href="#connection-view" id="toc-connection-view" class="nav-link" data-scroll-target="#connection-view"><span class="header-section-number">5.5.2</span> Connection view</a></li>
+  </ul></li>
+  <li><a href="#sec-modern-synthesis" id="toc-sec-modern-synthesis" class="nav-link" data-scroll-target="#sec-modern-synthesis"><span class="header-section-number">5.6</span> Modern attention in one view</a></li>
+  </ul></li>
+  <li><a href="#sec-transformer-bridge" id="toc-sec-transformer-bridge" class="nav-link" data-scroll-target="#sec-transformer-bridge"><span class="header-section-number">6</span> The Transformer bridge</a>
+  <ul class="collapse">
+  <li><a href="#sec-position-gap" id="toc-sec-position-gap" class="nav-link" data-scroll-target="#sec-position-gap"><span class="header-section-number">6.1</span> Self-attention has no order by itself</a></li>
+  <li><a href="#sec-feature-gap" id="toc-sec-feature-gap" class="nav-link" data-scroll-target="#sec-feature-gap"><span class="header-section-number">6.2</span> Attention mixes positions, not features deeply</a></li>
+  <li><a href="#sec-depth-gap" id="toc-sec-depth-gap" class="nav-link" data-scroll-target="#sec-depth-gap"><span class="header-section-number">6.3</span> Deep stacks need safe routes</a></li>
+  <li><a href="#sec-final-bridge" id="toc-sec-final-bridge" class="nav-link" data-scroll-target="#sec-final-bridge"><span class="header-section-number">6.4</span> Final visual bridge</a></li>
+  </ul></li>
+  <li><a href="#sec-attention-summary" id="toc-sec-attention-summary" class="nav-link" data-scroll-target="#sec-attention-summary"><span class="header-section-number">7</span> Chapter summary</a></li>
+  <li><a href="#sec-attention-reading" id="toc-sec-attention-reading" class="nav-link" data-scroll-target="#sec-attention-reading"><span class="header-section-number">8</span> Further reading and exploration</a>
+  <ul class="collapse">
+  <li><a href="#defining-papers" id="toc-defining-papers" class="nav-link" data-scroll-target="#defining-papers"><span class="header-section-number">8.1</span> Defining papers</a></li>
+  <li><a href="#visual-explanations" id="toc-visual-explanations" class="nav-link" data-scroll-target="#visual-explanations"><span class="header-section-number">8.2</span> Visual explanations</a></li>
+  <li><a href="#attention-patterns-and-interpretation" id="toc-attention-patterns-and-interpretation" class="nav-link" data-scroll-target="#attention-patterns-and-interpretation"><span class="header-section-number">8.3</span> Attention patterns and interpretation</a></li>
+  <li><a href="#references" id="toc-references" class="nav-link" data-scroll-target="#references"><span class="header-section-number">8.4</span> References</a></li>
+  </ul></li>
+  </ul>
+<div class="quarto-alternate-formats"><h2>Other Formats</h2><ul><li><a href="index.pdf"><i class="bi bi-file-pdf"></i>PDF</a></li></ul></div></nav>
+</nav>
+<div id="quarto-sidebar-glass" class="quarto-sidebar-collapse-item" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item"></div>
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar zindex-bottom">
+    </div>
+<!-- main -->
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title">Attention Mechanisms</h1>
+<p class="subtitle lead">Chapter 6 · Learning where to look</p>
+</div>
+
+<div>
+  <div class="description">
+    From the encoder bottleneck to soft lookup, cross-attention, self-attention, causal masking, multi-head attention, and the bridge to the Transformer block.
+  </div>
+</div>
+
+
+<div class="quarto-title-meta">
+
+    <div>
+    <div class="quarto-title-meta-heading">Author</div>
+    <div class="quarto-title-meta-contents">
+             <p>Dr.&nbsp;A. Belcaid </p>
+          </div>
+  </div>
+    
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<p><img src="../../images/uae-logo.png" class="img-fluid"></p>
+<p>CS 351 · Introduction to Natural Language Processing<br> Chapter 6 · Attention mechanisms</p>
+<p>The recurrent encoder–decoder gave us a general recipe for conditional sequence generation: read an input sequence, compress it into a state, and generate an output sequence. Its central weakness was equally simple: <strong>every source detail had to cross one fixed-size vector</strong>. Attention repairs this bottleneck by allowing a prediction to retrieve information directly from all available source states.</p>
+<p>This chapter develops attention as an inspectable soft lookup. We will keep one small translation example visible while deriving scores, weights, and context vectors; then we will reuse the same mechanism inside a single sequence. The chapter ends at the boundary of the Transformer architecture. We will identify what a complete model still needs, but leave the construction of the Transformer block to the next chapter.</p>
+<div id="fig-attention-overview" class="chapter-overview-image quarto-float quarto-figure quarto-figure-center anchored" data-fig-align="center">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-attention-overview-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="../../lectures/06-attention-mechanisms/images/attention-overview.png" class="chapter-overview-image img-fluid quarto-figure quarto-figure-center figure-img" style="width:94.0%">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-attention-overview-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;1: The chapter journey from a recurrent bottleneck through soft lookup, cross-attention, self-attention, scaled and masked multi-head attention, and an unfinished bridge toward the Transformer block.
+</figcaption>
+</figure>
+</div>
+<div class="cell" data-fig-width="7.4" data-layout-align="default">
+<div class="cell-output-display">
+<div id="fig-attention-route" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-attention-route-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<div>
+<pre class="mermaid mermaid-js" data-label="fig-attention-route">flowchart LR
+    A[One context&lt;br/&gt;bottleneck] --&gt; B[Soft lookup]
+    B --&gt; C[Cross-attention]
+    C --&gt; D[Self-attention]
+    D --&gt; E[Scale + mask&lt;br/&gt;+ many heads]
+    E --&gt; F[Transformer&lt;br/&gt;block?]
+
+    classDef base fill:#e8f2f0,stroke:#0f6f78,color:#17364a
+    classDef attention fill:#f2e9f7,stroke:#8b5bb5,color:#17364a
+    classDef bridge fill:#fff3d6,stroke:#b98a1d,color:#17364a
+    class A base
+    class B,C,D,E attention
+    class F bridge
+</pre>
+</div>
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-attention-route-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;2: Each part keeps the same score–normalize–retrieve operation while changing where queries, keys, and values come from.
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<div class="callout callout-style-simple callout-note callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>Learning objectives
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>After this chapter, you should be able to:</p>
+<ol type="1">
+<li>explain why one encoder state creates both a storage and an access bottleneck;</li>
+<li>calculate attention scores, softmax weights, and a weighted context vector;</li>
+<li>distinguish queries, keys, and values by their computational roles;</li>
+<li>distinguish cross-attention from self-attention;</li>
+<li>derive the matrix form of scaled dot-product attention;</li>
+<li>construct and interpret a causal mask;</li>
+<li>explain what multiple heads add beyond one attention distribution;</li>
+<li>interpret attention visualizations cautiously; and</li>
+<li>identify the missing ingredients that motivate a Transformer block.</li>
+</ol>
+</div>
+</div>
+<section id="sec-attention-bottleneck" class="level1" data-number="1">
+<h1 data-number="1"><span class="header-section-number">1</span> The encoder bottleneck</h1>
+<section id="sec-recall-seq2seq" class="level2" data-number="1.1">
+<h2 data-number="1.1" class="anchored" data-anchor-id="sec-recall-seq2seq"><span class="header-section-number">1.1</span> Recall: one RNN reads, another writes</h2>
+<p>Let the source sentence be:</p>
+<pre class="text"><code>Le colis arrivera demain</code></pre>
+<p>and the desired translation be:</p>
+<pre class="text"><code>The package will arrive tomorrow</code></pre>
+<p>An encoder RNN reads the source one token at a time:</p>
+<p><span id="eq-encoder-recurrence"><span class="math display">\[
+h_i=f_{\text{enc}}(h_{i-1},x_i),
+\qquad i=1,\ldots,n.
+\tag{1}\]</span></span></p>
+<p>In the simplest recurrent encoder–decoder, only the final state is passed to the decoder:</p>
+<p><span id="eq-fixed-context"><span class="math display">\[
+c=h_n,
+\qquad
+s_0=c.
+\tag{2}\]</span></span></p>
+<p>The decoder then produces one target state and token distribution at a time:</p>
+<p><span id="eq-decoder-recurrence"><span class="math display">\[
+s_t=f_{\text{dec}}(s_{t-1},y_{t-1}),
+\qquad
+p(y_t\mid y_{&lt;t},x)=\operatorname{softmax}(W_o s_t+b_o).
+\tag{3}\]</span></span></p>
+<div class="cell" data-fig-width="7.2" data-layout-align="default">
+<div class="cell-output-display">
+<div id="fig-fixed-context-seq2seq" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-fixed-context-seq2seq-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<div>
+<pre class="mermaid mermaid-js" data-label="fig-fixed-context-seq2seq">flowchart LR
+    x1[Le] --&gt; h1[h₁]
+    h1 --&gt; h2[h₂]
+    x2[colis] --&gt; h2
+    h2 --&gt; h3[h₃]
+    x3[arrivera] --&gt; h3
+    h3 --&gt; h4[h₄]
+    x4[demain] --&gt; h4
+    h4 --&gt; c((c))
+    c --&gt; s1[s₁]
+    s1 --&gt; s2[s₂]
+    s2 --&gt; s3[s₃]
+    s3 --&gt; s4[s₄]
+    s1 --&gt; y1[The]
+    s2 --&gt; y2[package]
+    s3 --&gt; y3[will arrive]
+    s4 --&gt; y4[tomorrow]
+
+    classDef enc fill:#e8f2f0,stroke:#356fa8,color:#17364a
+    classDef dec fill:#f8e5df,stroke:#d95f43,color:#17364a
+    classDef context fill:#f2e9f7,stroke:#8b5bb5,color:#17364a
+    class h1,h2,h3,h4,x1,x2,x3,x4 enc
+    class s1,s2,s3,s4,y1,y2,y3,y4 dec
+    class c context
+</pre>
+</div>
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-fixed-context-seq2seq-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;3: The entire source sequence reaches every decoder step through the single context vector <span class="math inline">\(c=h_4\)</span>.
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<p>This architecture was historically important: sequence-to-sequence learning showed that a neural model could learn variable-length mappings end to end <span class="citation" data-cites="sutskever2014sequence">(<a href="#ref-sutskever2014sequence" role="doc-biblioref">Sutskever et al. 2014</a>)</span>. The fixed vector, however, forces every source detail—content, order, syntax, entities, and ambiguities—through the same narrow channel.</p>
+</section>
+<section id="sec-storage-access" class="level2" data-number="1.2">
+<h2 data-number="1.2" class="anchored" data-anchor-id="sec-storage-access"><span class="header-section-number">1.2</span> The bottleneck is storage and access</h2>
+<p>The problem is often described as insufficient storage: one vector must remember an entire sentence. That is true, but incomplete. Even if a large vector could store every detail, the decoder would still receive the <strong>same undifferentiated vector at every output step</strong>.</p>
+<div id="tbl-decoder-needs" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-tbl figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-decoder-needs-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Table&nbsp;1: Different target predictions need different parts of the source.
+</figcaption>
+<div aria-describedby="tbl-decoder-needs-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th style="text-align: right;">Decoder step</th>
+<th>Desired output</th>
+<th>Most relevant source evidence</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: right;">1</td>
+<td><em>The</em></td>
+<td>source noun phrase and target syntax</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">2</td>
+<td><em>package</em></td>
+<td><em>colis</em></td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">3</td>
+<td><em>will arrive</em></td>
+<td><em>arrivera</em></td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">4</td>
+<td><em>tomorrow</em></td>
+<td><em>demain</em></td>
+</tr>
+</tbody>
+</table>
+</div>
+</figure>
+</div>
+<p>The decoder should not have to unpack the same vector in the same way for every token. It needs an <strong>access mechanism</strong>: at step <span class="math inline">\(t\)</span>, form a request that selects the source information useful for that prediction.</p>
+<div class="callout callout-style-simple callout-important callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Important</span>The change in one sentence
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>Do not discard <span class="math inline">\(h_1,\ldots,h_n\)</span>. Keep every encoder state available, and let each decoder step retrieve a different weighted combination.</p>
+</div>
+</div>
+<div class="cell" data-fig-width="6.8" data-layout-align="default">
+<div class="cell-output-display">
+<div id="fig-bottleneck-to-access" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-bottleneck-to-access-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<div>
+<pre class="mermaid mermaid-js" data-label="fig-bottleneck-to-access">flowchart LR
+    subgraph Before[Fixed context]
+      A1[h₁] --&gt; A4[hₙ]
+      A2[h₂] --&gt; A4
+      A3[⋯] --&gt; A4
+      A4 --&gt; D1[decoder step t]
+    end
+    subgraph After[Direct access]
+      B1[h₁] --&gt; C[weighted context cₜ]
+      B2[h₂] --&gt; C
+      B3[⋯] --&gt; C
+      B4[hₙ] --&gt; C
+      Q[decoder request sₜ₋₁] --&gt; C
+      C --&gt; D2[predict yₜ]
+    end
+
+    classDef old fill:#f8e5df,stroke:#d95f43,color:#17364a
+    classDef new fill:#e8f2f0,stroke:#0f6f78,color:#17364a
+    class A1,A2,A3,A4,D1 old
+    class B1,B2,B3,B4,C,Q,D2 new
+</pre>
+</div>
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-bottleneck-to-access-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;4: Attention replaces one mandatory path through <span class="math inline">\(h_n\)</span> with direct, prediction-dependent access to all encoder memories.
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<p>Bahdanau, Cho, and Bengio introduced this learned alignment mechanism for neural machine translation <span class="citation" data-cites="bahdanau2015align">(<a href="#ref-bahdanau2015align" role="doc-biblioref">Bahdanau et al. 2015</a>)</span>. Luong, Pham, and Manning later systematized several global and local variants <span class="citation" data-cites="luong2015effective">(<a href="#ref-luong2015effective" role="doc-biblioref">Luong et al. 2015</a>)</span>.</p>
+</section>
+<section id="sec-bottleneck-synthesis" class="level2" data-number="1.3">
+<h2 data-number="1.3" class="anchored" data-anchor-id="sec-bottleneck-synthesis"><span class="header-section-number">1.3</span> Section synthesis</h2>
+<p>The recurrent encoder–decoder compresses because it discards intermediate states. Attention begins with a simple reversal of that decision: preserve the states and learn how to access them.</p>
+<p>The next question is computational: <strong>how can a model select one memory while remaining differentiable end to end?</strong></p>
+</section>
+</section>
+<section id="sec-soft-lookup" class="level1" data-number="2">
+<h1 data-number="2"><span class="header-section-number">2</span> Attention as soft lookup</h1>
+<section id="sec-keep-memories" class="level2" data-number="2.1">
+<h2 data-number="2.1" class="anchored" data-anchor-id="sec-keep-memories"><span class="header-section-number">2.1</span> Keep every source memory</h2>
+<p>After encoding four tokens, retain the matrix of source states:</p>
+<p><span id="eq-encoder-memory-matrix"><span class="math display">\[
+H=
+\begin{bmatrix}
+h_1^\top\\
+h_2^\top\\
+h_3^\top\\
+h_4^\top
+\end{bmatrix}
+\in\mathbb{R}^{4\times d_h}.
+\tag{4}\]</span></span></p>
+<p>At decoder step <span class="math inline">\(t\)</span>, the previous decoder state <span class="math inline">\(s_{t-1}\)</span> summarizes what has already been generated. It therefore acts as a request. Informally:</p>
+<blockquote class="blockquote">
+<p>“Given what I have translated so far, which source memory should influence the next word?”</p>
+</blockquote>
+<p>A hard lookup would choose one index <span class="math inline">\(i\)</span>. That discrete choice is awkward to train with ordinary backpropagation. Attention instead performs a <strong>soft lookup</strong>: assign every memory a nonnegative weight, make the weights sum to one, and retrieve their weighted average.</p>
+<div class="cell" data-fig-width="6.8" data-layout-align="default">
+<div class="cell-output-display">
+<div id="fig-soft-lookup-concept" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-soft-lookup-concept-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<div>
+<pre class="mermaid mermaid-js" data-label="fig-soft-lookup-concept">flowchart LR
+    Q[request&lt;br/&gt;query q] --&gt; S{compare}
+    K1[key k₁] --&gt; S
+    K2[key k₂] --&gt; S
+    K3[key k₃] --&gt; S
+    S --&gt; W[weights α₁, α₂, α₃]
+    V1[value v₁] --&gt; C[weighted sum c]
+    V2[value v₂] --&gt; C
+    V3[value v₃] --&gt; C
+    W --&gt; C
+
+    classDef query fill:#f8e5df,stroke:#d95f43,color:#17364a
+    classDef memory fill:#e8f2f0,stroke:#356fa8,color:#17364a
+    classDef operation fill:#f2e9f7,stroke:#8b5bb5,color:#17364a
+    class Q query
+    class K1,K2,K3,V1,V2,V3 memory
+    class S,W,C operation
+</pre>
+</div>
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-soft-lookup-concept-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;5: A query compares with every key; normalized weights determine how much of every value is retrieved.
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+</section>
+<section id="sec-three-operations" class="level2" data-number="2.2">
+<h2 data-number="2.2" class="anchored" data-anchor-id="sec-three-operations"><span class="header-section-number">2.2</span> Three operations: score, normalize, retrieve</h2>
+<p>For a query <span class="math inline">\(q\)</span> and memory pairs <span class="math inline">\((k_i,v_i)\)</span>:</p>
+<ol type="1">
+<li><p><strong>Score</strong> each query–key pair:</p>
+<p><span id="eq-attention-score"><span class="math display">\[
+e_i=\operatorname{score}(q,k_i).
+\tag{5}\]</span></span></p></li>
+<li><p><strong>Normalize</strong> all scores with softmax:</p>
+<p><span id="eq-attention-weight"><span class="math display">\[
+\alpha_i=\frac{\exp(e_i)}{\sum_j\exp(e_j)}.
+\tag{6}\]</span></span></p></li>
+<li><p><strong>Retrieve</strong> a weighted combination of values:</p>
+<p><span id="eq-attention-context"><span class="math display">\[
+c=\sum_i \alpha_i v_i.
+\tag{7}\]</span></span></p></li>
+</ol>
+<p>The weights satisfy <span class="math inline">\(\alpha_i\ge0\)</span> and <span class="math inline">\(\sum_i\alpha_i=1\)</span>. The context is therefore a convex combination of values.</p>
+<div class="callout callout-style-simple callout-important callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Important</span>Pause · exact calculation
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>Suppose one query produces the scores</p>
+<p><span class="math display">\[
+e=[1,3,0,2]
+\]</span></p>
+<p>for four scalar values</p>
+<p><span class="math display">\[
+v=[2,5,-1,3].
+\]</span></p>
+<ol type="1">
+<li>Calculate <span class="math inline">\(\alpha=\operatorname{softmax}(e)\)</span>.</li>
+<li>Calculate <span class="math inline">\(c=\sum_i\alpha_i v_i\)</span>.</li>
+<li>Which value contributes most, and why?</li>
+</ol>
+</div>
+</div>
+</section>
+<section id="sec-soft-lookup-worked" class="level2" data-number="2.3">
+<h2 data-number="2.3" class="anchored" data-anchor-id="sec-soft-lookup-worked"><span class="header-section-number">2.3</span> Worked soft lookup</h2>
+<p>First exponentiate the scores:</p>
+<div id="tbl-soft-lookup" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-tbl figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-soft-lookup-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Table&nbsp;2: Every intermediate quantity in the soft lookup. Values are rounded to three decimals.
+</figcaption>
+<div aria-describedby="tbl-soft-lookup-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<table class="caption-top table">
+<colgroup>
+<col style="width: 16%">
+<col style="width: 16%">
+<col style="width: 16%">
+<col style="width: 16%">
+<col style="width: 16%">
+<col style="width: 16%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: right;">Memory <span class="math inline">\(i\)</span></th>
+<th style="text-align: right;">Score <span class="math inline">\(e_i\)</span></th>
+<th style="text-align: right;"><span class="math inline">\(\exp(e_i)\)</span></th>
+<th style="text-align: right;">Weight <span class="math inline">\(\alpha_i\)</span></th>
+<th style="text-align: right;">Value <span class="math inline">\(v_i\)</span></th>
+<th style="text-align: right;">Contribution <span class="math inline">\(\alpha_i v_i\)</span></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">2.718</td>
+<td style="text-align: right;">0.087</td>
+<td style="text-align: right;">2</td>
+<td style="text-align: right;">0.174</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">2</td>
+<td style="text-align: right;">3</td>
+<td style="text-align: right;">20.086</td>
+<td style="text-align: right;">0.644</td>
+<td style="text-align: right;">5</td>
+<td style="text-align: right;">3.220</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">3</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">1.000</td>
+<td style="text-align: right;">0.032</td>
+<td style="text-align: right;">−1</td>
+<td style="text-align: right;">−0.032</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">4</td>
+<td style="text-align: right;">2</td>
+<td style="text-align: right;">7.389</td>
+<td style="text-align: right;">0.237</td>
+<td style="text-align: right;">3</td>
+<td style="text-align: right;">0.711</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;"><strong>Total</strong></td>
+<td style="text-align: right;"></td>
+<td style="text-align: right;"><strong>31.193</strong></td>
+<td style="text-align: right;"><strong>1.000</strong></td>
+<td style="text-align: right;"></td>
+<td style="text-align: right;"><strong>4.073</strong></td>
+</tr>
+</tbody>
+</table>
+</div>
+</figure>
+</div>
+<p>Thus,</p>
+<p><span class="math display">\[
+\alpha\approx[0.087,0.644,0.032,0.237]
+\]</span></p>
+<p>and</p>
+<p><span class="math display">\[
+c\approx
+0.087(2)+0.644(5)+0.032(-1)+0.237(3)
+=4.073.
+\]</span></p>
+<p>Memory 2 contributes most because it has the largest compatibility score. Notice that the other memories are not discarded: a soft lookup can combine evidence.</p>
+<div class="callout callout-style-simple callout-tip callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Tip</span>Numerical stability
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>Implement softmax after subtracting the maximum score:</p>
+<p><span class="math display">\[
+\operatorname{softmax}(e)_i
+=
+\frac{\exp(e_i-\max_j e_j)}{\sum_k\exp(e_k-\max_j e_j)}.
+\]</span></p>
+<p>This leaves the probabilities unchanged while preventing unnecessarily large exponentials.</p>
+</div>
+</div>
+</section>
+<section id="sec-learned-lookup" class="level2" data-number="2.4">
+<h2 data-number="2.4" class="anchored" data-anchor-id="sec-learned-lookup"><span class="header-section-number">2.4</span> What learning changes</h2>
+<p>No human assigns the scores in <a href="#tbl-soft-lookup" class="quarto-xref">Table&nbsp;2</a>. The scoring parameters are trained through the final task loss. If attending to <em>demain</em> helps predict <em>tomorrow</em>, backpropagation adjusts the projections so that similar query–key pairs receive larger scores in future examples.</p>
+<p>The attention weights are intermediate differentiable variables:</p>
+<div class="cell" data-fig-width="6.5" data-layout-align="default">
+<div class="cell-output-display">
+<div id="fig-attention-gradient-path" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-attention-gradient-path-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<div>
+<pre class="mermaid mermaid-js" data-label="fig-attention-gradient-path">flowchart LR
+    P[projection parameters] --&gt; E[scores e]
+    E --&gt; A[weights α]
+    A --&gt; C[context c]
+    C --&gt; Y[next-token distribution]
+    Y --&gt; L[loss]
+    L -. gradient .-&gt; Y
+    Y -. gradient .-&gt; C
+    C -. gradient .-&gt; A
+    A -. gradient .-&gt; E
+    E -. gradient .-&gt; P
+
+    classDef forward fill:#e8f2f0,stroke:#0f6f78,color:#17364a
+    classDef loss fill:#f8e5df,stroke:#d95f43,color:#17364a
+    class P,E,A,C,Y forward
+    class L loss
+</pre>
+</div>
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-attention-gradient-path-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;6: The translation loss supervises the attention mechanism through the context vector.
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+</section>
+<section id="sec-soft-lookup-synthesis" class="level2" data-number="2.5">
+<h2 data-number="2.5" class="anchored" data-anchor-id="sec-soft-lookup-synthesis"><span class="header-section-number">2.5</span> Section synthesis</h2>
+<p>Attention is not a mysterious new memory type. It is a differentiable retrieval rule:</p>
+<p><span class="math display">\[
+\boxed{\text{score} \rightarrow \text{normalize} \rightarrow \text{retrieve}}.
+\]</span></p>
+<p>We have not yet specified what the query, keys, and values represent. Cross-attention gives those roles a concrete meaning in translation.</p>
+</section>
+</section>
+<section id="sec-cross-attention" class="level1" data-number="3">
+<h1 data-number="3"><span class="header-section-number">3</span> Cross-attention</h1>
+<section id="sec-qkv-roles" class="level2" data-number="3.1">
+<h2 data-number="3.1" class="anchored" data-anchor-id="sec-qkv-roles"><span class="header-section-number">3.1</span> Queries, keys, and values are roles</h2>
+<p>In encoder–decoder attention:</p>
+<div id="tbl-cross-attention-roles" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-tbl figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-cross-attention-roles-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Table&nbsp;3: The same source state can be projected once as a key and once as a value.
+</figcaption>
+<div aria-describedby="tbl-cross-attention-roles-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<table class="caption-top table">
+<colgroup>
+<col style="width: 33%">
+<col style="width: 33%">
+<col style="width: 33%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Role</th>
+<th>Comes from</th>
+<th>Question answered</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Query <span class="math inline">\(q_t\)</span></td>
+<td>current or previous decoder state</td>
+<td>What information is needed now?</td>
+</tr>
+<tr class="even">
+<td>Keys <span class="math inline">\(k_i\)</span></td>
+<td>encoder states</td>
+<td>Which source position matches the request?</td>
+</tr>
+<tr class="odd">
+<td>Values <span class="math inline">\(v_i\)</span></td>
+<td>encoder states</td>
+<td>What content should be retrieved?</td>
+</tr>
+</tbody>
+</table>
+</div>
+</figure>
+</div>
+<p>A common projected form is</p>
+<p><span id="eq-cross-projections"><span class="math display">\[
+q_t=s_{t-1}W_Q,
+\qquad
+k_i=h_iW_K,
+\qquad
+v_i=h_iW_V.
+\tag{8}\]</span></span></p>
+<p>The key and value originate from the same source state but serve different purposes. A useful analogy is a library:</p>
+<ul>
+<li>the <strong>key</strong> is the catalog description used to decide relevance;</li>
+<li>the <strong>value</strong> is the book content retrieved after the match.</li>
+</ul>
+</section>
+<section id="sec-scoring-functions" class="level2" data-number="3.2">
+<h2 data-number="3.2" class="anchored" data-anchor-id="sec-scoring-functions"><span class="header-section-number">3.2</span> Scoring functions</h2>
+<p>Several differentiable compatibility functions are possible.</p>
+<section id="dot-product" class="level3" data-number="3.2.1">
+<h3 data-number="3.2.1" class="anchored" data-anchor-id="dot-product"><span class="header-section-number">3.2.1</span> Dot product</h3>
+<p><span id="eq-dot-score"><span class="math display">\[
+e_{ti}=q_t^\top k_i.
+\tag{9}\]</span></span></p>
+<p>Dot products are efficient and become the standard form in the Transformer.</p>
+</section>
+<section id="additive-attention" class="level3" data-number="3.2.2">
+<h3 data-number="3.2.2" class="anchored" data-anchor-id="additive-attention"><span class="header-section-number">3.2.2</span> Additive attention</h3>
+<p><span id="eq-additive-score"><span class="math display">\[
+e_{ti}=v_a^\top\tanh(W_q q_t+W_k k_i+b_a).
+\tag{10}\]</span></span></p>
+<p>This small neural network was used in the original alignment model <span class="citation" data-cites="bahdanau2015align">(<a href="#ref-bahdanau2015align" role="doc-biblioref">Bahdanau et al. 2015</a>)</span>. Additive and multiplicative variants can learn similar behaviors, but their dimensions, parameter counts, and computational profiles differ <span class="citation" data-cites="luong2015effective">(<a href="#ref-luong2015effective" role="doc-biblioref">Luong et al. 2015</a>)</span>.</p>
+</section>
+</section>
+<section id="sec-one-alignment" class="level2" data-number="3.3">
+<h2 data-number="3.3" class="anchored" data-anchor-id="sec-one-alignment"><span class="header-section-number">3.3</span> One decoder query creates one alignment</h2>
+<p>Suppose the decoder is ready to produce <em>tomorrow</em>. Its query is compared with all French source keys:</p>
+<div id="tbl-tomorrow-alignment" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-tbl figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-tomorrow-alignment-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Table&nbsp;4: A plausible alignment for generating <em>tomorrow</em>.
+</figcaption>
+<div aria-describedby="tbl-tomorrow-alignment-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th style="text-align: right;">Source position <span class="math inline">\(i\)</span></th>
+<th>1</th>
+<th>2</th>
+<th>3</th>
+<th>4</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: right;">Token</td>
+<td>Le</td>
+<td>colis</td>
+<td>arrivera</td>
+<td>demain</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">Score <span class="math inline">\(e_{ti}\)</span></td>
+<td>0.2</td>
+<td>0.1</td>
+<td>0.8</td>
+<td>2.6</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">Weight <span class="math inline">\(\alpha_{ti}\)</span></td>
+<td>0.069</td>
+<td>0.062</td>
+<td>0.126</td>
+<td><strong>0.743</strong></td>
+</tr>
+</tbody>
+</table>
+</div>
+</figure>
+</div>
+<p>The context for this decoder step is</p>
+<p><span id="eq-cross-context"><span class="math display">\[
+c_t=\sum_{i=1}^{4}\alpha_{ti}v_i.
+\tag{11}\]</span></span></p>
+<p>The next-token distribution can use both decoder state and retrieved context:</p>
+<p><span id="eq-attentive-decoder-output"><span class="math display">\[
+p(y_t\mid y_{&lt;t},x)
+=
+\operatorname{softmax}\!\left(W_o[s_t;c_t]+b_o\right).
+\tag{12}\]</span></span></p>
+<div class="cell" data-fig-width="6.9" data-layout-align="default">
+<div class="cell-output-display">
+<div id="fig-cross-attention-tomorrow" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-cross-attention-tomorrow-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<div>
+<pre class="mermaid mermaid-js" data-label="fig-cross-attention-tomorrow">flowchart LR
+    Q[decoder query&lt;br/&gt;need next word] --&gt; S{scores}
+    L[Le&lt;br/&gt;.069] --&gt; C[context cₜ]
+    P[colis&lt;br/&gt;.062] --&gt; C
+    A[arrivera&lt;br/&gt;.126] --&gt; C
+    D[demain&lt;br/&gt;.743] ==&gt; C
+    S --&gt; L
+    S --&gt; P
+    S --&gt; A
+    S --&gt; D
+    C --&gt; T[tomorrow]
+
+    classDef query fill:#f8e5df,stroke:#d95f43,color:#17364a
+    classDef memory fill:#e8f2f0,stroke:#356fa8,color:#17364a
+    classDef focus fill:#fff3d6,stroke:#b98a1d,color:#17364a
+    class Q,S,T query
+    class L,P,A memory
+    class D,C focus
+</pre>
+</div>
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-cross-attention-tomorrow-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;7: The decoder query for the next target token assigns most weight to the source position containing <em>demain</em>.
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+</section>
+<section id="sec-changing-query" class="level2" data-number="3.4">
+<h2 data-number="3.4" class="anchored" data-anchor-id="sec-changing-query"><span class="header-section-number">3.4</span> A new query creates a new alignment</h2>
+<p>When the decoder moves from <em>package</em> to <em>will arrive</em> to <em>tomorrow</em>, the source keys and values stay fixed, but the query changes. Therefore the attention distribution changes:</p>
+<p><span id="eq-query-specific-alignment"><span class="math display">\[
+\alpha_t
+=
+\operatorname{softmax}(q_tK^\top).
+\tag{13}\]</span></span></p>
+<div id="tbl-changing-alignments" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-tbl figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-changing-alignments-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Table&nbsp;5: Cross-attention is conditional retrieval, not one global sentence summary.
+</figcaption>
+<div aria-describedby="tbl-changing-alignments-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>Target step</th>
+<th>Query intent</th>
+<th>Likely strongest source key</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><em>package</em></td>
+<td>retrieve the translated entity</td>
+<td><em>colis</em></td>
+</tr>
+<tr class="even">
+<td><em>will arrive</em></td>
+<td>retrieve the event</td>
+<td><em>arrivera</em></td>
+</tr>
+<tr class="odd">
+<td><em>tomorrow</em></td>
+<td>retrieve the time expression</td>
+<td><em>demain</em></td>
+</tr>
+</tbody>
+</table>
+</div>
+</figure>
+</div>
+<p>An attention matrix places one decoder query on each row and one source key on each column. Heatmaps of this matrix can reveal plausible alignments, diffuse uncertainty, repeated coverage, or systematic errors.</p>
+<div class="callout callout-style-simple callout-warning callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Warning</span>An attention heatmap is evidence—not a proof of reasoning
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>Weights show how values are mixed at a particular attention operation. They do not, by themselves, establish a complete causal explanation of the model prediction. Alternative weight patterns can sometimes produce similar outputs <span class="citation" data-cites="jain2019attention">(<a href="#ref-jain2019attention" role="doc-biblioref">Jain and Wallace 2019</a>)</span>. Use heatmaps as diagnostic evidence together with interventions, errors, and other analyses.</p>
+</div>
+</div>
+</section>
+<section id="sec-cross-attention-synthesis" class="level2" data-number="3.5">
+<h2 data-number="3.5" class="anchored" data-anchor-id="sec-cross-attention-synthesis"><span class="header-section-number">3.5</span> Section synthesis</h2>
+<p>Cross-attention links two sequences:</p>
+<ul>
+<li>queries come from the decoder;</li>
+<li>keys and values come from the encoder;</li>
+<li>each target step retrieves a different source context.</li>
+</ul>
+<p>The same lookup can operate without a separate encoder and decoder. If queries, keys, and values all come from one sequence, we obtain self-attention.</p>
+</section>
+</section>
+<section id="sec-self-attention" class="level1" data-number="4">
+<h1 data-number="4"><span class="header-section-number">4</span> Self-attention</h1>
+<section id="sec-self-origin" class="level2" data-number="4.1">
+<h2 data-number="4.1" class="anchored" data-anchor-id="sec-self-origin"><span class="header-section-number">4.1</span> Change the origin, keep the mechanism</h2>
+<p>Cross-attention and self-attention use the same score–normalize–retrieve rule. Only the source of the roles changes.</p>
+<div id="tbl-cross-self" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-tbl figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-cross-self-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Table&nbsp;6: Attention is named by where its roles originate.
+</figcaption>
+<div aria-describedby="tbl-cross-self-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<table class="caption-top table">
+<colgroup>
+<col style="width: 25%">
+<col style="width: 25%">
+<col style="width: 25%">
+<col style="width: 25%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Mechanism</th>
+<th>Queries</th>
+<th>Keys</th>
+<th>Values</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Cross-attention</td>
+<td>target/decoder sequence</td>
+<td>source/encoder sequence</td>
+<td>source/encoder sequence</td>
+</tr>
+<tr class="even">
+<td>Self-attention</td>
+<td>one sequence</td>
+<td>the same sequence</td>
+<td>the same sequence</td>
+</tr>
+</tbody>
+</table>
+</div>
+</figure>
+</div>
+<p>For an input matrix <span class="math inline">\(X\in\mathbb{R}^{n\times d_{model}}\)</span>,</p>
+<p><span id="eq-self-projections"><span class="math display">\[
+Q=XW_Q,
+\qquad
+K=XW_K,
+\qquad
+V=XW_V.
+\tag{14}\]</span></span></p>
+<p>The same token vector therefore produces three different learned views: what it asks for, how it advertises itself for matching, and what content it offers if selected.</p>
+</section>
+<section id="sec-pronoun-example" class="level2" data-number="4.2">
+<h2 data-number="4.2" class="anchored" data-anchor-id="sec-pronoun-example"><span class="header-section-number">4.2</span> A pronoun performs a lookup</h2>
+<p>Keep the sentence visible:</p>
+<blockquote class="blockquote">
+<p>The <strong>animal</strong> was tired because <strong>it</strong> ran.</p>
+</blockquote>
+<p>The token <em>it</em> is ambiguous in isolation. Its query can compare against every key in the sentence. A plausible distribution is:</p>
+<div id="tbl-pronoun-weights" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-tbl figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-pronoun-weights-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Table&nbsp;7: An illustrative self-attention distribution for contextualizing <em>it</em>.
+</figcaption>
+<div aria-describedby="tbl-pronoun-weights-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>Key token</th>
+<th style="text-align: right;">The</th>
+<th style="text-align: right;">animal</th>
+<th style="text-align: right;">was</th>
+<th style="text-align: right;">tired</th>
+<th style="text-align: right;">because</th>
+<th style="text-align: right;">it</th>
+<th style="text-align: right;">ran</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Weight from query <em>it</em></td>
+<td style="text-align: right;">.05</td>
+<td style="text-align: right;"><strong>.55</strong></td>
+<td style="text-align: right;">.05</td>
+<td style="text-align: right;">.15</td>
+<td style="text-align: right;">.05</td>
+<td style="text-align: right;">.10</td>
+<td style="text-align: right;">.05</td>
+</tr>
+</tbody>
+</table>
+</div>
+</figure>
+</div>
+<p>The contextual output is</p>
+<p><span id="eq-pronoun-context"><span class="math display">\[
+z_{it}
+=
+.05v_{The}+.55v_{animal}+.05v_{was}
++.15v_{tired}+.05v_{because}+.10v_{it}+.05v_{ran}.
+\tag{15}\]</span></span></p>
+<div class="cell" data-fig-width="7" data-layout-align="default">
+<div class="cell-output-display">
+<div id="fig-pronoun-self-attention" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-pronoun-self-attention-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<div>
+<pre class="mermaid mermaid-js" data-label="fig-pronoun-self-attention">flowchart TB
+    T[The · .05] --&gt; Z[contextual “it” z₆]
+    A[animal · .55] ==&gt; Z
+    W[was · .05] --&gt; Z
+    R[tired · .15] --&gt; Z
+    B[because · .05] --&gt; Z
+    I[it · .10] --&gt; Z
+    N[ran · .05] --&gt; Z
+
+    classDef ordinary fill:#e8f2f0,stroke:#356fa8,color:#17364a
+    classDef focus fill:#fff3d6,stroke:#b98a1d,color:#17364a
+    classDef output fill:#f2e9f7,stroke:#8b5bb5,color:#17364a
+    class T,W,R,B,I,N ordinary
+    class A focus
+    class Z output
+</pre>
+</div>
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-pronoun-self-attention-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;8: The query at <em>it</em> retrieves a weighted mixture from the same sentence, with the strongest illustrative connection to <em>animal</em>.
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<p>The output at position 6 is no longer a representation of <em>it</em> alone. It is <em>it interpreted in this sentence</em>.</p>
+</section>
+<section id="sec-every-token" class="level2" data-number="4.3">
+<h2 data-number="4.3" class="anchored" data-anchor-id="sec-every-token"><span class="header-section-number">4.3</span> Every token asks its own question</h2>
+<p>Self-attention does not only contextualize the pronoun. Every position <span class="math inline">\(i\)</span> supplies its own query <span class="math inline">\(q_i\)</span>, produces its own distribution over all keys, and receives its own output <span class="math inline">\(z_i\)</span>:</p>
+<p><span id="eq-every-token-context"><span class="math display">\[
+z_i=\sum_{j=1}^{n}\alpha_{ij}v_j.
+\tag{16}\]</span></span></p>
+<p>All <span class="math inline">\(n^2\)</span> scores can be computed together:</p>
+<p><span id="eq-score-matrix"><span class="math display">\[
+S=QK^\top
+\in\mathbb{R}^{n\times n},
+\tag{17}\]</span></span></p>
+<p><span id="eq-self-attention-matrix"><span class="math display">\[
+A=\operatorname{softmax}_{row}(S),
+\qquad
+Z=AV.
+\tag{18}\]</span></span></p>
+<p>For our seven-token sentence, the dimensions are inspectable:</p>
+<div class="cell" data-fig-width="7.2" data-layout-align="default">
+<div class="cell-output-display">
+<div id="fig-self-attention-matrices" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-self-attention-matrices-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<div>
+<pre class="mermaid mermaid-js" data-label="fig-self-attention-matrices">%%{init: {"themeVariables": {"fontSize": "18px"}, "flowchart": {"nodeSpacing": 28, "rankSpacing": 48, "curve": "basis"}}}%%
+flowchart LR
+    X["INPUTS&lt;br/&gt;&lt;b&gt;X&lt;/b&gt;&lt;br/&gt;7 × d_model"] --&gt; P(("PROJECT"))
+
+    subgraph Roles["LEARNED ROLES"]
+      direction TB
+      Q["QUERIES&lt;br/&gt;&lt;b&gt;Q = XWQ&lt;/b&gt;&lt;br/&gt;7 × dₖ"]
+      K["KEYS&lt;br/&gt;&lt;b&gt;K = XWK&lt;/b&gt;&lt;br/&gt;7 × dₖ"]
+      V["VALUES&lt;br/&gt;&lt;b&gt;V = XWV&lt;/b&gt;&lt;br/&gt;7 × dᵥ"]
+    end
+
+    P --&gt; Q
+    P --&gt; K
+    P --&gt; V
+    Q --&gt; S["ALL SCORES&lt;br/&gt;&lt;b&gt;S = QKᵀ&lt;/b&gt;&lt;br/&gt;7 × 7"]
+    K --&gt; S
+    S --&gt; A["ROW-WISE SOFTMAX&lt;br/&gt;&lt;b&gt;A = softmax(S)&lt;/b&gt;&lt;br/&gt;rows sum to 1"]
+    A --&gt; Z["ALL OUTPUTS&lt;br/&gt;&lt;b&gt;Z = AV&lt;/b&gt;&lt;br/&gt;7 × d_v"]
+    V --&gt; Z
+
+    classDef input fill:#eef4fa,stroke:#356fa8,stroke-width:3px,color:#17364a,font-size:18px
+    classDef query fill:#ffffff,stroke:#356fa8,stroke-width:3px,color:#17364a,font-size:18px
+    classDef key fill:#f7f1fb,stroke:#9a63c7,stroke-width:3px,color:#17364a,font-size:18px
+    classDef value fill:#fff8e7,stroke:#dca51e,stroke-width:3px,color:#17364a,font-size:18px
+    classDef operation fill:#f7f1fb,stroke:#9a63c7,stroke-width:3px,color:#17364a,font-size:18px
+    classDef output fill:#eef7f6,stroke:#178f91,stroke-width:3px,color:#17364a,font-size:18px
+    class X,P input
+    class Q query
+    class K key
+    class V value
+    class S,A operation
+    class Z output
+    style Roles fill:transparent,stroke:#b8c3c8,stroke-width:2px,stroke-dasharray:6 5,color:#62747d
+</pre>
+</div>
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-self-attention-matrices-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;9: Matrix multiplication performs all seven self-attention lookups together.
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<p>Row <span class="math inline">\(i\)</span> of <span class="math inline">\(A\)</span> contains the weights produced by query <span class="math inline">\(q_i\)</span>. Row <span class="math inline">\(i\)</span> of <span class="math inline">\(Z\)</span> is the context retrieved for position <span class="math inline">\(i\)</span>.</p>
+</section>
+<section id="sec-short-paths" class="level2" data-number="4.4">
+<h2 data-number="4.4" class="anchored" data-anchor-id="sec-short-paths"><span class="header-section-number">4.4</span> Shorter paths and parallel computation</h2>
+<p>In a recurrent network, information from position 2 to position 6 crosses four sequential state updates. In one self-attention layer, a learned edge can connect those positions directly.</p>
+<div id="tbl-rnn-self-attention" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-tbl figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-rnn-self-attention-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Table&nbsp;8: Self-attention changes both the information path and the computational trade-off.
+</figcaption>
+<div aria-describedby="tbl-rnn-self-attention-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<table class="caption-top table">
+<colgroup>
+<col style="width: 33%">
+<col style="width: 33%">
+<col style="width: 33%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Property</th>
+<th>Recurrent layer</th>
+<th>Self-attention layer</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Long-range path length</td>
+<td>grows with distance</td>
+<td>one attention edge</td>
+</tr>
+<tr class="even">
+<td>Training across positions</td>
+<td>sequential</td>
+<td>parallel matrix operations</td>
+</tr>
+<tr class="odd">
+<td>Pairwise interaction cost</td>
+<td>linear per recurrent step</td>
+<td>quadratic in sequence length</td>
+</tr>
+<tr class="even">
+<td>Explicit notion of order</td>
+<td>recurrence provides it</td>
+<td>must be supplied separately</td>
+</tr>
+</tbody>
+</table>
+</div>
+</figure>
+</div>
+<p>The quadratic <span class="math inline">\(n\times n\)</span> score matrix is powerful but can become expensive for very long sequences. This limitation motivates later work on sparse, local, linear, and memory-efficient attention. It does not change the basic lookup derived here.</p>
+</section>
+<section id="sec-self-synthesis" class="level2" data-number="4.5">
+<h2 data-number="4.5" class="anchored" data-anchor-id="sec-self-synthesis"><span class="header-section-number">4.5</span> Section synthesis</h2>
+<p>Self-attention creates direct, context-dependent token representations and evaluates all queries in parallel. Two practical questions remain:</p>
+<ol type="1">
+<li>Why do dot products become unstable as vector width grows?</li>
+<li>How can a language model prevent a position from reading future tokens?</li>
+</ol>
+<p>A third modeling question will follow: can one attention distribution capture every useful relation?</p>
+</section>
+</section>
+<section id="sec-modern-attention" class="level1" data-number="5">
+<h1 data-number="5"><span class="header-section-number">5</span> Modern attention</h1>
+<section id="sec-attention-scaling" class="level2" data-number="5.1">
+<h2 data-number="5.1" class="anchored" data-anchor-id="sec-attention-scaling"><span class="header-section-number">5.1</span> Why scale dot products?</h2>
+<p>Consider a query and key with four matching coordinates:</p>
+<p><span class="math display">\[
+q=[1,1,1,1],
+\qquad
+k=[1,1,1,1].
+\]</span></p>
+<p>Their dot product is</p>
+<p><span class="math display">\[
+q^\top k=1+1+1+1=4.
+\]</span></p>
+<p>With wider random vectors, more products are summed. Under common independence assumptions, if query and key coordinates have mean zero and variance one, the dot product has variance proportional to <span class="math inline">\(d_k\)</span>:</p>
+<p><span class="math display">\[
+\operatorname{Var}(q^\top k)=d_k.
+\]</span></p>
+<p>Dividing by <span class="math inline">\(\sqrt{d_k}\)</span> restores an approximately unit variance:</p>
+<p><span class="math display">\[
+\operatorname{Var}\!\left(\frac{q^\top k}{\sqrt{d_k}}\right)\approx1.
+\]</span></p>
+<p>This matters because large logits make softmax extremely sharp. Probabilities approach zero or one, where useful gradients may become small <span class="citation" data-cites="vaswani2017attention">(<a href="#ref-vaswani2017attention" role="doc-biblioref">Vaswani et al. 2017</a>)</span>.</p>
+<div class="callout callout-style-simple callout-important callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Important</span>Pause · compare two distributions
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>Given scores <span class="math inline">\([4,2,0]\)</span> and <span class="math inline">\(d_k=4\)</span>, compare:</p>
+<p><span class="math display">\[
+\operatorname{softmax}([4,2,0])
+\]</span></p>
+<p>with</p>
+<p><span class="math display">\[
+\operatorname{softmax}\!\left(\frac{[4,2,0]}{\sqrt4}\right).
+\]</span></p>
+<p>Which distribution leaves more probability for alternatives?</p>
+</div>
+</div>
+</section>
+<section id="sec-scaling-worked" class="level2" data-number="5.2">
+<h2 data-number="5.2" class="anchored" data-anchor-id="sec-scaling-worked"><span class="header-section-number">5.2</span> Worked scaling example</h2>
+<p>Since <span class="math inline">\(\sqrt{d_k}=2\)</span>, the scaled scores are <span class="math inline">\([2,1,0]\)</span>.</p>
+<div id="tbl-scaled-softmax" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-tbl figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-scaled-softmax-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Table&nbsp;9: Scaling preserves the score ranking but reduces accidental overconfidence.
+</figcaption>
+<div aria-describedby="tbl-scaled-softmax-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<table class="caption-top table">
+<colgroup>
+<col style="width: 20%">
+<col style="width: 20%">
+<col style="width: 20%">
+<col style="width: 20%">
+<col style="width: 20%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: right;">Candidate</th>
+<th style="text-align: right;">Unscaled score</th>
+<th style="text-align: right;">Unscaled weight</th>
+<th style="text-align: right;">Scaled score</th>
+<th style="text-align: right;">Scaled weight</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">4</td>
+<td style="text-align: right;"><strong>0.867</strong></td>
+<td style="text-align: right;">2</td>
+<td style="text-align: right;"><strong>0.665</strong></td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">2</td>
+<td style="text-align: right;">2</td>
+<td style="text-align: right;">0.117</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">0.245</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">3</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0.016</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0.090</td>
+</tr>
+</tbody>
+</table>
+</div>
+</figure>
+</div>
+<p>The complete operator is therefore</p>
+<p><span id="eq-scaled-dot-product-attention"><span class="math display">\[
+\operatorname{Attention}(Q,K,V)
+=
+\operatorname{softmax}\!\left(
+\frac{QK^\top}{\sqrt{d_k}}
+\right)V.
+\tag{19}\]</span></span></p>
+</section>
+<section id="sec-causal-mask" class="level2" data-number="5.3">
+<h2 data-number="5.3" class="anchored" data-anchor-id="sec-causal-mask"><span class="header-section-number">5.3</span> Causal masking: do not read tomorrow</h2>
+<p>Suppose an autoregressive language model is trained on:</p>
+<pre class="text"><code>The animal ran home</code></pre>
+<p>At position 3, the task is to predict the next token <em>home</em> from the prefix <em>The animal ran</em>. Unrestricted self-attention would allow the query at position 3 to inspect position 4, leaking the answer.</p>
+<p>The causal rule is:</p>
+<p><span id="eq-causal-rule"><span class="math display">\[
+\text{query position }i\text{ may attend to key position }j
+\quad\text{only if}\quad j\le i.
+\tag{20}\]</span></span></p>
+<p>Define an additive mask <span class="math inline">\(M\)</span>:</p>
+<p><span id="eq-causal-mask"><span class="math display">\[
+M_{ij}=
+\begin{cases}
+0, &amp; j\le i,\\
+-\infty, &amp; j&gt;i.
+\end{cases}
+\tag{21}\]</span></span></p>
+<p>For four positions:</p>
+<div id="tbl-causal-mask" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-tbl figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-causal-mask-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Table&nbsp;10: The lower-triangular causal mask.
+</figcaption>
+<div aria-describedby="tbl-causal-mask-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th style="text-align: right;">Query <span class="math inline">\(i\)</span> &nbsp;Key <span class="math inline">\(j\)</span></th>
+<th style="text-align: center;">1</th>
+<th style="text-align: center;">2</th>
+<th style="text-align: center;">3</th>
+<th style="text-align: center;">4</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: right;">1</td>
+<td style="text-align: center;">✓</td>
+<td style="text-align: center;"><span class="math inline">\(-\infty\)</span></td>
+<td style="text-align: center;"><span class="math inline">\(-\infty\)</span></td>
+<td style="text-align: center;"><span class="math inline">\(-\infty\)</span></td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">2</td>
+<td style="text-align: center;">✓</td>
+<td style="text-align: center;">✓</td>
+<td style="text-align: center;"><span class="math inline">\(-\infty\)</span></td>
+<td style="text-align: center;"><span class="math inline">\(-\infty\)</span></td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">3</td>
+<td style="text-align: center;">✓</td>
+<td style="text-align: center;">✓</td>
+<td style="text-align: center;">✓</td>
+<td style="text-align: center;"><span class="math inline">\(-\infty\)</span></td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">4</td>
+<td style="text-align: center;">✓</td>
+<td style="text-align: center;">✓</td>
+<td style="text-align: center;">✓</td>
+<td style="text-align: center;">✓</td>
+</tr>
+</tbody>
+</table>
+</div>
+</figure>
+</div>
+<p>The masked operation is</p>
+<p><span class="math display">\[
+\widetilde S
+=
+\frac{QK^\top}{\sqrt{d_k}}+M,
+\]</span></p>
+<p><span id="eq-masked-attention"><span class="math display">\[
+A=\operatorname{softmax}_{row}(\widetilde S),
+\qquad
+Z=AV.
+\tag{22}\]</span></span></p>
+<p>Because <span class="math inline">\(\exp(-\infty)=0\)</span>, every forbidden future weight becomes zero. All positions can still be processed in parallel during training; the mask controls information, not execution order.</p>
+<div class="cell" data-fig-width="6.6" data-layout-align="default">
+<div class="cell-output-display">
+<div id="fig-causal-mask-flow" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-causal-mask-flow-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<div>
+<pre class="mermaid mermaid-js" data-label="fig-causal-mask-flow">flowchart LR
+    S[scaled scores&lt;br/&gt;QKᵀ / √dₖ] --&gt; P[add triangular mask M]
+    P --&gt; N[row-wise softmax]
+    N --&gt; A[future weights = 0]
+    A --&gt; Z[weighted values Z]
+
+    classDef score fill:#e8f2f0,stroke:#356fa8,color:#17364a
+    classDef mask fill:#f8e5df,stroke:#d95f43,color:#17364a
+    classDef output fill:#e8f2f0,stroke:#0f6f78,color:#17364a
+    class S score
+    class P mask
+    class N,A,Z output
+</pre>
+</div>
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-causal-mask-flow-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;10: Masking occurs before softmax, converting forbidden future connections into zero attention weight.
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+</section>
+<section id="sec-multihead-motivation" class="level2" data-number="5.4">
+<h2 data-number="5.4" class="anchored" data-anchor-id="sec-multihead-motivation"><span class="header-section-number">5.4</span> Why use multiple heads?</h2>
+<p>Consider:</p>
+<blockquote class="blockquote">
+<p>The <strong>animal</strong> did not <strong>cross</strong> the <strong>street</strong> because <strong>it</strong> was <strong>wide</strong>.</p>
+</blockquote>
+<p>For the token <em>it</em>, several relations may be useful:</p>
+<ul>
+<li>reference: <em>it</em> <span class="math inline">\(\rightarrow\)</span> <em>street</em>;</li>
+<li>description: <em>it</em> <span class="math inline">\(\rightarrow\)</span> <em>wide</em>;</li>
+<li>event participants: <em>cross</em> <span class="math inline">\(\rightarrow\)</span> <em>animal</em>, <em>street</em>.</li>
+</ul>
+<p>A single head produces one attention distribution per query. It can mix several signals, but a multi-head layer provides distinct learned projection spaces:</p>
+<p><span id="eq-one-head"><span class="math display">\[
+head_r
+=
+\operatorname{Attention}(QW_r^Q,KW_r^K,VW_r^V),
+\tag{23}\]</span></span></p>
+<p><span id="eq-multihead"><span class="math display">\[
+\operatorname{MultiHead}(Q,K,V)
+=
+\operatorname{Concat}(head_1,\ldots,head_h)W^O.
+\tag{24}\]</span></span></p>
+<div class="cell" data-fig-width="7.2" data-layout-align="default">
+<div class="cell-output-display">
+<div id="fig-multihead-parallel" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-multihead-parallel-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<div>
+<pre class="mermaid mermaid-js" data-label="fig-multihead-parallel">%%{init: {"themeVariables": {"fontSize": "18px"}, "flowchart": {"nodeSpacing": 30, "rankSpacing": 52, "curve": "basis"}}}%%
+flowchart LR
+    X["SAME INPUT&lt;br/&gt;&lt;b&gt;X&lt;/b&gt;"] --&gt; B(("SPLIT"))
+
+    subgraph Heads["PARALLEL HEADS"]
+      direction TB
+      H1["&lt;b&gt;HEAD 1&lt;/b&gt;&lt;br/&gt;own WQ¹, WK¹, WV¹&lt;br/&gt;reference view"]
+      H2["&lt;b&gt;HEAD 2&lt;/b&gt;&lt;br/&gt;own WQ², WK², WV²&lt;br/&gt;description view"]
+      H3["&lt;b&gt;HEAD 3&lt;/b&gt;&lt;br/&gt;own WQ³, WK³, WV³&lt;br/&gt;participant view"]
+    end
+
+    B --&gt; H1
+    B --&gt; H2
+    B --&gt; H3
+    H1 --&gt; C["&lt;b&gt;CONCATENATE&lt;/b&gt;&lt;br/&gt;[head₁ ; head₂ ; head₃]"]
+    H2 --&gt; C
+    H3 --&gt; C
+    C --&gt; O["&lt;b&gt;MIX&lt;/b&gt;&lt;br/&gt;multiply by Wᴼ"]
+    O --&gt; Z["ONE OUTPUT&lt;br/&gt;&lt;b&gt;Z&lt;/b&gt;&lt;br/&gt;per token"]
+
+    classDef input fill:#eef4fa,stroke:#356fa8,stroke-width:3px,color:#17364a,font-size:18px
+    classDef h1 fill:#f7f1fb,stroke:#9a63c7,stroke-width:3px,color:#17364a,font-size:18px
+    classDef h2 fill:#eef7f6,stroke:#178f91,stroke-width:3px,color:#17364a,font-size:18px
+    classDef h3 fill:#fff8e7,stroke:#dca51e,stroke-width:3px,color:#17364a,font-size:18px
+    classDef merge fill:#fff0ec,stroke:#d95f43,stroke-width:3px,color:#17364a,font-size:18px
+    class X input
+    class B input
+    class H1 h1
+    class H2 h2
+    class H3 h3
+    class C,O merge
+    class Z input
+    style Heads fill:transparent,stroke:#b8c3c8,stroke-width:2px,stroke-dasharray:6 5,color:#62747d
+</pre>
+</div>
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-multihead-parallel-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;11: Every head receives the same input but learns separate query, key, and value projections before the results are concatenated and mixed.
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<p>The colored linguistic roles are an explanatory possibility, not a constraint. The architecture does not label a head “coreference” or “syntax.” Analyses have nevertheless found heads correlated with positional patterns, delimiters, syntactic dependencies, and coreference <span class="citation" data-cites="clark2019bert">(<a href="#ref-clark2019bert" role="doc-biblioref">Clark et al. 2019</a>)</span>.</p>
+</section>
+<section id="sec-attention-visualization" class="level2" data-number="5.5">
+<h2 data-number="5.5" class="anchored" data-anchor-id="sec-attention-visualization"><span class="header-section-number">5.5</span> Reading attention visualizations</h2>
+<p>Two common views are useful.</p>
+<section id="attention-heatmap" class="level3" data-number="5.5.1">
+<h3 data-number="5.5.1" class="anchored" data-anchor-id="attention-heatmap"><span class="header-section-number">5.5.1</span> Attention heatmap</h3>
+<p>Rows represent queries, columns represent keys, and color intensity represents <span class="math inline">\(\alpha_{ij}\)</span>. A heatmap is effective for inspecting all pairwise weights in one head.</p>
+</section>
+<section id="connection-view" class="level3" data-number="5.5.2">
+<h3 data-number="5.5.2" class="anchored" data-anchor-id="connection-view"><span class="header-section-number">5.5.2</span> Connection view</h3>
+<p>Tokens are connected by lines whose opacity or width represents attention strength. This view makes a small number of strong relations visually immediate.</p>
+<p><a href="https://github.com/jessevig/bertviz">BertViz</a> provides head, model, and neuron-oriented views for Transformer attention <span class="citation" data-cites="vig2019multiscale">(<a href="#ref-vig2019multiscale" role="doc-biblioref">Vig 2019</a>)</span>. For a research example connecting heads with linguistic relations, read <a href="https://aclanthology.org/W19-4828/">Clark et al., <em>What Does BERT Look At?</em></a> <span class="citation" data-cites="clark2019bert">(<a href="#ref-clark2019bert" role="doc-biblioref">Clark et al. 2019</a>)</span>.</p>
+<div class="callout callout-style-simple callout-warning callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Warning</span>Interpret with care
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>An attractive attention line is not automatically the reason for a prediction. Inspect:</p>
+<ul>
+<li>several heads and layers, not one selected picture;</li>
+<li>whether the pattern is stable across examples;</li>
+<li>how changing or removing attended tokens changes the output;</li>
+<li>whether value vectors and downstream layers preserve the apparent relation; and</li>
+<li>whether another attention distribution produces a similar result.</li>
+</ul>
+<p>Attention visualization is a valuable microscope, not a complete theory of model reasoning <span class="citation" data-cites="jain2019attention">(<a href="#ref-jain2019attention" role="doc-biblioref">Jain and Wallace 2019</a>)</span>.</p>
+</div>
+</div>
+</section>
+</section>
+<section id="sec-modern-synthesis" class="level2" data-number="5.6">
+<h2 data-number="5.6" class="anchored" data-anchor-id="sec-modern-synthesis"><span class="header-section-number">5.6</span> Modern attention in one view</h2>
+<div id="tbl-modern-attention" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-tbl figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-modern-attention-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Table&nbsp;11: Three additions that form the modern attention operator.
+</figcaption>
+<div aria-describedby="tbl-modern-attention-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<table class="caption-top table">
+<colgroup>
+<col style="width: 33%">
+<col style="width: 33%">
+<col style="width: 33%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Mechanism</th>
+<th>Operation</th>
+<th>Problem addressed</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Scaling</td>
+<td>divide logits by <span class="math inline">\(\sqrt{d_k}\)</span></td>
+<td>softmax saturation as width grows</td>
+</tr>
+<tr class="even">
+<td>Causal mask</td>
+<td>add <span class="math inline">\(-\infty\)</span> above the diagonal</td>
+<td>future-token leakage</td>
+</tr>
+<tr class="odd">
+<td>Multiple heads</td>
+<td>parallel projected lookups</td>
+<td>reliance on one similarity space</td>
+</tr>
+</tbody>
+</table>
+</div>
+</figure>
+</div>
+<p>The operator is now stable, information-valid, and able to learn several views. It is still not a complete sequence model.</p>
+</section>
+</section>
+<section id="sec-transformer-bridge" class="level1" data-number="6">
+<h1 data-number="6"><span class="header-section-number">6</span> The Transformer bridge</h1>
+<section id="sec-position-gap" class="level2" data-number="6.1">
+<h2 data-number="6.1" class="anchored" data-anchor-id="sec-position-gap"><span class="header-section-number">6.1</span> Self-attention has no order by itself</h2>
+<p>Compare:</p>
+<pre class="text"><code>dog bites man
+man bites dog</code></pre>
+<p>The token set is the same, but the meanings differ. If <span class="math inline">\(P\)</span> is a permutation matrix that reorders positions, self-attention without positional information is permutation equivariant:</p>
+<p><span id="eq-permutation-equivariance"><span class="math display">\[
+\operatorname{Attn}(PX)
+=
+P\operatorname{Attn}(X).
+\tag{25}\]</span></span></p>
+<p>Reordering inputs merely reorders outputs. The operation has no independent signal that position 1 came before position 3. A sequence architecture must therefore inject position information. The next chapter will compare ways to do so.</p>
+</section>
+<section id="sec-feature-gap" class="level2" data-number="6.2">
+<h2 data-number="6.2" class="anchored" data-anchor-id="sec-feature-gap"><span class="header-section-number">6.2</span> Attention mixes positions, not features deeply</h2>
+<p>Attention answers:</p>
+<blockquote class="blockquote">
+<p>Which positions should exchange information?</p>
+</blockquote>
+<p>After that exchange, each token also needs a nonlinear transformation of its features:</p>
+<blockquote class="blockquote">
+<p>How should this position transform the information it received?</p>
+</blockquote>
+<div class="cell" data-fig-width="6.8" data-layout-align="default">
+<div class="cell-output-display">
+<div id="fig-attention-feature-gap" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-attention-feature-gap-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<div>
+<pre class="mermaid mermaid-js" data-label="fig-attention-feature-gap">flowchart LR
+    X[token representations] --&gt; A[multi-head attention]
+    A --&gt; M[mixed information&lt;br/&gt;across positions]
+    M --&gt; Q{what transforms&lt;br/&gt;features locally?}
+    Q --&gt; Z[updated representations]
+
+    classDef known fill:#f2e9f7,stroke:#8b5bb5,color:#17364a
+    classDef open fill:#fff3d6,stroke:#b98a1d,color:#17364a
+    class X,A,M,Z known
+    class Q open
+</pre>
+</div>
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-attention-feature-gap-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;12: Attention supplies cross-position communication; a complete block also needs position-wise feature transformation.
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<p>The Transformer answers this with a position-wise feed-forward sublayer, but its exact equations and placement belong to the architecture chapter.</p>
+</section>
+<section id="sec-depth-gap" class="level2" data-number="6.3">
+<h2 data-number="6.3" class="anchored" data-anchor-id="sec-depth-gap"><span class="header-section-number">6.3</span> Deep stacks need safe routes</h2>
+<p>One attention layer creates one round of interaction. Rich models stack many layers, which raises two questions:</p>
+<ol type="1">
+<li>Can an original representation survive repeated transformations?</li>
+<li>Can activation and gradient scales remain controlled across depth?</li>
+</ol>
+<div class="cell" data-fig-width="6.8" data-layout-align="default">
+<div class="cell-output-display">
+<div id="fig-depth-open-question" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-depth-open-question-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<div>
+<pre class="mermaid mermaid-js" data-label="fig-depth-open-question">flowchart LR
+    X[input x] --&gt; L1[layer 1]
+    L1 --&gt; L2[layer 2]
+    L2 --&gt; L3[layer 3]
+    L3 --&gt; D[⋯ deeper]
+    D --&gt; Z[output z]
+    X -. preserve information? .-&gt; Z
+
+    classDef layer fill:#f2e9f7,stroke:#8b5bb5,color:#17364a
+    classDef endpoint fill:#e8f2f0,stroke:#356fa8,color:#17364a
+    class L1,L2,L3,D layer
+    class X,Z endpoint
+</pre>
+</div>
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-depth-open-question-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;13: Repeated attention and transformation require a safe route for information and stable activation scales.
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<p>Residual pathways and normalization address these requirements in practical Transformer blocks <span class="citation" data-cites="vaswani2017attention">(<a href="#ref-vaswani2017attention" role="doc-biblioref">Vaswani et al. 2017</a>)</span>. For now, retain the requirements rather than memorizing a block diagram.</p>
+</section>
+<section id="sec-final-bridge" class="level2" data-number="6.4">
+<h2 data-number="6.4" class="anchored" data-anchor-id="sec-final-bridge"><span class="header-section-number">6.4</span> Final visual bridge</h2>
+<div class="cell" data-fig-width="7.4" data-layout-align="default">
+<div class="cell-output-display">
+<div id="fig-transformer-bridge" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-transformer-bridge-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<div>
+<pre class="mermaid mermaid-js" data-label="fig-transformer-bridge">flowchart LR
+    X[Tokens X] --&gt; P{Order?}
+    P --&gt; A[Attention&lt;br/&gt;who interacts?]
+    A --&gt; T{Feature&lt;br/&gt;transformation?}
+    T --&gt; D{Safe&lt;br/&gt;depth?}
+    D --&gt; Z[Contextual&lt;br/&gt;representations Z]
+
+    classDef known fill:#f2e9f7,stroke:#8b5bb5,color:#17364a
+    classDef open fill:#fff3d6,stroke:#b98a1d,color:#17364a
+    classDef endpoint fill:#e8f2f0,stroke:#356fa8,color:#17364a
+    class A known
+    class P,T,D open
+    class X,Z endpoint
+</pre>
+</div>
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-transformer-bridge-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;14: Attention is the core operation, but order, position-wise transformation, and safe depth must be assembled around it.
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<div class="callout callout-style-simple callout-important callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Important</span>Question to carry into the next chapter
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>How do we assemble order, attention, position-wise transformation, and safe depth into one reusable Transformer block?</p>
+</div>
+</div>
+</section>
+</section>
+<section id="sec-attention-summary" class="level1" data-number="7">
+<h1 data-number="7"><span class="header-section-number">7</span> Chapter summary</h1>
+<p>The full conceptual chain is now visible:</p>
+<ol type="1">
+<li>A fixed encoder context creates a storage and access bottleneck.</li>
+<li>Attention keeps all memories and performs a differentiable soft lookup.</li>
+<li>Cross-attention lets each decoder query retrieve a different source context.</li>
+<li>Self-attention lets every token retrieve context from its own sequence.</li>
+<li>Matrix operations compute all token-to-token scores and weighted sums together.</li>
+<li>Scaling controls dot-product magnitude.</li>
+<li>Causal masking prevents future-token leakage.</li>
+<li>Multiple heads learn parallel projection and retrieval spaces.</li>
+<li>Attention still needs order, position-wise transformation, and safe depth to become a full architecture.</li>
+</ol>
+<p>The most important reusable formula is:</p>
+<p><span id="eq-final-attention"><span class="math display">\[
+\boxed{
+\operatorname{Attention}(Q,K,V)
+=
+\operatorname{softmax}\!\left(
+\frac{QK^\top}{\sqrt{d_k}}+M
+\right)V
+}
+\tag{26}\]</span></span></p>
+<p>where <span class="math inline">\(M=0\)</span> when every connection is permitted and <span class="math inline">\(M\)</span> is a causal or task-specific mask otherwise.</p>
+</section>
+<section id="sec-attention-reading" class="level1" data-number="8">
+<h1 data-number="8"><span class="header-section-number">8</span> Further reading and exploration</h1>
+<section id="defining-papers" class="level2" data-number="8.1">
+<h2 data-number="8.1" class="anchored" data-anchor-id="defining-papers"><span class="header-section-number">8.1</span> Defining papers</h2>
+<ul>
+<li><a href="https://arxiv.org/abs/1409.0473">Bahdanau, Cho, and Bengio · <em>Neural Machine Translation by Jointly Learning to Align and Translate</em></a> introduces learned soft alignment in recurrent encoder–decoder translation <span class="citation" data-cites="bahdanau2015align">(<a href="#ref-bahdanau2015align" role="doc-biblioref">Bahdanau et al. 2015</a>)</span>.</li>
+<li><a href="https://aclanthology.org/D15-1166/">Luong, Pham, and Manning · <em>Effective Approaches to Attention-based Neural Machine Translation</em></a> compares global/local and scoring variants <span class="citation" data-cites="luong2015effective">(<a href="#ref-luong2015effective" role="doc-biblioref">Luong et al. 2015</a>)</span>.</li>
+<li><a href="https://proceedings.neurips.cc/paper/7181-attention-is-all-you-need">Vaswani et al.&nbsp;· <em>Attention Is All You Need</em></a> introduces scaled dot-product and multi-head attention within the Transformer <span class="citation" data-cites="vaswani2017attention">(<a href="#ref-vaswani2017attention" role="doc-biblioref">Vaswani et al. 2017</a>)</span>.</li>
+</ul>
+</section>
+<section id="visual-explanations" class="level2" data-number="8.2">
+<h2 data-number="8.2" class="anchored" data-anchor-id="visual-explanations"><span class="header-section-number">8.2</span> Visual explanations</h2>
+<ul>
+<li><a href="https://jalammar.github.io/illustrated-transformer/">Jay Alammar · <em>The Illustrated Transformer</em></a> provides a visual walkthrough from attention to the architecture.</li>
+<li><a href="https://github.com/jessevig/bertviz">BertViz</a> provides interactive head, model, and neuron views <span class="citation" data-cites="vig2019multiscale">(<a href="#ref-vig2019multiscale" role="doc-biblioref">Vig 2019</a>)</span>.</li>
+<li><a href="https://github.com/tensorflow/tensor2tensor">Tensor2Tensor visualization and implementation</a> preserves an influential historical implementation. The repository is archived and should be treated as legacy code.</li>
+</ul>
+</section>
+<section id="attention-patterns-and-interpretation" class="level2" data-number="8.3">
+<h2 data-number="8.3" class="anchored" data-anchor-id="attention-patterns-and-interpretation"><span class="header-section-number">8.3</span> Attention patterns and interpretation</h2>
+<ul>
+<li><a href="https://aclanthology.org/W19-4828/">Clark et al.&nbsp;· <em>What Does BERT Look At?</em></a> studies positional, syntactic, and coreference patterns in BERT heads <span class="citation" data-cites="clark2019bert">(<a href="#ref-clark2019bert" role="doc-biblioref">Clark et al. 2019</a>)</span>.</li>
+<li><a href="https://aclanthology.org/N19-1357/">Jain and Wallace · <em>Attention is not Explanation</em></a> explains why attention weights alone should not be treated as a faithful explanation <span class="citation" data-cites="jain2019attention">(<a href="#ref-jain2019attention" role="doc-biblioref">Jain and Wallace 2019</a>)</span>.</li>
+<li><a href="https://web.stanford.edu/class/cs224n/slides_w26/cs224n-2026-lecture05-transformers.pdf">Stanford CS224N · Attention and Transformers</a> offers a complementary lecture treatment.</li>
+</ul>
+</section>
+<section id="references" class="level2" data-number="8.4">
+<h2 data-number="8.4" class="anchored" data-anchor-id="references"><span class="header-section-number">8.4</span> References</h2>
+<div id="refs" class="references csl-bib-body hanging-indent" role="list">
+<div id="ref-bahdanau2015align" class="csl-entry" role="listitem">
+Bahdanau, Dzmitry, Kyunghyun Cho, and Yoshua Bengio. 2015. <span>“Neural Machine Translation by Jointly Learning to Align and Translate.”</span> <em>International Conference on Learning Representations</em>. <a href="https://arxiv.org/abs/1409.0473">https://arxiv.org/abs/1409.0473</a>.
+</div>
+<div id="ref-clark2019bert" class="csl-entry" role="listitem">
+Clark, Kevin, Urvashi Khandelwal, Omer Levy, and Christopher D. Manning. 2019. <span>“What Does <span>BERT</span> Look at? An Analysis of <span>BERT</span>’s Attention.”</span> <em>Proceedings of the 2019 ACL Workshop BlackboxNLP</em>, 276–86. <a href="https://doi.org/10.18653/v1/W19-4828">https://doi.org/10.18653/v1/W19-4828</a>.
+</div>
+<div id="ref-jain2019attention" class="csl-entry" role="listitem">
+Jain, Sarthak, and Byron C. Wallace. 2019. <span>“Attention Is Not Explanation.”</span> <em>Proceedings of the 2019 Conference of the North American Chapter of the Association for Computational Linguistics</em>, 3543–56. <a href="https://doi.org/10.18653/v1/N19-1357">https://doi.org/10.18653/v1/N19-1357</a>.
+</div>
+<div id="ref-luong2015effective" class="csl-entry" role="listitem">
+Luong, Thang, Hieu Pham, and Christopher D. Manning. 2015. <span>“Effective Approaches to Attention-Based Neural Machine Translation.”</span> <em>Proceedings of the 2015 Conference on Empirical Methods in Natural Language Processing</em>, 1412–21. <a href="https://doi.org/10.18653/v1/D15-1166">https://doi.org/10.18653/v1/D15-1166</a>.
+</div>
+<div id="ref-sutskever2014sequence" class="csl-entry" role="listitem">
+Sutskever, Ilya, Oriol Vinyals, and Quoc V. Le. 2014. <span>“Sequence to Sequence Learning with Neural Networks.”</span> <em>Advances in Neural Information Processing Systems</em> 27. <a href="https://papers.nips.cc/paper/5346-sequence-to-sequence-learning-with-neural-networks">https://papers.nips.cc/paper/5346-sequence-to-sequence-learning-with-neural-networks</a>.
+</div>
+<div id="ref-vaswani2017attention" class="csl-entry" role="listitem">
+Vaswani, Ashish, Noam Shazeer, Niki Parmar, et al. 2017. <span>“Attention Is All You Need.”</span> <em>Advances in Neural Information Processing Systems</em> 30. <a href="https://arxiv.org/abs/1706.03762">https://arxiv.org/abs/1706.03762</a>.
+</div>
+<div id="ref-vig2019multiscale" class="csl-entry" role="listitem">
+Vig, Jesse. 2019. <span>“A Multiscale Visualization of Attention in the Transformer Model.”</span> <em>Proceedings of the 57th Annual Meeting of the Association for Computational Linguistics: System Demonstrations</em>, 37–42. <a href="https://doi.org/10.18653/v1/P19-3007">https://doi.org/10.18653/v1/P19-3007</a>.
+</div>
+</div>
+
+
+</section>
+</section>
+
+</main> <!-- /main -->
+<script>
+(() => {
+  const padding = 24;
+
+  function cropMermaid(svg) {
+    const root = svg.querySelector(":scope > g, g.root");
+    if (!root) return;
+
+    let box;
+    try {
+      box = root.getBBox();
+    } catch (_) {
+      return;
+    }
+
+    if (!box.width || !box.height) return;
+
+    svg.setAttribute(
+      "viewBox",
+      `${box.x - padding} ${box.y - padding} ${box.width + 2 * padding} ${box.height + 2 * padding}`
+    );
+    svg.setAttribute("width", "100%");
+    svg.removeAttribute("height");
+    svg.style.width = "100%";
+    svg.style.height = "auto";
+    svg.style.maxWidth = "100%";
+    svg.style.display = "block";
+    svg.style.marginInline = "auto";
+    svg.dataset.cropped = "true";
+  }
+
+  function cropAllMermaid() {
+    document
+      .querySelectorAll("svg.mermaid-js:not([data-cropped])")
+      .forEach(cropMermaid);
+  }
+
+  const observer = new MutationObserver(cropAllMermaid);
+  observer.observe(document.documentElement, { childList: true, subtree: true });
+
+  window.addEventListener("load", () => {
+    cropAllMermaid();
+    window.setTimeout(cropAllMermaid, 250);
+    window.setTimeout(cropAllMermaid, 1000);
+  });
+})();
+</script>
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp("https:\/\/anassbelcaid\.github\.io\/nlp-course-2026\/");
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+            // target, if specified
+            link.setAttribute("target", "_blank");
+            if (link.getAttribute("rel") === null) {
+              link.setAttribute("rel", "noopener");
+            }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+</div> <!-- /content -->
+<footer class="footer">
+  <div class="nav-footer">
+    <div class="nav-footer-left">
+<p>Natural Language Processing · Université Abdelmalek Essaâdi</p>
+</div>   
+    <div class="nav-footer-center">
+      &nbsp;
+    </div>
+    <div class="nav-footer-right">
+<p>Built with Quarto</p>
+</div>
+  </div>
+</footer>
+
+
+
+
+<script src="../../site_libs/quarto-html/zenscroll-min.js"></script>
+</body></html>

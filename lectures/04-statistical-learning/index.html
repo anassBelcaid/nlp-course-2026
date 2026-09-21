@@ -1,0 +1,1998 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<script src="../../site_libs/clipboard/clipboard.min.js"></script>
+<script src="../../site_libs/quarto-html/tabby.min.js"></script>
+<script src="../../site_libs/quarto-html/popper.min.js"></script>
+<script src="../../site_libs/quarto-html/tippy.umd.min.js"></script>
+<link href="../../site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="../../site_libs/quarto-html/light-border.css" rel="stylesheet">
+<link href="../../site_libs/quarto-html/quarto-syntax-highlighting-64a204ab8560d761af7679ceaba22944.css" rel="stylesheet" id="quarto-text-highlighting-styles"><meta charset="utf-8">
+  <meta name="generator" content="quarto-1.10.18">
+
+  <meta name="author" content="Dr.&nbsp;A. Belcaid · CS 351">
+  <meta name="dcterms.date" content="2026-09-21">
+  <title>CS 351 · NLP – Statistical NLP</title>
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, minimal-ui">
+  <link rel="stylesheet" href="../../site_libs/revealjs/dist/reset.css">
+  <link rel="stylesheet" href="../../site_libs/revealjs/dist/reveal.css">
+  <style>
+    /* Default styles provided by pandoc.
+    ** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+    */
+    span.smallcaps{font-variant: small-caps;}
+    div.columns{display: flex; gap: 1.5em;}
+    div.column{flex: auto;}
+    @media screen {
+    div.columns{gap: min(4vw, 1.5em);}
+    div.column{overflow-x: auto;}
+    }
+    div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+    ul.task-list{list-style: none;}
+    ul.task-list li input[type="checkbox"] {
+      width: 0.8em;
+      margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+      vertical-align: middle;
+    }
+    /* CSS for citations */
+    div.csl-bib-body { }
+    div.csl-entry {
+      clear: both;
+    }
+    .hanging-indent div.csl-entry {
+      margin-left:2em;
+      text-indent:-2em;
+    }
+    div.csl-left-margin {
+      min-width:2em;
+      float:left;
+    }
+    div.csl-right-inline {
+      margin-left:2em;
+      padding-left:1em;
+    }
+    div.csl-indent {
+      margin-left: 2em;
+    }  </style>
+  <link rel="stylesheet" href="../../site_libs/revealjs/dist/theme/quarto-ab0d674cc71beada37107d6d240ab684.css">
+  <link rel="stylesheet" href="slides.css">
+  <link href="../../site_libs/revealjs/plugin/quarto-line-highlight/line-highlight.css" rel="stylesheet">
+  <link href="../../site_libs/revealjs/plugin/reveal-menu/menu.css" rel="stylesheet">
+  <link href="../../site_libs/revealjs/plugin/reveal-menu/quarto-menu.css" rel="stylesheet">
+  <link href="../../site_libs/revealjs/plugin/quarto-support/footer.css" rel="stylesheet">
+  <style type="text/css">
+    .reveal div.sourceCode {
+      margin: 0;
+      overflow: auto;
+    }
+    .reveal div.hanging-indent {
+      margin-left: 1em;
+      text-indent: -1em;
+    }
+    .reveal .slide:not(.center) {
+      height: 100%;
+    }
+    .reveal .slide.scrollable {
+      overflow-y: auto;
+    }
+    .reveal .footnotes {
+      height: 100%;
+      overflow-y: auto;
+    }
+    .reveal .slide .absolute {
+      position: absolute;
+      display: block;
+    }
+    .reveal .footnotes ol {
+      counter-reset: ol;
+      list-style-type: none; 
+      margin-left: 0;
+    }
+    .reveal .footnotes ol li:before {
+      counter-increment: ol;
+      content: counter(ol) ". "; 
+    }
+    .reveal .footnotes ol li > p:first-child {
+      display: inline-block;
+    }
+    .reveal .slide ul,
+    .reveal .slide ol {
+      margin-bottom: 0.5em;
+    }
+    .reveal .slide ul li,
+    .reveal .slide ol li {
+      margin-top: 0.4em;
+      margin-bottom: 0.2em;
+    }
+    .reveal .slide ul[role="tablist"] li {
+      margin-bottom: 0;
+    }
+    .reveal .slide ul li > *:first-child,
+    .reveal .slide ol li > *:first-child {
+      margin-block-start: 0;
+    }
+    .reveal .slide ul li > *:last-child,
+    .reveal .slide ol li > *:last-child {
+      margin-block-end: 0;
+    }
+    .reveal .slide .columns:nth-child(3) {
+      margin-block-start: 0.8em;
+    }
+    .reveal blockquote {
+      box-shadow: none;
+    }
+    .reveal .tippy-content>* {
+      margin-top: 0.2em;
+      margin-bottom: 0.7em;
+    }
+    .reveal .tippy-content>*:last-child {
+      margin-bottom: 0.2em;
+    }
+    .reveal .slide > img.stretch.quarto-figure-center,
+    .reveal .slide > img.r-stretch.quarto-figure-center {
+      display: block;
+      margin-left: auto;
+      margin-right: auto; 
+    }
+    .reveal .slide > img.stretch.quarto-figure-left,
+    .reveal .slide > img.r-stretch.quarto-figure-left  {
+      display: block;
+      margin-left: 0;
+      margin-right: auto; 
+    }
+    .reveal .slide > img.stretch.quarto-figure-right,
+    .reveal .slide > img.r-stretch.quarto-figure-right  {
+      display: block;
+      margin-left: auto;
+      margin-right: 0; 
+    }
+  </style>
+</head>
+<body class="quarto-light">
+  <div class="reveal">
+    <div class="slides">
+
+<section id="title-slide" class="quarto-title-block center">
+  <h1 class="title">Statistical NLP</h1>
+  <p class="subtitle">From corpus frequencies to word representations</p>
+
+<div class="quarto-title-authors">
+<div class="quarto-title-author">
+<div class="quarto-title-author-name">
+Dr.&nbsp;A. Belcaid · CS 351
+</div>
+</div>
+</div>
+
+  <p class="date">2026-09-21</p>
+</section>
+<section id="from-corpus-evidence-to-word-vectors" class="slide level2 overview-slide">
+<h2>From corpus evidence to word vectors</h2>
+
+<img data-src="images/statistical-context-journey.png" class="overview-image r-stretch" alt="A corpus becomes token sequences, context windows, a co-occurrence matrix, compact vectors, and geometric word clusters"><div class="journey-labels">
+<div class="journey-label">
+<p><strong>CORPUS</strong></p>
+<p>Observe language</p>
+</div>
+<div class="journey-label">
+<p><strong>SEQUENCES</strong></p>
+<p>Count neighbors</p>
+</div>
+<div class="journey-label">
+<p><strong>CONTEXTS</strong></p>
+<p>Collect company</p>
+</div>
+<div class="journey-label">
+<p><strong>MATRIX</strong></p>
+<p>Organize counts</p>
+</div>
+<div class="journey-label">
+<p><strong>VECTORS</strong></p>
+<p>Compress structure</p>
+</div>
+</div>
+<aside class="notes">
+<p>Use the image as the map for the lecture. Trace the lower path from documents to context windows, matrix, and vectors. Then point to the upper path: the same corpus can also estimate what token comes next. Do not explain the algorithms yet. 2 minutes.</p>
+<style type="text/css">
+        span.MJX_Assistive_MathML {
+          position:absolute!important;
+          clip: rect(1px, 1px, 1px, 1px);
+          padding: 1px 0 0 0!important;
+          border: 0!important;
+          height: 1px!important;
+          width: 1px!important;
+          overflow: hidden!important;
+          display:block!important;
+      }</style></aside>
+</section>
+<section id="what-we-will-cover" class="slide level2">
+<h2>What we will cover</h2>
+<div class="toc-route">
+<div>
+<b>1</b><strong>PREDICT</strong><span>What is a language model?</span>
+</div>
+<div>
+<b>2</b><strong>COUNT</strong><span>Build a bigram model</span>
+</div>
+<div>
+<b>3</b><strong>GENERATE</strong><span>Choose the next word</span>
+</div>
+<div>
+<b>4</b><strong>HANDLE ZEROS</strong><span>Meet unseen sequences</span>
+</div>
+<div>
+<b>5</b><strong>EVALUATE</strong><span>Measure perplexity</span>
+</div>
+<div>
+<b>6</b><strong>LOOK AHEAD</strong><span>Why we need RNNs</span>
+</div>
+</div>
+<div class="citation">
+Lecture sequence adapted from <span class="citation" data-cites="jurafsky2026slp">(<a href="#/next-can-a-model-carry-memory-through-time" role="doc-biblioref" onclick="">Jurafsky and Martin 2026</a>, Ch. 3)</span>.
+</div>
+</section>
+<section>
+<section id="part-i-what-does-a-language-model-predict" class="title-slide slide level1 section-slide center">
+<h1>Part I · What does a language model predict?</h1>
+
+</section>
+<section id="the-task-complete-the-sequence" class="slide level2">
+<h2>The task: complete the sequence</h2>
+<div class="prediction-stage">
+<div class="prediction-history">
+the students opened their
+</div>
+<div class="prediction-slot">
+?
+</div>
+</div>
+<div class="candidate-grid">
+<div class="fragment">
+<span>books</span>
+</div>
+<div class="fragment">
+<span>laptops</span>
+</div>
+<div class="fragment">
+<span>exams</span>
+</div>
+<div class="fragment">
+<span>umbrella</span>
+</div>
+</div>
+<div class="takeaway">
+<p>The model does not retrieve one memorized answer—it scores the possible next tokens.</p>
+</div>
+<div class="citation">
+Next-word prediction framing: <span class="citation" data-cites="jurafsky2026slp">(<a href="#/next-can-a-model-carry-memory-through-time" role="doc-biblioref" onclick="">Jurafsky and Martin 2026</a>, Ch. 3)</span>.
+</div>
+</section>
+<section id="you-use-language-models-every-day" class="slide level2">
+<h2>You use language models every day</h2>
+<div class="everyday-lm-examples">
+<div class="everyday-lm-card">
+<p><img data-src="images/google-autocomplete.svg" alt="Google-style search box predicting completions for the query how do language models"></p>
+<p><strong>SEARCH AUTOCOMPLETE</strong></p>
+<p>Predicts a likely continuation of a partial query.</p>
+</div>
+<div class="everyday-lm-card phone-card">
+<p><img data-src="images/phone-predictive-text.svg" alt="Phone keyboard suggesting books, laptops, and exams after the students opened their"></p>
+<p><strong>PREDICTIVE TYPING</strong></p>
+<p>Offers likely next words while a sentence is being written.</p>
+</div>
+</div>
+<div class="fragment takeaway">
+<p>Both interfaces rank possible continuations from the context already entered.</p>
+</div>
+<div class="citation">
+Illustrations are original educational reconstructions; language-model applications follow <span class="citation" data-cites="jurafsky2026slp">(<a href="#/next-can-a-model-carry-memory-through-time" role="doc-biblioref" onclick="">Jurafsky and Martin 2026</a>, Ch. 3)</span>.
+</div>
+</section>
+<section id="a-language-model-distributes-probability" class="slide level2">
+<h2>A language model distributes probability</h2>
+<div class="continuation-prompt">
+<p><span>students study</span><b>…</b></p>
+</div>
+<div class="continuation-bars">
+<div class="fragment">
+<span>language</span><i style="--bar: 100%"></i><b>0.40</b>
+</div>
+<div class="fragment">
+<span>statistics</span><i style="--bar: 75%"></i><b>0.30</b>
+</div>
+<div class="fragment">
+<span>together</span><i style="--bar: 37.5%"></i><b>0.15</b>
+</div>
+<div class="fragment">
+<span>other tokens</span><i style="--bar: 37.5%"></i><b>0.15</b>
+</div>
+</div>
+<div class="probability-total">
+<p><span>probability across all possible next tokens</span><b>Σ = 1.00</b></p>
+</div>
+<div class="fragment takeaway">
+<p>A language model assigns a probability distribution to the next token—and therefore a probability to a complete sequence.</p>
+</div>
+<div class="citation">
+Definition and conditional next-token formulation: <span class="citation" data-cites="jurafsky2026slp">(<a href="#/next-can-a-model-carry-memory-through-time" role="doc-biblioref" onclick="">Jurafsky and Martin 2026</a>, Ch. 3)</span>.
+</div>
+</section>
+<section id="prediction-turns-scores-into-an-action" class="slide level2">
+<h2>Prediction turns scores into an action</h2>
+<div class="prediction-network">
+<svg class="branch-map" viewbox="0 0 1200 500" aria-hidden="true">
+<path d="M300 250 C500 250 720 62 1050 62"></path> <path d="M300 250 C500 250 720 188 1050 188"></path> <path d="M300 250 C500 250 720 312 1050 312"></path> <path d="M300 250 C500 250 720 438 1050 438"></path>
+</svg>
+<div class="history-node">
+<small>HISTORY</small><strong>students study</strong><span><span class="math inline">\(h\)</span></span>
+</div>
+<div class="branch-hub">
+<span><span class="math inline">\(P(w\mid h)\)</span></span>
+</div>
+<div class="candidate-node candidate-language">
+<span>language</span><b>0.40</b>
+</div>
+<div class="candidate-node candidate-statistics">
+<span>statistics</span><b>0.30</b>
+</div>
+<div class="candidate-node candidate-together">
+<span>together</span><b>0.15</b>
+</div>
+<div class="candidate-node candidate-other">
+<span>other</span><b>0.15</b>
+</div>
+<div class="fragment fade-in-then-out greedy-animation">
+<svg viewbox="0 0 1200 500" aria-hidden="true"><path d="M300 250 C500 250 720 62 1050 62"></path></svg>
+<div class="greedy-label">
+<small>GREEDY · ARGMAX</small><b>language</b><span>largest probability = 0.40</span>
+</div>
+<div class="greedy-target-ring">
+
+</div>
+<div class="decision-principle greedy-principle">
+<b>GREEDY PREDICTION</b><span>choose <span class="math inline">\(\arg\max_w P(w\mid h)\)</span></span><strong>→ always selects <code>language</code></strong>
+</div>
+</div>
+<div class="fragment sampling-animation">
+<svg viewbox="0 0 1200 500" aria-hidden="true"><path d="M300 250 C500 250 720 188 1050 188"></path></svg>
+<div class="sampling-label">
+<small>SAMPLE</small><b><span class="math inline">\(r=0.58\)</span></b><span><span class="math inline">\(r\in[0.40,0.70)\)</span> → statistics</span>
+</div>
+<div class="sampling-target-ring">
+
+</div>
+<div class="decision-principle sampling-principle">
+<div class="random-rule">
+<b>RANDOM SAMPLING</b><span>draw <span class="math inline">\(r\sim\operatorname{Uniform}[0,1]\)</span></span>
+</div>
+<div class="sampling-intervals">
+<span class="interval-language">language<br><small>[0.00, 0.40)</small></span><span class="interval-statistics">statistics<br><small>[0.40, 0.70)</small></span><span class="interval-together">together<br><small>[0.70, 0.85)</small></span><span class="interval-other">other<br><small>[0.85, 1.00]</small></span><i>r = 0.58 ↓</i>
+</div>
+<strong><span class="math inline">\(r\)</span> falls inside the <code>statistics</code> interval → select <code>statistics</code></strong>
+</div>
+</div>
+</div>
+<div class="citation">
+Greedy decoding selects <span class="math inline">\(\arg\max_w P(w\mid h)\)</span>; sampling draws according to the full categorical distribution <span class="citation" data-cites="jurafsky2026slp">(<a href="#/next-can-a-model-carry-memory-through-time" role="doc-biblioref" onclick="">Jurafsky and Martin 2026</a>, Ch. 3)</span>.
+</div>
+</section>
+<section id="what-to-keep-from-part-i" class="slide level2">
+<h2>What to keep from Part I</h2>
+<div class="part-summary prediction-summary">
+<div class="fragment">
+<b>1</b><span>A language model receives a token history.</span>
+</div>
+<div class="fragment">
+<b>2</b><span>It assigns a probability to every candidate next token.</span>
+</div>
+<div class="fragment">
+<b>3</b><span>Prediction can select the maximum or sample from the distribution.</span>
+</div>
+</div>
+<div class="fragment next-part">
+<p><strong>NEXT · BUILD THE MODEL</strong></p>
+<p>Where do those probabilities come from if all we have is a small corpus?</p>
+</div>
+<div class="citation">
+Summary based on <span class="citation" data-cites="jurafsky2026slp">(<a href="#/next-can-a-model-carry-memory-through-time" role="doc-biblioref" onclick="">Jurafsky and Martin 2026</a>, Ch. 3)</span>.
+</div>
+</section></section>
+<section>
+<section id="part-ii-build-a-bigram-model" class="title-slide slide level1 section-slide center">
+<h1>Part II · Build a bigram model</h1>
+
+</section>
+<section id="a-sentence-is-a-sequence-of-decisions" class="slide level2">
+<h2>A sentence is a sequence of decisions</h2>
+<div class="token-chain">
+<p><span class="fragment">students</span><i class="fragment">→</i><span class="fragment">study</span><i class="fragment">→</i><span class="fragment">language</span><i class="fragment">→</i><span class="fragment">&lt;/s&gt;</span></p>
+</div>
+<div class="chain-probability">
+<p><span class="math display">\[
+P(w_{1:T})=\prod_{t=1}^{T}P(w_t\mid w_1,\ldots,w_{t-1})
+\]</span></p>
+</div>
+<div class="history-cards">
+<div>
+<b>students</b><span>given sentence start</span>
+</div>
+<div>
+<b>study</b><span>given students</span>
+</div>
+<div>
+<b>language</b><span>given students study</span>
+</div>
+</div>
+<div class="fragment takeaway">
+<p>The chain rule is exact; the difficulty is estimating a probability for every possible history.</p>
+</div>
+<div class="citation">
+Chain rule for sequence probabilities: <span class="citation" data-cites="jurafsky2026slp">(<a href="#/next-can-a-model-carry-memory-through-time" role="doc-biblioref" onclick="">Jurafsky and Martin 2026</a>, Ch. 3)</span>.
+</div>
+</section>
+<section id="full-histories-almost-never-repeat" class="slide level2">
+<h2>Full histories almost never repeat</h2>
+<div class="history-contrast">
+<div class="history-panel long-history">
+<p><strong>Exact history</strong></p>
+<p><code>after the morning lecture the students study → ?</code></p>
+<p>Count in a modest corpus: <strong>0</strong></p>
+</div>
+<div class="history-panel short-history">
+<p><strong>Short local history</strong></p>
+<p><code>students study → ?</code></p>
+<p>Count in the same corpus: <strong>many</strong></p>
+</div>
+</div>
+<div class="markov-illustration bigram-focus">
+<div class="remote-history fragment">
+<span>w₁</span><i>→</i><span>…</span><i>→</i><span>wₜ₋₂</span>
+</div>
+<i class="blocked-arrow fragment">╳</i>
+<div class="local-blanket fragment">
+<small>BIGRAM HISTORY</small><span>wₜ₋₁</span>
+</div>
+<i class="active-arrow fragment">→</i>
+<div class="predicted-node">
+<small>PREDICT</small><b>wₜ</b>
+</div>
+</div>
+<div class="markov-box">
+<p>The bigram approximation keeps only the immediately preceding token:</p>
+<p><span class="math display">\[P(w_t\mid w_{1:t-1})\approx P(w_t\mid w_{t-1})\]</span></p>
+</div>
+<div class="citation">
+The Markov approximation and bigram model: <span class="citation" data-cites="jurafsky2026slp">(<a href="#/next-can-a-model-carry-memory-through-time" role="doc-biblioref" onclick="">Jurafsky and Martin 2026</a>, Ch. 3)</span>.
+</div>
+</section>
+<section id="the-order-controls-the-memory" class="slide level2">
+<h2>The order controls the memory</h2>
+<div class="ngram-orders">
+<div class="fragment">
+<b>UNIGRAM</b><code>P(language)</code><span>no preceding token</span>
+</div>
+<div class="fragment">
+<b>BIGRAM</b><code>P(language | study)</code><span>one-token history</span>
+</div>
+<div class="fragment">
+<b>TRIGRAM</b><code>P(language | students study)</code><span>two-token history</span>
+</div>
+</div>
+<div class="fragment order-tradeoff">
+<div class="accuracy-side">
+<small>BENEFIT OF MORE CONTEXT</small><b>more specific prediction</b><span>potentially more accurate when the context has enough evidence</span>
+<div class="target-rings">
+<i></i><i></i><i></i><strong>✓</strong>
+</div>
+</div>
+<div class="order-increase">
+<span>increase <span class="math inline">\(n\)</span></span><b>→</b>
+</div>
+<div class="evidence-side">
+<small>COST OF MORE CONTEXT</small><b>fewer matching observations</b><span>sparser counts make the estimate less reliable</span>
+<div class="observation-dots">
+<i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i>
+</div>
+</div>
+</div>
+<div class="citation">
+N-gram order and context length: <span class="citation" data-cites="jurafsky2026slp">(<a href="#/next-can-a-model-carry-memory-through-time" role="doc-biblioref" onclick="">Jurafsky and Martin 2026</a>, Ch. 3)</span>.
+</div>
+</section>
+<section id="count-one-tiny-corpus" class="slide level2">
+<h2>Count one tiny corpus</h2>
+<div class="ngram-corpus">
+<div>
+<b>S1</b><span>&lt;s&gt; students study language &lt;/s&gt;</span>
+</div>
+<div>
+<b>S2</b><span>&lt;s&gt; students study statistics &lt;/s&gt;</span>
+</div>
+<div>
+<b>S3</b><span>&lt;s&gt; researchers study language &lt;/s&gt;</span>
+</div>
+<div>
+<b>S4</b><span>&lt;s&gt; students study language &lt;/s&gt;</span>
+</div>
+</div>
+<div class="fragment boundary-note">
+<p><code>&lt;s&gt;</code> and <code>&lt;/s&gt;</code> let the model count how sentences begin and end.</p>
+</div>
+<div class="citation">
+Sentence-boundary symbols in n-gram models: <span class="citation" data-cites="jurafsky2026slp">(<a href="#/next-can-a-model-carry-memory-through-time" role="doc-biblioref" onclick="">Jurafsky and Martin 2026</a>, Ch. 3)</span>.
+</div>
+</section>
+<section id="make-the-relevant-counts-visible" class="slide level2">
+<h2>Make the relevant counts visible</h2>
+<div class="count-inspection">
+<div class="count-column">
+<p><strong>History counts</strong></p>
+<table class="caption-top">
+<thead>
+<tr class="header">
+<th>history <span class="math inline">\(h\)</span></th>
+<th style="text-align: right;"><span class="math inline">\(C(h)\)</span></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>study</code></td>
+<td style="text-align: right;">4</td>
+</tr>
+<tr class="even">
+<td><code>language</code></td>
+<td style="text-align: right;">3</td>
+</tr>
+<tr class="odd">
+<td><code>statistics</code></td>
+<td style="text-align: right;">1</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="count-column">
+<p><strong>Continuation counts</strong></p>
+<table class="caption-top">
+<thead>
+<tr class="header">
+<th>pair <span class="math inline">\((h,w)\)</span></th>
+<th style="text-align: right;"><span class="math inline">\(C(h,w)\)</span></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>study language</code></td>
+<td style="text-align: right;">3</td>
+</tr>
+<tr class="even">
+<td><code>study statistics</code></td>
+<td style="text-align: right;">1</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<div class="takeaway">
+<p>Every maximum-likelihood estimate will be a continuation count divided by its history count.</p>
+</div>
+<div class="citation">
+Bigram counts and maximum-likelihood estimation: <span class="citation" data-cites="jurafsky2026slp">(<a href="#/next-can-a-model-carry-memory-through-time" role="doc-biblioref" onclick="">Jurafsky and Martin 2026</a>, Ch. 3)</span>.
+</div>
+</section>
+<section id="relative-frequency-becomes-probability" class="slide level2">
+<h2>Relative frequency becomes probability</h2>
+<div class="mle-rule">
+<p><span class="math display">\[
+P_{\text{MLE}}(w\mid h)=\frac{C(h,w)}{C(h)}
+\]</span></p>
+</div>
+<div class="mle-ledger">
+<div>
+<span>history</span><code>study</code><b>C(study) = 4</b>
+</div>
+<div>
+<span>continuation</span><code>language</code><b>C(study, language) = 3</b>
+</div>
+<div class="mle-result">
+<span>estimate</span><code>P(language | study)</code><b>3/4 = 0.75</b>
+</div>
+</div>
+<div class="takeaway">
+<p>The estimate says: among observed occurrences of this history, how often did this continuation follow?</p>
+</div>
+<div class="citation">
+Relative-frequency estimate for n-grams: <span class="citation" data-cites="jurafsky2026slp">(<a href="#/next-can-a-model-carry-memory-through-time" role="doc-biblioref" onclick="">Jurafsky and Martin 2026</a>, Ch. 3)</span>.
+</div>
+</section>
+<section id="your-turn-estimate-three-bigrams" class="slide level2 question-slide">
+<h2>Your turn: estimate three bigrams</h2>
+<div class="bigram-exercise-layout">
+<div class="exercise-corpus-six">
+<div>
+<b>S1</b><span>&lt;s&gt; students study language &lt;/s&gt;</span>
+</div>
+<div>
+<b>S2</b><span>&lt;s&gt; students study statistics &lt;/s&gt;</span>
+</div>
+<div>
+<b>S3</b><span>&lt;s&gt; researchers study language &lt;/s&gt;</span>
+</div>
+<div>
+<b>S4</b><span>&lt;s&gt; students learn statistics &lt;/s&gt;</span>
+</div>
+<div>
+<b>S5</b><span>&lt;s&gt; researchers study statistics &lt;/s&gt;</span>
+</div>
+<div>
+<b>S6</b><span>&lt;s&gt; students study language &lt;/s&gt;</span>
+</div>
+</div>
+<div class="pause-box three-bigram-pause">
+<p><strong>PAUSE · 3 minutes</strong></p>
+<p>Use <span class="math inline">\(P(w\mid h)=C(h,w)/C(h)\)</span> to estimate:</p>
+<ol type="1">
+<li><span class="math inline">\(P(study\mid students)\)</span></li>
+<li><span class="math inline">\(P(language\mid study)\)</span></li>
+<li><span class="math inline">\(P(statistics\mid study)\)</span></li>
+</ol>
+<p>For each estimate, write the two counts before the fraction.</p>
+</div>
+</div>
+<div class="citation">
+Exercise uses the maximum-likelihood bigram estimate from <span class="citation" data-cites="jurafsky2026slp">(<a href="#/next-can-a-model-carry-memory-through-time" role="doc-biblioref" onclick="">Jurafsky and Martin 2026</a>, Ch. 3)</span>.
+</div>
+</section>
+<section id="worked-solution-recover-counts-before-dividing" class="slide level2">
+<h2>Worked solution: recover counts before dividing</h2>
+<div class="three-bigram-solutions">
+<div class="worked-bigram-card">
+<p><strong>study after students</strong></p>
+<p><span><span class="math inline">\(C(students,study)=3\)</span></span> <span><span class="math inline">\(C(students)=4\)</span></span></p>
+<p><span class="math display">\[P(study\mid students)=\frac{3}{4}=\mathbf{0.75}\]</span></p>
+</div>
+<div class="worked-bigram-card language-solution">
+<p><strong>language after study</strong></p>
+<p><span><span class="math inline">\(C(study,language)=3\)</span></span> <span><span class="math inline">\(C(study)=5\)</span></span></p>
+<p><span class="math display">\[P(language\mid study)=\frac{3}{5}=\mathbf{0.60}\]</span></p>
+</div>
+<div class="worked-bigram-card statistics-solution">
+<p><strong>statistics after study</strong></p>
+<p><span><span class="math inline">\(C(study,statistics)=2\)</span></span> <span><span class="math inline">\(C(study)=5\)</span></span></p>
+<p><span class="math display">\[P(statistics\mid study)=\frac{2}{5}=\mathbf{0.40}\]</span></p>
+</div>
+</div>
+<div class="takeaway">
+<p>For the history <code>study</code>, the complete row is visible: <span class="math inline">\(0.60+0.40=1.00\)</span>.</p>
+</div>
+<div class="citation">
+Worked maximum-likelihood estimate: <span class="citation" data-cites="jurafsky2026slp">(<a href="#/next-can-a-model-carry-memory-through-time" role="doc-biblioref" onclick="">Jurafsky and Martin 2026</a>, Ch. 3)</span>.
+</div>
+</section>
+<section id="what-to-keep-from-part-ii" class="slide level2">
+<h2>What to keep from Part II</h2>
+<div class="part-summary bigram-summary">
+<div class="fragment">
+<b>1</b><span>A bigram model keeps one word of history.</span>
+</div>
+<div class="fragment">
+<b>2</b><span>The corpus supplies history and continuation counts.</span>
+</div>
+<div class="fragment">
+<b>3</b><span>Dividing <span class="math inline">\(C(h,w)\)</span> by <span class="math inline">\(C(h)\)</span> creates a next-word distribution.</span>
+</div>
+</div>
+<div class="fragment next-part">
+<p><strong>NEXT · GENERATE</strong></p>
+<p>How can we use these probability rows to score, predict, and generate a sequence?</p>
+</div>
+<div class="citation">
+Summary based on <span class="citation" data-cites="jurafsky2026slp">(<a href="#/next-can-a-model-carry-memory-through-time" role="doc-biblioref" onclick="">Jurafsky and Martin 2026</a>, Ch. 3)</span>.
+</div>
+</section></section>
+<section>
+<section id="part-iii-predict-and-generate" class="title-slide slide level1 section-slide center">
+<h1>Part III · Predict and generate</h1>
+
+</section>
+<section id="a-probability-row-is-a-menu" class="slide level2">
+<h2>A probability row is a menu</h2>
+<div class="generation-history">
+<p><small>CURRENT TOKEN</small><strong>study</strong><i>→</i><span>choose the next token</span></p>
+</div>
+<div class="probability-strip">
+<div class="fragment language-mass">
+<b>language</b><span>0.75</span>
+</div>
+<div class="fragment statistics-mass">
+<b>statistics</b><span>0.25</span>
+</div>
+</div>
+<div class="generation-choices">
+<div class="fragment generation-choice">
+<p><strong>GREEDY</strong></p>
+<p>Take the largest region → <code>language</code></p>
+</div>
+<div class="fragment generation-choice sample-choice">
+<p><strong>SAMPLE</strong></p>
+<p>Draw according to region size → either word</p>
+</div>
+</div>
+<div class="citation">
+Greedy selection and sampling from a language-model distribution: <span class="citation" data-cites="jurafsky2026slp">(<a href="#/next-can-a-model-carry-memory-through-time" role="doc-biblioref" onclick="">Jurafsky and Martin 2026</a>, Ch. 3)</span>.
+</div>
+</section>
+<section id="generation-is-prediction-in-a-loop" class="slide level2">
+<h2>Generation is prediction in a loop</h2>
+<div class="generation-network" aria-label="Animated generation graph. The token students moves to study, then branches to language with probability 0.75 or statistics with probability 0.25; the selected word loops back as the next state.">
+<svg viewbox="0 0 1240 360" role="img">
+  <defs>
+    <marker id="generation-arrow" viewbox="0 0 10 10" refx="9" refy="5" markerwidth="8" markerheight="8" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z"></path>
+    </marker>
+    <filter id="token-glow"><fegaussianblur stddeviation="4" result="blur"></fegaussianblur><femerge><femergenode in="blur"></femergenode><femergenode in="SourceGraphic"></femergenode></femerge></filter>
+  </defs>
+
+  <path class="generation-edge main-edge" d="M245 150 H450"></path>
+  <path class="generation-edge language-edge" d="M660 150 C750 150 760 82 850 82"></path>
+  <path class="generation-edge statistics-edge" d="M660 150 C750 150 760 224 850 224"></path>
+  <path class="generation-edge return-edge" d="M1080 224 C1180 224 1175 330 620 330 C340 330 330 275 450 210"></path>
+
+  <g class="generation-node seed-svg-node">
+    <circle cx="155" cy="150" r="90"></circle>
+    <text class="node-kicker" x="155" y="128">SEED</text>
+    <text class="node-word" x="155" y="165">students</text>
+  </g>
+  <g class="generation-node state-svg-node">
+    <circle cx="555" cy="150" r="105"></circle>
+    <text class="node-kicker" x="555" y="118">NEXT STATE</text>
+    <text class="node-word" x="555" y="158">study</text>
+    <text class="node-probability" x="555" y="198">P = 1.00</text>
+  </g>
+  <g class="generation-node candidate-svg-node language-svg-node">
+    <rect x="850" y="30" width="230" height="104" rx="24"></rect>
+    <text class="node-word" x="965" y="74">language</text>
+    <text class="node-probability" x="965" y="108">0.75</text>
+  </g>
+  <g class="generation-node candidate-svg-node statistics-svg-node">
+    <rect x="850" y="172" width="230" height="104" rx="24"></rect>
+    <text class="node-word" x="965" y="216">statistics</text>
+    <text class="node-probability" x="965" y="250">0.25</text>
+  </g>
+
+  <circle class="travelling-token greedy-token" r="13">
+    <animatemotion dur="3.8s" repeatcount="indefinite" path="M155 150 H555 C750 150 760 82 965 82"></animatemotion>
+  </circle>
+  <circle class="travelling-token sample-token" r="11">
+    <animatemotion begin="1.9s" dur="3.8s" repeatcount="indefinite" path="M155 150 H555 C750 150 760 224 965 224"></animatemotion>
+  </circle>
+  <text class="feedback-label" x="775" y="318">append selection → use it as the next state</text>
+</svg>
+</div>
+<div class="decoding-fork">
+<div class="fragment decoding-branch greedy-branch">
+<p><small>GREEDY · <span class="math inline">\(argmax\)</span> EACH STEP</small> <b>students → study → language → &lt;/s&gt;</b> <span>Run again → the <strong>same sentence</strong></span></p>
+</div>
+<div class="fragment decoding-branch sampling-branch">
+<p><small>SAMPLING · DRAW EACH STEP</small> <b>students → study → statistics → &lt;/s&gt;</b> <span>Run again → a <strong>different path is possible</strong></span></p>
+</div>
+</div>
+<div class="citation">
+Autoregressive generation repeatedly feeds a selected token back as context; greedy decoding and sampling induce different output behavior <span class="citation" data-cites="jurafsky2026slp">(<a href="#/next-can-a-model-carry-memory-through-time" role="doc-biblioref" onclick="">Jurafsky and Martin 2026</a>, Ch. 3)</span>.
+</div>
+</section>
+<section id="sampling-can-take-another-path" class="slide level2">
+<h2>Sampling can take another path</h2>
+<div class="sampling-demo">
+<div class="sampling-context">
+<small>HISTORY</small><strong>study</strong>
+</div>
+<div class="sampling-number-line">
+<div class="language-zone">
+<span>language</span><b>0.00–0.75</b>
+</div>
+<div class="statistics-zone">
+<span>statistics</span><b>0.75–1.00</b>
+</div>
+<p><i class="fragment sample-marker">r = 0.82</i></p>
+</div>
+<div class="fragment sampling-result">
+<small>SELECT</small><strong>statistics</strong>
+</div>
+</div>
+<div class="fragment alternative-sentence">
+<p><code>&lt;s&gt; students study statistics &lt;/s&gt;</code></p>
+</div>
+<div class="takeaway">
+<p>Sampling preserves variation: less likely continuations can still be generated.</p>
+</div>
+<div class="citation">
+Sampling interpretation for a categorical next-token distribution: <span class="citation" data-cites="jurafsky2026slp">(<a href="#/next-can-a-model-carry-memory-through-time" role="doc-biblioref" onclick="">Jurafsky and Martin 2026</a>, Ch. 3)</span>.
+</div>
+</section>
+<section id="your-turn-score-the-generated-sentence" class="slide level2 question-slide">
+<h2>Your turn: score the generated sentence</h2>
+<div class="score-prompt-sentence">
+<p><code>&lt;s&gt; students study language &lt;/s&gt;</code></p>
+</div>
+<div class="score-givens">
+<div>
+<span>P(students | <code>&lt;s&gt;</code>)</span><b>3/4</b>
+</div>
+<div>
+<span>P(study | students)</span><b>3/3</b>
+</div>
+<div>
+<span>P(language | study)</span><b>3/4</b>
+</div>
+<div>
+<span>P(<code>&lt;/s&gt;</code> | language)</span><b>3/3</b>
+</div>
+</div>
+<div class="pause-box score-pause">
+<p><strong>PAUSE · 90 seconds</strong></p>
+<p>Compute the sentence probability by multiplying its four transition probabilities.</p>
+<p><span class="math display">\[P(\text{students study language})=\;?\]</span></p>
+</div>
+<div class="citation">
+Sentence scoring with a bigram language model: <span class="citation" data-cites="jurafsky2026slp">(<a href="#/next-can-a-model-carry-memory-through-time" role="doc-biblioref" onclick="">Jurafsky and Martin 2026</a>, Ch. 3)</span>.
+</div>
+</section>
+<section id="worked-solution-multiply-the-path" class="slide level2">
+<h2>Worked solution: multiply the path</h2>
+<div class="sentence-score">
+<div class="fragment">
+<span>&lt;s&gt; → students</span><b>3/4</b>
+</div>
+<i class="fragment">×</i>
+<div class="fragment">
+<span>students → study</span><b>3/3</b>
+</div>
+<i class="fragment">×</i>
+<div class="fragment">
+<span>study → language</span><b>3/4</b>
+</div>
+<i class="fragment">×</i>
+<div class="fragment">
+<span>language → &lt;/s&gt;</span><b>3/3</b>
+</div>
+</div>
+<div class="score-result">
+<p><span class="math display">\[P(\text{students study language})=\frac34\times1\times\frac34\times1=\mathbf{0.5625}\]</span></p>
+</div>
+<div class="takeaway">
+<p>Longer sequences accumulate more factors, so their raw probabilities naturally become smaller.</p>
+</div>
+<div class="citation">
+Bigram sentence probability as a product of local conditionals: <span class="citation" data-cites="jurafsky2026slp">(<a href="#/next-can-a-model-carry-memory-through-time" role="doc-biblioref" onclick="">Jurafsky and Martin 2026</a>, Ch. 3)</span>.
+</div>
+</section>
+<section id="what-to-keep-from-part-iii" class="slide level2">
+<h2>What to keep from Part III</h2>
+<div class="part-summary generation-summary">
+<div class="fragment">
+<b>1</b><span>Prediction selects from one conditional probability row.</span>
+</div>
+<div class="fragment">
+<b>2</b><span>Generation feeds each selected token back as the next history.</span>
+</div>
+<div class="fragment">
+<b>3</b><span>A sequence score is the product of its transition probabilities.</span>
+</div>
+</div>
+<div class="fragment next-part">
+<p><strong>NEXT · HANDLE ZEROS</strong></p>
+<p>What happens when generation requests a transition that the training corpus never contained?</p>
+</div>
+<div class="citation">
+Summary based on <span class="citation" data-cites="jurafsky2026slp">(<a href="#/next-can-a-model-carry-memory-through-time" role="doc-biblioref" onclick="">Jurafsky and Martin 2026</a>, Ch. 3)</span>.
+</div>
+</section></section>
+<section>
+<section id="part-iv-handle-unseen-sequences" class="title-slide slide level1 section-slide center">
+<h1>Part IV · Handle unseen sequences</h1>
+
+</section>
+<section id="can-a-plausible-clause-receive-probability-zero" class="slide level2 question-slide">
+<h2>Can a plausible clause receive probability zero?</h2>
+<div class="zero-clause-example">
+<p><small>CLAUSE TO SCORE</small> <b>students study language</b></p>
+</div>
+<div class="fragment unseen-bigram-focus">
+<div class="focus-token">
+students
+</div>
+<i>→</i>
+<div class="focus-token unseen-history">
+study
+</div>
+<i class="unseen-link">╌╌╌→<small>never observed</small></i>
+<div class="focus-token unseen-word">
+language
+</div>
+<div class="zero-evidence">
+<span class="math inline">\(C(study,language)=0\)</span>
+</div>
+</div>
+<div class="fragment pause-box zero-pause">
+<p><strong>PAUSE · discuss before revealing the next slide</strong></p>
+<ol type="1">
+<li>Under the unsmoothed bigram model, what is the probability of the complete clause?</li>
+<li>Is this clause genuinely improbable—or merely absent from our finite training corpus?</li>
+</ol>
+</div>
+<div class="citation">
+The zero-frequency problem for maximum-likelihood n-grams: <span class="citation" data-cites="jurafsky2026slp">(<a href="#/next-can-a-model-carry-memory-through-time" role="doc-biblioref" onclick="">Jurafsky and Martin 2026</a>, Ch. 3)</span>.
+</div>
+</section>
+<section id="smoothing-reserves-probability-for-the-unseen" class="slide level2">
+<h2>Smoothing reserves probability for the unseen</h2>
+<div class="smoothing-bridge">
+<p><strong>UNSEEN <span class="math inline">\(\ne\)</span> IMPOSSIBLE</strong> · A finite corpus can miss a perfectly plausible bigram. Smoothing prevents one missing count from eliminating the whole sentence.</p>
+</div>
+<div class="smoothing-idea">
+<div class="probability-mass before-smoothing fragment">
+<p><strong>Maximum likelihood</strong></p>
+<div>
+<span>seen events</span><b>100%</b>
+</div>
+<div>
+<span>unseen events</span><b>0%</b>
+</div>
+</div>
+<div class="mass-transfer fragment">
+<p>small redistribution →</p>
+</div>
+<div class="probability-mass after-smoothing fragment">
+<p><strong>Smoothed model</strong></p>
+<div>
+<span>seen events</span><b>&lt;100%</b>
+</div>
+<div>
+<span>unseen events</span><b>&gt;0%</b>
+</div>
+</div>
+</div>
+<div class="add-one-rule">
+<p><strong>Teaching example</strong></p>
+<p><span class="math display">\[P_{+1}(w\mid h)=\frac{C(h,w)+1}{C(h)+|V|}\]</span></p>
+</div>
+<div class="takeaway">
+<p>Add-one smoothing makes the idea visible, but it usually redistributes too much mass for word language models.</p>
+</div>
+<div class="citation">
+Add-one smoothing as a pedagogical introduction: <span class="citation" data-cites="jurafsky2026slp">(<a href="#/next-can-a-model-carry-memory-through-time" role="doc-biblioref" onclick="">Jurafsky and Martin 2026</a>, Ch. 3)</span>.
+</div>
+</section>
+<section id="smoothing-turns-a-sparse-probability-matrix-dense" class="slide level2">
+<h2>Smoothing turns a sparse probability matrix dense</h2>
+<div class="sparsity-transformation">
+<div class="sparsity-panel mle-matrix-panel">
+<p><strong>UNSMOOTHED MLE</strong></p>
+<div class="mini-matrix matrix-header">
+<i></i><b>language</b><b>statistics</b><b>together</b><b>&lt;/s&gt;</b>
+</div>
+<div class="mini-matrix">
+<b>study</b><span>.60</span><span>.40</span><span class="zero-cell">0</span><span class="zero-cell">0</span>
+</div>
+<div class="mini-matrix">
+<b>learn</b><span>.50</span><span class="zero-cell">0</span><span>.50</span><span class="zero-cell">0</span>
+</div>
+<div class="mini-matrix">
+<b>model</b><span class="zero-cell">0</span><span>.33</span><span class="zero-cell">0</span><span>.67</span>
+</div>
+<div class="matrix-density">
+<strong>6 / 12</strong><span>cells are zero</span>
+</div>
+</div>
+<div class="fragment mass-redistribution">
+<p><b>redistribute</b><span>a little probability mass</span><i>→</i></p>
+</div>
+<div class="fragment sparsity-panel smoothed-matrix-panel">
+<p><strong>ADD-ONE SMOOTHED</strong></p>
+<div class="mini-matrix matrix-header">
+<i></i><b>language</b><b>statistics</b><b>together</b><b>&lt;/s&gt;</b>
+</div>
+<div class="mini-matrix">
+<b>study</b><span>.44</span><span>.33</span><span class="new-mass">.11</span><span class="new-mass">.11</span>
+</div>
+<div class="mini-matrix">
+<b>learn</b><span>.33</span><span class="new-mass">.17</span><span>.33</span><span class="new-mass">.17</span>
+</div>
+<div class="mini-matrix">
+<b>model</b><span class="new-mass">.14</span><span>.29</span><span class="new-mass">.14</span><span>.43</span>
+</div>
+<div class="matrix-density dense-result">
+<strong>0 / 12</strong><span>cells are zero</span>
+</div>
+</div>
+</div>
+<div class="fragment matrix-clarification">
+<p>The <strong>count matrix stays sparse</strong>. Smoothing makes the derived <strong>probability matrix dense</strong>.</p>
+</div>
+<div class="citation">
+Smoothing assigns nonzero probability to unseen n-grams, converting zero entries in the estimated probability table into small positive values <span class="citation" data-cites="jurafsky2026slp">(<a href="#/next-can-a-model-carry-memory-through-time" role="doc-biblioref" onclick="">Jurafsky and Martin 2026</a>, Ch. 3)</span>.
+</div>
+</section>
+<section id="your-turn-give-an-unseen-bigram-probability" class="slide level2 question-slide">
+<h2>Your turn: give an unseen bigram probability</h2>
+<div class="smoothing-givens">
+<div>
+<span>history</span><code>study</code>
+</div>
+<div>
+<span><span class="math inline">\(C(study)\)</span></span><b>4</b>
+</div>
+<div>
+<span><span class="math inline">\(C(study,together)\)</span></span><b>0</b>
+</div>
+<div>
+<span>candidate vocabulary <span class="math inline">\(|V|\)</span></span><b>4</b>
+</div>
+</div>
+<div class="candidate-vocabulary">
+<p><code>V = { language, statistics, together, &lt;/s&gt; }</code></p>
+</div>
+<div class="pause-box smoothing-pause">
+<p><strong>PAUSE · 90 seconds</strong></p>
+<p>Using add-one smoothing, compute:</p>
+<p><span class="math display">\[P_{+1}(together\mid study)=\frac{C(study,together)+1}{C(study)+|V|}\]</span></p>
+</div>
+<div class="citation">
+Exercise applies the add-one estimator presented in <span class="citation" data-cites="jurafsky2026slp">(<a href="#/next-can-a-model-carry-memory-through-time" role="doc-biblioref" onclick="">Jurafsky and Martin 2026</a>, Ch. 3)</span>.
+</div>
+</section>
+<section id="worked-solution-zero-becomes-small-not-impossible" class="slide level2">
+<h2>Worked solution: zero becomes small, not impossible</h2>
+<div class="add-one-worked">
+<div>
+<span>add one to the unseen count</span><b><span class="math inline">\(0+1\)</span></b>
+</div>
+<div>
+<span>add one for every candidate</span><b><span class="math inline">\(4+4\)</span></b>
+</div>
+<div class="fragment result">
+<span>smoothed probability</span><b><span class="math inline">\(\frac{1}{8}=\mathbf{0.125}\)</span></b>
+</div>
+</div>
+<div class="mass-ledger">
+<div class="fragment">
+<span>language</span><b><span class="math inline">\((3+1)/8=0.50\)</span></b>
+</div>
+<div class="fragment">
+<span>statistics</span><b><span class="math inline">\((1+1)/8=0.25\)</span></b>
+</div>
+<div class="fragment">
+<span>together</span><b><span class="math inline">\((0+1)/8=0.125\)</span></b>
+</div>
+<div class="fragment">
+<span>&lt;/s&gt;</span><b><span class="math inline">\((0+1)/8=0.125\)</span></b>
+</div>
+</div>
+<div class="takeaway">
+<p>The row still sums to one, but probability mass moved from seen events to unseen events.</p>
+</div>
+<div class="citation">
+Worked add-one calculation; for word-level models, stronger smoothing is usually preferred <span class="citation" data-cites="jurafsky2026slp">(<a href="#/next-can-a-model-carry-memory-through-time" role="doc-biblioref" onclick="">Jurafsky and Martin 2026</a>, Ch. 3)</span>.
+</div>
+</section>
+<section id="back-off-when-detailed-evidence-is-weak" class="slide level2">
+<h2>Back off when detailed evidence is weak</h2>
+<div class="backoff-staircase">
+<div class="fragment">
+<b>BIGRAM</b><code>P(study | language)</code><span>unseen</span>
+</div>
+<i class="fragment">↓ ask a simpler question</i>
+<div class="fragment">
+<b>UNIGRAM</b><code>P(study)</code><span>supported by corpus counts</span>
+</div>
+</div>
+<div class="backoff-contrast">
+<div class="fragment">
+<p><strong>Backoff</strong> uses the shorter history when detailed evidence is missing.</p>
+</div>
+<div class="fragment">
+<p><strong>Interpolation</strong> always combines estimates from several history lengths.</p>
+</div>
+</div>
+<div class="takeaway">
+<p>Backoff chooses a shorter history; interpolation combines estimates from several history lengths.</p>
+</div>
+<div class="paper-link">
+<p><a href="https://aclanthology.org/P96-1041/">Chen &amp; Goodman, “An Empirical Study of Smoothing Techniques for Language Modeling” (ACL 1996)</a></p>
+</div>
+</section>
+<section id="what-to-keep-from-part-iv" class="slide level2">
+<h2>What to keep from Part IV</h2>
+<div class="part-summary smoothing-summary">
+<div class="fragment">
+<b>1</b><span>An unseen bigram receives zero maximum-likelihood probability.</span>
+</div>
+<div class="fragment">
+<b>2</b><span>Smoothing reserves some probability mass for unseen transitions.</span>
+</div>
+<div class="fragment">
+<b>3</b><span>Backoff uses a shorter, better-supported history.</span>
+</div>
+</div>
+<div class="fragment next-part">
+<p><strong>NEXT · EVALUATE</strong></p>
+<p>Once every test sequence can receive a score, how do we compare two language models fairly?</p>
+</div>
+<div class="citation">
+Summary based on <span class="citation" data-cites="jurafsky2026slp">(<a href="#/next-can-a-model-carry-memory-through-time" role="doc-biblioref" onclick="">Jurafsky and Martin 2026</a>, Ch. 3)</span> and <a href="https://aclanthology.org/P96-1041/">Chen &amp; Goodman (1996)</a>.
+</div>
+</section></section>
+<section>
+<section id="part-v-evaluate-with-perplexity" class="title-slide slide level1 section-slide center">
+<h1>Part V · Evaluate with perplexity</h1>
+
+</section>
+<section id="evaluate-on-text-the-model-did-not-see" class="slide level2">
+<h2>Evaluate on text the model did not see</h2>
+<div class="evaluation-path">
+<div class="fragment">
+<b>TRAIN</b><span>estimate counts and probabilities</span>
+</div>
+<i class="fragment">→</i>
+<div class="fragment">
+<b>DEVELOPMENT</b><span>choose settings and smoothing</span>
+</div>
+<i class="fragment">→</i>
+<div class="fragment">
+<b>TEST</b><span>report final performance once</span>
+</div>
+</div>
+<div class="held-out-card">
+<p><small>HELD-OUT TEST SENTENCE</small></p>
+<p><code>&lt;s&gt; students learn language &lt;/s&gt;</code></p>
+</div>
+<div class="takeaway">
+<p>Testing on training text measures memory; held-out text measures generalization.</p>
+</div>
+<div class="citation">
+Train/development/test separation for language-model evaluation: <span class="citation" data-cites="jurafsky2026slp">(<a href="#/next-can-a-model-carry-memory-through-time" role="doc-biblioref" onclick="">Jurafsky and Martin 2026</a>, Ch. 3)</span>.
+</div>
+</section>
+<section id="raw-sentence-probability-favors-shorter-text" class="slide level2">
+<h2>Raw sentence probability favors shorter text</h2>
+<div class="length-comparison">
+<div class="length-card">
+<p><strong>Two decisions</strong></p>
+<p><span class="math display">\[0.5\times0.5=\mathbf{0.25}\]</span></p>
+<p><code>students learn</code></p>
+</div>
+<div class="length-card longer-card">
+<p><strong>Four decisions</strong></p>
+<p><span class="math display">\[0.5\times0.5\times0.5\times0.5=\mathbf{0.0625}\]</span></p>
+<p><code>students learn language today</code></p>
+</div>
+</div>
+<div class="fragment length-question">
+<p>Did the longer sentence receive a smaller score because the model was worse—or simply because it required more multiplications?</p>
+</div>
+<div class="takeaway">
+<p>Evaluation must normalize for the number of predicted tokens.</p>
+</div>
+<div class="citation">
+Length normalization motivates cross-entropy and perplexity: <span class="citation" data-cites="jurafsky2026slp">(<a href="#/next-can-a-model-carry-memory-through-time" role="doc-biblioref" onclick="">Jurafsky and Martin 2026</a>, Ch. 3)</span>.
+</div>
+</section>
+<section id="perplexity-is-average-inverse-confidence" class="slide level2">
+<h2>Perplexity is average inverse confidence</h2>
+<div class="perplexity-equation">
+<p><span class="math display">\[
+\operatorname{PPL}(w_{1:T})=
+\left(\prod_{t=1}^{T}P(w_t\mid w_{t-1})\right)^{-1/T}
+\]</span></p>
+</div>
+<div class="perplexity-meaning">
+<div class="fragment">
+<small>HIGH TOKEN PROBABILITIES</small><b>→</b><strong>LOW perplexity</strong><span>less surprise</span>
+</div>
+<div class="fragment">
+<small>LOW TOKEN PROBABILITIES</small><b>→</b><strong>HIGH perplexity</strong><span>more surprise</span>
+</div>
+</div>
+<div class="fragment effective-choices">
+<p>Perplexity of <strong>2</strong> is like facing about <strong>two equally plausible choices</strong> at each prediction step.</p>
+</div>
+<div class="citation">
+Perplexity definition and interpretation: <span class="citation" data-cites="jurafsky2026slp">(<a href="#/next-can-a-model-carry-memory-through-time" role="doc-biblioref" onclick="">Jurafsky and Martin 2026</a>, Ch. 3)</span>.
+</div>
+</section>
+<section id="your-turn-compute-perplexity" class="slide level2 question-slide">
+<h2>Your turn: compute perplexity</h2>
+<div class="ppl-test-sequence">
+<p><code>&lt;s&gt; students learn language &lt;/s&gt;</code></p>
+</div>
+<div class="ppl-givens">
+<div>
+<span>P(students | <code>&lt;s&gt;</code>)</span><b>0.50</b>
+</div>
+<div>
+<span>P(learn | students)</span><b>0.25</b>
+</div>
+<div>
+<span>P(language | learn)</span><b>0.50</b>
+</div>
+<div>
+<span>P(<code>&lt;/s&gt;</code> | language)</span><b>1.00</b>
+</div>
+</div>
+<div class="pause-box ppl-pause">
+<p><strong>PAUSE · 2 minutes</strong></p>
+<p>For these <span class="math inline">\(T=4\)</span> predictions:</p>
+<ol type="1">
+<li>Multiply the four probabilities to obtain the sequence probability.</li>
+<li>Compute <span class="math inline">\(\operatorname{PPL}=P(sequence)^{-1/4}\)</span>.</li>
+</ol>
+</div>
+<div class="citation">
+Exercise applies the perplexity definition in <span class="citation" data-cites="jurafsky2026slp">(<a href="#/next-can-a-model-carry-memory-through-time" role="doc-biblioref" onclick="">Jurafsky and Martin 2026</a>, Ch. 3)</span>.
+</div>
+</section>
+<section id="worked-solution-normalize-the-surprise" class="slide level2">
+<h2>Worked solution: normalize the surprise</h2>
+<div class="ppl-worked">
+<div class="fragment">
+<small>1 · MULTIPLY</small><span><span class="math inline">\(0.50\times0.25\times0.50\times1.00\)</span></span><b><span class="math inline">\(=\frac{1}{16}\)</span></b>
+</div>
+<div class="fragment">
+<small>2 · INVERT</small><span><span class="math inline">\((\frac{1}{16})^{-1}\)</span></span><b><span class="math inline">\(=16\)</span></b>
+</div>
+<div class="fragment result">
+<small>3 · FOURTH ROOT</small><span><span class="math inline">\(16^{1/4}\)</span></span><b><span class="math inline">\(=\mathbf{2}\)</span></b>
+</div>
+</div>
+<div class="takeaway">
+<p>On this test sequence, the model behaves as if it had about two equally likely choices per prediction.</p>
+</div>
+<div class="citation">
+Worked perplexity calculation following <span class="citation" data-cites="jurafsky2026slp">(<a href="#/next-can-a-model-carry-memory-through-time" role="doc-biblioref" onclick="">Jurafsky and Martin 2026</a>, Ch. 3)</span>.
+</div>
+</section>
+<section id="compare-models-under-identical-conditions" class="slide level2">
+<h2>Compare models under identical conditions</h2>
+<div class="model-comparison">
+<div class="model-result winner">
+<p><strong>MODEL A</strong></p>
+<p><span>test perplexity</span><b>2.0</b></p>
+<p>Lower average surprise</p>
+</div>
+<div class="model-result">
+<p><strong>MODEL B</strong></p>
+<p><span>test perplexity</span><b>3.4</b></p>
+<p>Higher average surprise</p>
+</div>
+</div>
+<div class="comparison-rules">
+<div class="fragment">
+<b>SAME</b><span>held-out test text</span>
+</div>
+<div class="fragment">
+<b>SAME</b><span>tokenization</span>
+</div>
+<div class="fragment">
+<b>SAME</b><span>vocabulary and unknown-word policy</span>
+</div>
+</div>
+<div class="takeaway">
+<p>Lower perplexity is better only when the evaluation conditions are the same.</p>
+</div>
+<div class="citation">
+Requirements for valid perplexity comparison: <span class="citation" data-cites="jurafsky2026slp">(<a href="#/next-can-a-model-carry-memory-through-time" role="doc-biblioref" onclick="">Jurafsky and Martin 2026</a>, Ch. 3)</span>.
+</div>
+</section>
+<section id="perplexity-is-usefulbut-not-the-final-goal" class="slide level2">
+<h2>Perplexity is useful—but not the final goal</h2>
+<div class="metric-lenses">
+<div class="metric-lens">
+<p><strong>INTRINSIC</strong></p>
+<p>Perplexity asks how well the model predicts held-out tokens.</p>
+</div>
+<div class="metric-arrow">
+<p>→</p>
+</div>
+<div class="metric-lens task-lens">
+<p><strong>EXTRINSIC</strong></p>
+<p>A task metric asks whether the model improves an application.</p>
+</div>
+</div>
+<div class="fragment example-task-metrics">
+<p><span>autocomplete acceptance</span><span>speech-recognition errors</span><span>translation quality</span></p>
+</div>
+<div class="takeaway">
+<p>A lower perplexity is encouraging, but downstream evaluation decides whether the model is useful.</p>
+</div>
+<div class="citation">
+Intrinsic versus extrinsic language-model evaluation: <span class="citation" data-cites="jurafsky2026slp">(<a href="#/next-can-a-model-carry-memory-through-time" role="doc-biblioref" onclick="">Jurafsky and Martin 2026</a>, Ch. 3)</span>.
+</div>
+</section>
+<section id="what-to-keep-from-part-v" class="slide level2">
+<h2>What to keep from Part V</h2>
+<div class="part-summary evaluation-summary">
+<div class="fragment">
+<b>1</b><span>Evaluate generalization on held-out text.</span>
+</div>
+<div class="fragment">
+<b>2</b><span>Perplexity normalizes sequence probability by token count.</span>
+</div>
+<div class="fragment">
+<b>3</b><span>Lower perplexity means less average surprise under matched conditions.</span>
+</div>
+</div>
+<div class="fragment next-part">
+<p><strong>NEXT · LOOK AHEAD</strong></p>
+<p>Even with smoothing and good perplexity, what can a fixed one-word history never remember?</p>
+</div>
+<div class="citation">
+Summary based on <span class="citation" data-cites="jurafsky2026slp">(<a href="#/next-can-a-model-carry-memory-through-time" role="doc-biblioref" onclick="">Jurafsky and Martin 2026</a>, Ch. 3)</span>.
+</div>
+</section></section>
+<section>
+<section id="part-vi-why-n-grams-are-not-enough" class="title-slide slide level1 section-slide center">
+<h1>Part VI · Why n-grams are not enough</h1>
+
+</section>
+<section id="a-bigram-remembers-exactly-one-token" class="slide level2">
+<h2>A bigram remembers exactly one token</h2>
+<div class="dependency-sentence">
+<p><span class="fragment remote-cue">The <b>keys</b></span> <span class="fragment faded-token">to</span> <span class="fragment faded-token">the</span> <span class="fragment local-token">cabinet</span> <span class="fragment prediction-gap">___</span></p>
+</div>
+<div class="memory-views">
+<div class="memory-view human-view">
+<p><strong>THE SENTENCE TELLS US</strong></p>
+<p>The subject is plural: <code>keys → are</code>.</p>
+</div>
+<div class="memory-view bigram-view">
+<p><strong>THE BIGRAM SEES</strong></p>
+<p>Only <code>cabinet → ?</code>; the relevant subject is gone.</p>
+</div>
+</div>
+<div class="takeaway danger">
+<p>A fixed one-token history cannot represent a dependency that crosses several words.</p>
+</div>
+<div class="citation">
+Fixed-context limitation of n-gram language models: <span class="citation" data-cites="jurafsky2026slp">(<a href="#/next-can-a-model-carry-memory-through-time" role="doc-biblioref" onclick="">Jurafsky and Martin 2026</a>, Ch. 3)</span>.
+</div>
+</section>
+<section id="increasing-n-makes-the-table-explode" class="slide level2">
+<h2>Increasing n makes the table explode</h2>
+<div class="table-growth">
+<div class="fragment">
+<small>VOCABULARY</small><b>50,000</b><span>possible tokens</span>
+</div>
+<i class="fragment">→</i>
+<div class="fragment">
+<small>BIGRAM TABLE</small><b>2.5 billion</b><span>possible pairs</span>
+</div>
+<i class="fragment">→</i>
+<div class="fragment">
+<small>TRIGRAM TABLE</small><b>125 trillion</b><span>possible triples</span>
+</div>
+</div>
+<div class="fragment sparse-table-illustration">
+<div class="seen-cell">
+
+</div>
+<div>
+
+</div>
+<div>
+
+</div>
+<div>
+
+</div>
+<div>
+
+</div>
+<div>
+
+</div>
+<div>
+
+</div>
+<div>
+
+</div>
+<div>
+
+</div>
+<div>
+
+</div>
+<div>
+
+</div>
+<div class="seen-cell">
+
+</div>
+<div>
+
+</div>
+<div>
+
+</div>
+<div>
+
+</div>
+<div>
+
+</div>
+<div>
+
+</div>
+<div>
+
+</div>
+<div>
+
+</div>
+<div>
+
+</div>
+<div>
+
+</div>
+<div class="seen-cell">
+
+</div>
+<div>
+
+</div>
+<div>
+
+</div>
+<p><span>most possible n-grams are never observed</span></p>
+</div>
+<div class="takeaway">
+<p>Longer contexts remember more—but create vastly more sparse parameters.</p>
+</div>
+<div class="citation">
+Parameter growth and sparsity in higher-order n-grams: <span class="citation" data-cites="jurafsky2026slp">(<a href="#/next-can-a-model-carry-memory-through-time" role="doc-biblioref" onclick="">Jurafsky and Martin 2026</a>, Ch. 3)</span>.
+</div>
+</section>
+<section id="similar-words-cannot-share-evidence" class="slide level2">
+<h2>Similar words cannot share evidence</h2>
+<div class="sharing-corpus">
+<div>
+<small>SEEN 12 TIMES</small><code>students → study</code><b>✓</b>
+</div>
+<div>
+<small>SEEN 9 TIMES</small><code>researchers → study</code><b>✓</b>
+</div>
+<div class="fragment unseen-sharing">
+<small>NEVER SEEN</small><code>pupils → study</code><b>?</b>
+</div>
+</div>
+<div class="fragment similarity-bridge">
+<p><span>students</span><i>≈</i><span>pupils</span><strong>similar meaning</strong> <b>but</b> <span class="count-symbol">C(students, study)</span><i>≠</i><span class="count-symbol">C(pupils, study)</span><strong>separate counts</strong></p>
+</div>
+<div class="takeaway">
+<p>An n-gram table treats every word sequence as a separate symbol, even when words are semantically similar.</p>
+</div>
+<div class="citation">
+Lack of distributed parameter sharing in count-based n-grams: <span class="citation" data-cites="jurafsky2026slp">(<a href="#/next-can-a-model-carry-memory-through-time" role="doc-biblioref" onclick="">Jurafsky and Martin 2026</a>, Chs. 3 and 9)</span>.
+</div>
+</section>
+<section id="what-to-keep-from-part-vi" class="slide level2">
+<h2>What to keep from Part VI</h2>
+<div class="part-summary limitations-summary">
+<div class="fragment">
+<b>1</b><span>Fixed n-gram histories cannot carry distant information.</span>
+</div>
+<div class="fragment">
+<b>2</b><span>Higher-order tables grow rapidly and remain sparse.</span>
+</div>
+<div class="fragment">
+<b>3</b><span>Separate symbolic counts cannot share evidence across similar words.</span>
+</div>
+</div>
+<div class="fragment next-part">
+<p><strong>NEXT LECTURE · RNNs</strong></p>
+<p>What kind of model could carry useful information forward through time?</p>
+</div>
+<div class="citation">
+Summary based on <span class="citation" data-cites="jurafsky2026slp">(<a href="#/next-can-a-model-carry-memory-through-time" role="doc-biblioref" onclick="">Jurafsky and Martin 2026</a>, Chs. 3 and 9)</span>.
+</div>
+</section>
+<section id="the-complete-journey" class="slide level2">
+<h2>The complete journey</h2>
+<div class="final-lm-journey">
+<div class="fragment">
+<b>1</b><strong>PREDICT</strong><span>distribute probability</span>
+</div>
+<i class="fragment">→</i>
+<div class="fragment">
+<b>2</b><strong>COUNT</strong><span>estimate bigrams</span>
+</div>
+<i class="fragment">→</i>
+<div class="fragment">
+<b>3</b><strong>GENERATE</strong><span>follow probability rows</span>
+</div>
+<i class="fragment">→</i>
+<div class="fragment">
+<b>4</b><strong>SMOOTH</strong><span>handle unseen events</span>
+</div>
+<i class="fragment">→</i>
+<div class="fragment">
+<b>5</b><strong>EVALUATE</strong><span>measure perplexity</span>
+</div>
+<i class="fragment">→</i>
+<div class="fragment">
+<b>6</b><strong>RETHINK</strong><span>carry a learned state</span>
+</div>
+</div>
+<div class="big-summary">
+<p>Language modeling turns a history into a distribution over what comes next.</p>
+</div>
+<div class="citation">
+Lecture synthesis based on <span class="citation" data-cites="jurafsky2026slp">(<a href="#/next-can-a-model-carry-memory-through-time" role="doc-biblioref" onclick="">Jurafsky and Martin 2026</a>, Chs. 3 and 9)</span>.
+</div>
+</section>
+<section id="applied-session-build-the-model-yourself" class="slide level2">
+<h2>Applied session: build the model yourself</h2>
+<div class="lab-pipeline">
+<div class="fragment">
+<b>1</b><span>tokenize a tiny corpus</span>
+</div>
+<i class="fragment">→</i>
+<div class="fragment">
+<b>2</b><span>count bigram transitions</span>
+</div>
+<i class="fragment">→</i>
+<div class="fragment">
+<b>3</b><span>normalize each row</span>
+</div>
+<i class="fragment">→</i>
+<div class="fragment">
+<b>4</b><span>predict or sample</span>
+</div>
+</div>
+<div class="lab-output">
+<p><small>YOU WILL BE ABLE TO ASK</small></p>
+<p><code>model.predict_next("study")</code></p>
+<p><strong>→ language</strong></p>
+</div>
+<div class="takeaway">
+<p>Every number in the model will be inspectable: tokens, counts, probabilities, predictions, and errors.</p>
+</div>
+<div class="citation">
+Applied workflow implements the count-based bigram model developed in <span class="citation" data-cites="jurafsky2026slp">(<a href="#/next-can-a-model-carry-memory-through-time" role="doc-biblioref" onclick="">Jurafsky and Martin 2026</a>, Ch. 3)</span>.
+</div>
+</section>
+<section id="next-can-a-model-carry-memory-through-time" class="slide level2 smaller scrollable">
+<h2>Next: can a model carry memory through time?</h2>
+<div class="rnn-suspense" aria-label="An animated unrolled recurrent neural network. Input words enter successive recurrent states, information travels from one state to the next, and each state produces an output.">
+<svg viewbox="0 0 1240 520" role="img">
+  <defs>
+    <marker id="rnn-arrow" viewbox="0 0 10 10" refx="9" refy="5" markerwidth="8" markerheight="8" orient="auto">
+      <path d="M0 0 L10 5 L0 10 z"></path>
+    </marker>
+    <filter id="rnn-glow"><fegaussianblur stddeviation="5" result="blur"></fegaussianblur><femerge><femergenode in="blur"></femergenode><femergenode in="SourceGraphic"></femergenode></femerge></filter>
+  </defs>
+
+  <path class="rnn-edge hidden-edge" d="M110 250 H1110"></path>
+  <path class="rnn-edge input-edge" d="M270 440 V335"></path>
+  <path class="rnn-edge input-edge" d="M620 440 V335"></path>
+  <path class="rnn-edge input-edge" d="M970 440 V335"></path>
+  <path class="rnn-edge output-edge" d="M270 165 V70"></path>
+  <path class="rnn-edge output-edge" d="M620 165 V70"></path>
+  <path class="rnn-edge output-edge" d="M970 165 V70"></path>
+
+  <g class="rnn-state"><rect x="180" y="165" width="180" height="170" rx="28"></rect><text x="270" y="238">RNN</text><text class="state-label" x="270" y="282">state 1</text></g>
+  <g class="rnn-state"><rect x="530" y="165" width="180" height="170" rx="28"></rect><text x="620" y="238">RNN</text><text class="state-label" x="620" y="282">state 2</text></g>
+  <g class="rnn-state"><rect x="880" y="165" width="180" height="170" rx="28"></rect><text x="970" y="238">RNN</text><text class="state-label" x="970" y="282">state 3</text></g>
+
+  <g class="rnn-input"><text x="270" y="478">the</text><text x="620" y="478">keys</text><text x="970" y="478">to</text></g>
+  <g class="rnn-output"><text x="270" y="38">?</text><text x="620" y="38">?</text><text x="970" y="38">?</text></g>
+
+  <circle class="memory-pulse" r="15"><animatemotion dur="4s" repeatcount="indefinite" path="M110 250 H1110"></animatemotion></circle>
+  <circle class="input-pulse" r="10"><animatemotion begin=".5s" dur="2s" repeatcount="indefinite" path="M270 440 V250"></animatemotion></circle>
+  <circle class="input-pulse" r="10"><animatemotion begin="1.5s" dur="2s" repeatcount="indefinite" path="M620 440 V250"></animatemotion></circle>
+  <circle class="input-pulse" r="10"><animatemotion begin="2.5s" dur="2s" repeatcount="indefinite" path="M970 440 V250"></animatemotion></circle>
+</svg>
+</div>
+<div class="fragment rnn-cliffhanger">
+<p><strong>NEXT LECTURE · RECURRENT NEURAL NETWORKS</strong></p>
+<p>One state, reused through time. But how can it learn what deserves to survive?</p>
+</div>
+<div class="citation">
+Bridge to recurrent language models: <span class="citation" data-cites="jurafsky2026slp">(<a href="#/next-can-a-model-carry-memory-through-time" role="doc-biblioref" onclick="">Jurafsky and Martin 2026</a>, Ch. 9)</span>.
+</div>
+
+
+<div id="refs" class="references csl-bib-body hanging-indent" role="list">
+<div id="ref-jurafsky2026slp" class="csl-entry" role="listitem">
+Jurafsky, Daniel, and James H. Martin. 2026. <em>Speech and Language Processing: An Introduction to Natural Language Processing, Computational Linguistics, and Speech Recognition with Language Models</em>. 3rd ed. <a href="https://web.stanford.edu/~jurafsky/slp3/">https://web.stanford.edu/~jurafsky/slp3/</a>.
+</div>
+</div>
+</section></section>
+    </div>
+  <div class="quarto-auto-generated-content" style="display: none;">
+<div class="footer footer-default">
+<p>CS 351 · Statistical NLP</p>
+</div>
+</div></div>
+
+  <script>window.backupDefine = window.define; window.define = undefined;</script>
+  <script src="../../site_libs/revealjs/dist/reveal.js"></script>
+  <!-- reveal.js plugins -->
+  <script src="../../site_libs/revealjs/plugin/quarto-line-highlight/line-highlight.js"></script>
+  <script src="../../site_libs/revealjs/plugin/pdf-export/pdfexport.js"></script>
+  <script src="../../site_libs/revealjs/plugin/reveal-menu/menu.js"></script>
+  <script src="../../site_libs/revealjs/plugin/reveal-menu/quarto-menu.js"></script>
+  <script src="../../site_libs/revealjs/plugin/quarto-support/support.js"></script>
+  
+
+  <script src="../../site_libs/revealjs/plugin/notes/notes.js"></script>
+  <script src="../../site_libs/revealjs/plugin/search/search.js"></script>
+  <script src="../../site_libs/revealjs/plugin/zoom/zoom.js"></script>
+  <script src="../../site_libs/revealjs/plugin/math/math.js"></script>
+  <script>window.define = window.backupDefine; window.backupDefine = undefined;</script>
+
+  <script>
+
+      // Full list of configuration options available at:
+      // https://revealjs.com/config/
+      Reveal.initialize({
+'controlsAuto': false,
+'previewLinksAuto': false,
+'pdfSeparateFragments': false,
+'autoAnimateEasing': "ease",
+'autoAnimateDuration': 1,
+'autoAnimateUnmatched': true,
+'jumpToSlide': true,
+'menu': {"side":"left","useTextContentForMissingTitles":true,"markers":false,"loadIcons":false,"custom":[{"title":"Tools","icon":"<i class=\"fas fa-gear\"></i>","content":"<ul class=\"slide-menu-items\">\n<li class=\"slide-tool-item active\" data-item=\"0\"><a href=\"#\" onclick=\"RevealMenuToolHandlers.fullscreen(event)\"><kbd>f</kbd> Fullscreen</a></li>\n<li class=\"slide-tool-item\" data-item=\"1\"><a href=\"#\" onclick=\"RevealMenuToolHandlers.speakerMode(event)\"><kbd>s</kbd> Speaker View</a></li>\n<li class=\"slide-tool-item\" data-item=\"2\"><a href=\"#\" onclick=\"RevealMenuToolHandlers.overview(event)\"><kbd>o</kbd> Slide Overview</a></li>\n<li class=\"slide-tool-item\" data-item=\"3\"><a href=\"#\" onclick=\"RevealMenuToolHandlers.togglePdfExport(event)\"><kbd>e</kbd> PDF Export Mode</a></li>\n<li class=\"slide-tool-item\" data-item=\"4\"><a href=\"#\" onclick=\"RevealMenuToolHandlers.toggleScrollView(event)\"><kbd>r</kbd> Scroll View Mode</a></li>\n<li class=\"slide-tool-item\" data-item=\"5\"><a href=\"#\" onclick=\"RevealMenuToolHandlers.keyboardHelp(event)\"><kbd>?</kbd> Keyboard Help</a></li>\n</ul>"}],"openButton":true},
+'smaller': false,
+ 
+        // Display controls in the bottom right corner
+        controls: true,
+
+        // Help the user learn the controls by providing hints, for example by
+        // bouncing the down arrow when they first encounter a vertical slide
+        controlsTutorial: false,
+
+        // Determines where controls appear, "edges" or "bottom-right"
+        controlsLayout: 'edges',
+
+        // Visibility rule for backwards navigation arrows; "faded", "hidden"
+        // or "visible"
+        controlsBackArrows: 'faded',
+
+        // Display a presentation progress bar
+        progress: true,
+
+        // Display the page number of the current slide
+        slideNumber: 'c/t',
+
+        // 'all', 'print', or 'speaker'
+        showSlideNumber: 'all',
+
+        // Add the current slide number to the URL hash so that reloading the
+        // page/copying the URL will return you to the same slide
+        hash: true,
+
+        // Start with 1 for the hash rather than 0
+        hashOneBasedIndex: false,
+
+        // Flags if we should monitor the hash and change slides accordingly
+        respondToHashChanges: true,
+
+        // Push each slide change to the browser history
+        history: true,
+
+        // Enable keyboard shortcuts for navigation
+        keyboard: true,
+
+        // Enable the slide overview mode
+        overview: true,
+
+        // Disables the default reveal.js slide layout (scaling and centering)
+        // so that you can use custom CSS layout
+        disableLayout: false,
+
+        // Vertical centering of slides
+        center: false,
+
+        // Enables touch navigation on devices with touch input
+        touch: true,
+
+        // Loop the presentation
+        loop: false,
+
+        // Change the presentation direction to be RTL
+        rtl: false,
+
+        // see https://revealjs.com/vertical-slides/#navigation-mode
+        navigationMode: 'linear',
+
+        // Randomizes the order of slides each time the presentation loads
+        shuffle: false,
+
+        // Turns fragments on and off globally
+        fragments: true,
+
+        // Flags whether to include the current fragment in the URL,
+        // so that reloading brings you to the same fragment position
+        fragmentInURL: false,
+
+        // Flags if the presentation is running in an embedded mode,
+        // i.e. contained within a limited portion of the screen
+        embedded: false,
+
+        // Flags if we should show a help overlay when the questionmark
+        // key is pressed
+        help: true,
+
+        // Flags if it should be possible to pause the presentation (blackout)
+        pause: true,
+
+        // Flags if speaker notes should be visible to all viewers
+        showNotes: false,
+
+        // Global override for autoplaying embedded media (null/true/false)
+        autoPlayMedia: null,
+
+        // Global override for preloading lazy-loaded iframes (null/true/false)
+        preloadIframes: null,
+
+        // Number of milliseconds between automatically proceeding to the
+        // next slide, disabled when set to 0, this value can be overwritten
+        // by using a data-autoslide attribute on your slides
+        autoSlide: 0,
+
+        // Stop auto-sliding after user input
+        autoSlideStoppable: true,
+
+        // Use this method for navigation when auto-sliding
+        autoSlideMethod: null,
+
+        // Specify the average time in seconds that you think you will spend
+        // presenting each slide. This is used to show a pacing timer in the
+        // speaker view
+        defaultTiming: null,
+
+        // Enable slide navigation via mouse wheel
+        mouseWheel: false,
+
+        // The display mode that will be used to show slides
+        display: 'block',
+
+        // Hide cursor if inactive
+        hideInactiveCursor: true,
+
+        // Time before the cursor is hidden (in ms)
+        hideCursorTime: 5000,
+
+        // Opens links in an iframe preview overlay
+        previewLinks: false,
+
+        // Transition style (none/fade/slide/convex/concave/zoom)
+        transition: 'fade',
+
+        // Transition speed (default/fast/slow)
+        transitionSpeed: 'default',
+
+        // Transition style for full page slide backgrounds
+        // (none/fade/slide/convex/concave/zoom)
+        backgroundTransition: 'fade',
+
+        // Number of slides away from the current that are visible
+        viewDistance: 3,
+
+        // Number of slides away from the current that are visible on mobile
+        // devices. It is advisable to set this to a lower number than
+        // viewDistance in order to save resources.
+        mobileViewDistance: 2,
+
+        // The "normal" size of the presentation, aspect ratio will be preserved
+        // when the presentation is scaled to fit different resolutions. Can be
+        // specified using percentage units.
+        width: 1440,
+
+        height: 900,
+
+        // Factor of the display size that should remain empty around the content
+        margin: 6.0e-2,
+
+        math: {
+          mathjax: 'https://cdn.jsdelivr.net/npm/mathjax@2.7.9/MathJax.js',
+          config: 'TeX-AMS_HTML-full',
+          tex2jax: {
+            inlineMath: [['\\(','\\)']],
+            displayMath: [['\\[','\\]']],
+            balanceBraces: true,
+            processEscapes: false,
+            processRefs: true,
+            processEnvironments: true,
+            preview: 'TeX',
+            skipTags: ['script','noscript','style','textarea','pre','code'],
+            ignoreClass: 'tex2jax_ignore',
+            processClass: 'tex2jax_process'
+          },
+        },
+
+        // reveal.js plugins
+        plugins: [QuartoLineHighlight, PdfExport, RevealMenu, QuartoSupport,
+
+          RevealMath,
+          RevealNotes,
+          RevealSearch,
+          RevealZoom
+        ]
+      });
+    </script>
+    <script id="quarto-html-after-body" type="application/javascript">
+      window.document.addEventListener("DOMContentLoaded", function (event) {
+        const tabsets =  window.document.querySelectorAll(".panel-tabset-tabby")
+        tabsets.forEach(function(tabset) {
+          const tabby = new Tabby('#' + tabset.id);
+        });
+        const isCodeAnnotation = (el) => {
+          for (const clz of el.classList) {
+            if (clz.startsWith('code-annotation-')) {                     
+              return true;
+            }
+          }
+          return false;
+        }
+        const onCopySuccess = function(e) {
+          // button target
+          const button = e.trigger;
+          // don't keep focus
+          button.blur();
+          // flash "checked"
+          button.classList.add('code-copy-button-checked');
+          var currentTitle = button.getAttribute("title");
+          button.setAttribute("title", "Copied!");
+          let tooltip;
+          if (window.bootstrap) {
+            button.setAttribute("data-bs-toggle", "tooltip");
+            button.setAttribute("data-bs-placement", "left");
+            button.setAttribute("data-bs-title", "Copied!");
+            tooltip = new bootstrap.Tooltip(button, 
+              { trigger: "manual", 
+                customClass: "code-copy-button-tooltip",
+                offset: [0, -8]});
+            tooltip.show();    
+          }
+          setTimeout(function() {
+            if (tooltip) {
+              tooltip.hide();
+              button.removeAttribute("data-bs-title");
+              button.removeAttribute("data-bs-toggle");
+              button.removeAttribute("data-bs-placement");
+            }
+            button.setAttribute("title", currentTitle);
+            button.classList.remove('code-copy-button-checked');
+          }, 1000);
+          // clear code selection
+          e.clearSelection();
+        }
+        const getTextToCopy = function(trigger) {
+          const outerScaffold = trigger.parentElement.cloneNode(true);
+          const codeEl = outerScaffold.querySelector('code');
+          for (const childEl of codeEl.children) {
+            if (isCodeAnnotation(childEl)) {
+              childEl.remove();
+            }
+          }
+          return codeEl.innerText;
+        }
+        const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+          text: getTextToCopy
+        });
+        clipboard.on('success', onCopySuccess);
+        if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+          const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+            text: getTextToCopy,
+            container: window.document.getElementById('quarto-embedded-source-code-modal')
+          });
+          clipboardModal.on('success', onCopySuccess);
+        }
+          var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+          var mailtoRegex = new RegExp(/^mailto:/);
+            var filterRegex = new RegExp("https:\/\/anassbelcaid\.github\.io\/nlp-course-2026\/");
+          var isInternal = (href) => {
+              return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+          }
+          // Inspect non-navigation links and adorn them if external
+         var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+          for (var i=0; i<links.length; i++) {
+            const link = links[i];
+            if (!isInternal(link.href)) {
+              // undo the damage that might have been done by quarto-nav.js in the case of
+              // links that we want to consider external
+              if (link.dataset.originalHref !== undefined) {
+                link.href = link.dataset.originalHref;
+              }
+            }
+          }
+        function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+          const config = {
+            allowHTML: true,
+            maxWidth: 500,
+            delay: 100,
+            arrow: false,
+            appendTo: function(el) {
+                return el.closest('section.slide') || el.parentElement;
+            },
+            interactive: true,
+            interactiveBorder: 10,
+            theme: 'light-border',
+            placement: 'bottom-start',
+          };
+          if (contentFn) {
+            config.content = contentFn;
+          }
+          if (onTriggerFn) {
+            config.onTrigger = onTriggerFn;
+          }
+          if (onUntriggerFn) {
+            config.onUntrigger = onUntriggerFn;
+          }
+            config['offset'] = [0,0];
+            config['maxWidth'] = 700;
+          window.tippy(el, config); 
+        }
+        const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+        for (var i=0; i<noterefs.length; i++) {
+          const ref = noterefs[i];
+          tippyHover(ref, function() {
+            // use id or data attribute instead here
+            let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+            try { href = new URL(href).hash; } catch {}
+            const id = href.replace(/^#\/?/, "");
+            const note = window.document.getElementById(id);
+            if (note) {
+              return note.innerHTML;
+            } else {
+              return "";
+            }
+          });
+        }
+        const findCites = (el) => {
+          const parentEl = el.parentElement;
+          if (parentEl) {
+            const cites = parentEl.dataset.cites;
+            if (cites) {
+              return {
+                el,
+                cites: cites.split(' ')
+              };
+            } else {
+              return findCites(el.parentElement)
+            }
+          } else {
+            return undefined;
+          }
+        };
+        var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+        for (var i=0; i<bibliorefs.length; i++) {
+          const ref = bibliorefs[i];
+          const citeInfo = findCites(ref);
+          if (citeInfo) {
+            tippyHover(citeInfo.el, function() {
+              var popup = window.document.createElement('div');
+              citeInfo.cites.forEach(function(cite) {
+                var citeDiv = window.document.createElement('div');
+                citeDiv.classList.add('hanging-indent');
+                citeDiv.classList.add('csl-entry');
+                var biblioDiv = window.document.getElementById('ref-' + cite);
+                if (biblioDiv) {
+                  citeDiv.innerHTML = biblioDiv.innerHTML;
+                }
+                popup.appendChild(citeDiv);
+              });
+              return popup.innerHTML;
+            });
+          }
+        }
+      });
+      </script>
+    
+
+</body></html>

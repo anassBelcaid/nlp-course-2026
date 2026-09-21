@@ -1,0 +1,2581 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<script src="../../site_libs/clipboard/clipboard.min.js"></script>
+<script src="../../site_libs/quarto-html/tabby.min.js"></script>
+<script src="../../site_libs/quarto-html/popper.min.js"></script>
+<script src="../../site_libs/quarto-html/tippy.umd.min.js"></script>
+<link href="../../site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="../../site_libs/quarto-html/light-border.css" rel="stylesheet">
+<link href="../../site_libs/quarto-html/quarto-syntax-highlighting-64a204ab8560d761af7679ceaba22944.css" rel="stylesheet" id="quarto-text-highlighting-styles"><meta charset="utf-8">
+  <meta name="generator" content="quarto-1.10.18">
+
+  <meta name="author" content="Dr.&nbsp;A. Belcaid · CS 351">
+  <meta name="dcterms.date" content="2026-09-21">
+  <title>CS 351 · NLP – Neural Networks for Sequences</title>
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, minimal-ui">
+  <link rel="stylesheet" href="../../site_libs/revealjs/dist/reset.css">
+  <link rel="stylesheet" href="../../site_libs/revealjs/dist/reveal.css">
+  <style>
+    /* Default styles provided by pandoc.
+    ** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+    */
+    span.smallcaps{font-variant: small-caps;}
+    div.columns{display: flex; gap: 1.5em;}
+    div.column{flex: auto;}
+    @media screen {
+    div.columns{gap: min(4vw, 1.5em);}
+    div.column{overflow-x: auto;}
+    }
+    div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+    ul.task-list{list-style: none;}
+    ul.task-list li input[type="checkbox"] {
+      width: 0.8em;
+      margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+      vertical-align: middle;
+    }
+  </style>
+  <link rel="stylesheet" href="../../site_libs/revealjs/dist/theme/quarto-ab0d674cc71beada37107d6d240ab684.css">
+  <link rel="stylesheet" href="slides.css">
+  <link href="../../site_libs/revealjs/plugin/quarto-line-highlight/line-highlight.css" rel="stylesheet">
+  <link href="../../site_libs/revealjs/plugin/reveal-menu/menu.css" rel="stylesheet">
+  <link href="../../site_libs/revealjs/plugin/reveal-menu/quarto-menu.css" rel="stylesheet">
+  <link href="../../site_libs/revealjs/plugin/quarto-support/footer.css" rel="stylesheet">
+  <style type="text/css">
+    .reveal div.sourceCode {
+      margin: 0;
+      overflow: auto;
+    }
+    .reveal div.hanging-indent {
+      margin-left: 1em;
+      text-indent: -1em;
+    }
+    .reveal .slide:not(.center) {
+      height: 100%;
+    }
+    .reveal .slide.scrollable {
+      overflow-y: auto;
+    }
+    .reveal .footnotes {
+      height: 100%;
+      overflow-y: auto;
+    }
+    .reveal .slide .absolute {
+      position: absolute;
+      display: block;
+    }
+    .reveal .footnotes ol {
+      counter-reset: ol;
+      list-style-type: none; 
+      margin-left: 0;
+    }
+    .reveal .footnotes ol li:before {
+      counter-increment: ol;
+      content: counter(ol) ". "; 
+    }
+    .reveal .footnotes ol li > p:first-child {
+      display: inline-block;
+    }
+    .reveal .slide ul,
+    .reveal .slide ol {
+      margin-bottom: 0.5em;
+    }
+    .reveal .slide ul li,
+    .reveal .slide ol li {
+      margin-top: 0.4em;
+      margin-bottom: 0.2em;
+    }
+    .reveal .slide ul[role="tablist"] li {
+      margin-bottom: 0;
+    }
+    .reveal .slide ul li > *:first-child,
+    .reveal .slide ol li > *:first-child {
+      margin-block-start: 0;
+    }
+    .reveal .slide ul li > *:last-child,
+    .reveal .slide ol li > *:last-child {
+      margin-block-end: 0;
+    }
+    .reveal .slide .columns:nth-child(3) {
+      margin-block-start: 0.8em;
+    }
+    .reveal blockquote {
+      box-shadow: none;
+    }
+    .reveal .tippy-content>* {
+      margin-top: 0.2em;
+      margin-bottom: 0.7em;
+    }
+    .reveal .tippy-content>*:last-child {
+      margin-bottom: 0.2em;
+    }
+    .reveal .slide > img.stretch.quarto-figure-center,
+    .reveal .slide > img.r-stretch.quarto-figure-center {
+      display: block;
+      margin-left: auto;
+      margin-right: auto; 
+    }
+    .reveal .slide > img.stretch.quarto-figure-left,
+    .reveal .slide > img.r-stretch.quarto-figure-left  {
+      display: block;
+      margin-left: 0;
+      margin-right: auto; 
+    }
+    .reveal .slide > img.stretch.quarto-figure-right,
+    .reveal .slide > img.r-stretch.quarto-figure-right  {
+      display: block;
+      margin-left: auto;
+      margin-right: 0; 
+    }
+  </style>
+</head>
+<body class="quarto-light">
+  <div class="reveal">
+    <div class="slides">
+
+<section id="title-slide" class="quarto-title-block center">
+  <h1 class="title">Neural Networks for Sequences</h1>
+  <p class="subtitle">From fixed context to learned memory</p>
+
+<div class="quarto-title-authors">
+<div class="quarto-title-author">
+<div class="quarto-title-author-name">
+Dr.&nbsp;A. Belcaid · CS 351
+</div>
+</div>
+</div>
+
+  <p class="date">2026-09-21</p>
+</section>
+<section id="from-a-broken-window-to-learned-memory" class="slide level2 overview-slide">
+<h2>From a broken window to learned memory</h2>
+
+<img data-src="images/neural-sequences-overview.png" class="overview-image r-stretch" alt="A fixed context window gives way to an unrolled recurrent sequence, backward gradient signals, gated memory mechanisms, and a final opening toward direct attention connections"><div class="overview-labels">
+<div class="overview-label">
+<p><strong>MEMORY PROBLEM</strong></p>
+<p>Fixed context breaks</p>
+</div>
+<div class="overview-label">
+<p><strong>RNN</strong></p>
+<p>Carry state through time</p>
+</div>
+<div class="overview-label">
+<p><strong>BPTT</strong></p>
+<p>Send credit backward</p>
+</div>
+<div class="overview-label">
+<p><strong>GRADIENTS</strong></p>
+<p>Fade or explode</p>
+</div>
+<div class="overview-label">
+<p><strong>GATES</strong></p>
+<p>Control the memory</p>
+</div>
+<div class="overview-label">
+<p><strong>ATTENTION</strong></p>
+<p>Open a direct path</p>
+</div>
+</div>
+<div class="citation">
+Lecture journey follows the progression from recurrent networks to gated recurrent units and attention in <span class="citation" data-cites="jurafsky2026slp">(Jurafsky and Martin 2026, Chs. 9–10)</span>.
+</div>
+</section>
+<section id="what-we-will-cover" class="slide level2">
+<h2>What we will cover</h2>
+<div class="toc-route">
+<div>
+<b>1</b><strong>THE MEMORY PROBLEM</strong><span>What n-grams cannot retain</span>
+</div>
+<div>
+<b>2</b><strong>RECURRENT NETWORKS</strong><span>Reuse one state update through time</span>
+</div>
+<div>
+<b>3</b><strong>LEARNING THROUGH TIME</strong><span>Backpropagation through time</span>
+</div>
+<div>
+<b>4</b><strong>UNSTABLE GRADIENTS</strong><span>Why signals vanish or explode</span>
+</div>
+<div>
+<b>5</b><strong>GATED MEMORY</strong><span>LSTM and GRU in detail</span>
+</div>
+<div>
+<b>6</b><strong>TRANSLATION BRIDGE</strong><span>From encoder–decoder RNNs to attention</span>
+</div>
+</div>
+<div class="citation">
+Sequence adapted from standard treatments of recurrent language models, BPTT, LSTMs, GRUs, and attention <span class="citation" data-cites="jurafsky2026slp">(Jurafsky and Martin 2026, Chs. 9–10)</span>.
+</div>
+</section>
+<section>
+<section id="part-i-the-memory-problem-left-by-n-grams" class="title-slide slide level1 section-slide center">
+<h1>Part I · The memory problem left by n-grams</h1>
+
+</section>
+<section id="start-with-the-prediction-problem" class="slide level2">
+<h2>Start with the prediction problem</h2>
+<div class="pause-panel memory-pause">
+<p><strong>PAUSE · PREDICT THE MISSING WORD</strong></p>
+<blockquote>
+<p>The keys to the cabinet ___ on the table.</p>
+</blockquote>
+<ol type="1">
+<li>Which earlier word determines the answer?</li>
+<li>What does a bigram model see when it reaches the blank?</li>
+</ol>
+</div>
+<div class="problem-instruction">
+<p>Keep the full sentence visible—but make the prediction using only the final available token.</p>
+</div>
+</section>
+<section id="the-relevant-word-may-be-far-behind" class="slide level2">
+<h2>The relevant word may be far behind</h2>
+<div class="dependency-stage">
+<p><span class="fragment cue-token">The <b>keys</b></span> <span class="fragment intervening">to</span> <span class="fragment intervening">the</span> <span class="fragment local-history">cabinet</span> <span class="fragment prediction-slot">___</span></p>
+</div>
+<div class="fragment dependency-arc">
+<div class="arc-line">
+
+</div>
+<p><span>plural agreement must survive four positions</span></p>
+</div>
+<div class="memory-comparison">
+<div class="fragment memory-card sentence-evidence">
+<p><small>THE SENTENCE CONTAINS</small></p>
+<p><code>keys → plural → are</code></p>
+</div>
+<div class="fragment memory-card bigram-evidence">
+<p><small>THE BIGRAM RETAINS</small></p>
+<p><code>cabinet → ?</code></p>
+</div>
+</div>
+<div class="citation">
+Long-distance agreement illustrates the fixed-context limitation of n-gram models <span class="citation" data-cites="jurafsky2026slp">(Jurafsky and Martin 2026, Chs. 3 and 9)</span>.
+</div>
+</section>
+<section id="inspect-exactly-where-the-information-disappears" class="slide level2">
+<h2>Inspect exactly where the information disappears</h2>
+<div class="context-window-demo">
+<div class="sentence-track">
+<span class="lost-cue">keys</span><span>to</span><span>the</span><span class="active-history">cabinet</span><b>?</b>
+</div>
+<div class="window-bracket">
+<i></i><strong>BIGRAM INPUT</strong><i></i>
+</div>
+</div>
+<div class="information-ledger">
+<div class="fragment ledger-row available-row">
+<p><b>Needed feature</b><span>subject number = plural</span><strong>available earlier</strong></p>
+</div>
+<div class="fragment ledger-row discarded-row">
+<p><b>Model input</b><span>previous token = cabinet</span><strong>plural cue discarded</strong></p>
+</div>
+</div>
+<div class="fragment takeaway danger">
+<p>Smoothing can repair a missing <strong>count</strong>. It cannot recover information that the model’s history representation has already discarded.</p>
+</div>
+<div class="citation">
+N-gram smoothing and context-length limitations are distinct problems <span class="citation" data-cites="jurafsky2026slp">(Jurafsky and Martin 2026, Ch. 3)</span>.
+</div>
+</section>
+<section id="why-not-simply-increase-n" class="slide level2">
+<h2>Why not simply increase n?</h2>
+<div class="order-growth">
+<div class="fragment">
+<small>BIGRAM</small><b>1 word</b><span><span class="math inline">\(|V|^2\)</span> possible pairs</span>
+</div>
+<i class="fragment">→</i>
+<div class="fragment">
+<small>5-GRAM</small><b>4 words</b><span><span class="math inline">\(|V|^5\)</span> possible sequences</span>
+</div>
+<i class="fragment">→</i>
+<div class="fragment growth-warning">
+<small>LONG DEPENDENCY</small><b>unknown length</b><span>no fixed n is enough</span>
+</div>
+</div>
+<div class="fragment growth-calculation">
+<p>With <span class="math inline">\(|V|=50{,}000\)</span>, a 5-gram table permits <span class="math inline">\((50{,}000)^5\approx\mathbf{3.1\times10^{23}}\)</span> distinct sequences.</p>
+</div>
+<div class="fragment takeaway">
+<p>Increasing <span class="math inline">\(n\)</span> buys a longer window, not a mechanism for deciding which earlier information matters.</p>
+</div>
+<div class="citation">
+Higher-order n-gram parameter growth and sparsity: <span class="citation" data-cites="jurafsky2026slp">(Jurafsky and Martin 2026, Ch. 3)</span>.
+</div>
+</section>
+<section id="one-n-gram-model-two-different-failures" class="slide level2">
+<h2>One n-gram model, two different failures</h2>
+<div class="failure-fork">
+<div class="failure-case sparsity-case">
+<p><small>FAILURE 1 · GENERALIZATION</small></p>
+<p><strong>“the cat rested”</strong> was seen<br>
+<strong>“the dog rested”</strong> was not</p>
+<p><span class="math display">\[
+\text{count(the dog rested)}=0
+\]</span></p>
+<p><b>Bengio’s repair</b></p>
+<p>Learn that <em>cat</em> and <em>dog</em> can behave similarly.</p>
+</div>
+<div class="fragment failure-case memory-case">
+<p><small>FAILURE 2 · MEMORY</small></p>
+<p><strong>keys</strong> to the cabinet <strong>are</strong><br>
+but the window sees only <strong>cabinet</strong></p>
+<p><span class="math display">\[
+P(w_t\mid w_{t-n:t-1})
+\]</span></p>
+<p><b>RNN’s repair</b></p>
+<p>Carry an evolving state beyond a fixed suffix.</p>
+</div>
+</div>
+<div class="fragment takeaway">
+<p>These are separate defects: <strong>continuous representations</strong> address sparse generalization; <strong>recurrence</strong> addresses how context is carried.</p>
+</div>
+<div class="citation">
+The window-based neural LM addresses the curse of dimensionality while retaining finite context <span class="citation" data-cites="bengio2003neural jurafsky2026slp">(Bengio et al. 2003; Jurafsky and Martin 2026, Ch. 9)</span>.
+</div>
+</section>
+<section id="bengios-wager-nearby-words-should-share-evidence" class="slide level2">
+<h2>Bengio’s wager: nearby words should share evidence</h2>
+<div class="bengio-example">
+<div class="seen-context">
+<small>SEEN</small><span>the</span><b>cat</b><span>rested</span><strong>high evidence</strong>
+</div>
+<div class="embedding-neighborhood" aria-label="Cat and dog occupy nearby locations in an embedding plane, while cabinet is farther away.">
+<p><svg viewbox="0 0 520 320" role="img"> <line x1="55" y1="270" x2="480" y2="270"></line><line x1="55" y1="270" x2="55" y2="35"></line> <circle class="neighbor-halo" cx="205" cy="145" r="75"></circle> <circle class="cat-point" cx="180" cy="130" r="18"></circle><text x="180" y="100">cat</text> <circle class="dog-point" cx="235" cy="165" r="18"></circle><text x="235" y="205">dog</text> <circle class="far-point" cx="410" cy="75" r="18"></circle><text x="410" y="113">cabinet</text> <text class="axis-label" x="390" y="302">learned dimension 1</text> <text class="axis-label" x="15" y="25">dimension 2</text> </svg></p>
+</div>
+<div class="unseen-context fragment">
+<small>UNSEEN</small><span>the</span><b>dog</b><span>rested</span><strong>borrow evidence</strong>
+</div>
+</div>
+<p><span class="math display">\[
+\mathbf e(\text{cat})\approx \mathbf e(\text{dog})
+\quad\Longrightarrow\quad
+P(\text{rested}\mid\text{the, cat})\approx P(\text{rested}\mid\text{the, dog})
+\]</span></p>
+<div class="citation">
+Distributed word representations let a training sequence inform semantically neighboring sequences <span class="citation" data-cites="bengio2003neural">(Bengio et al. 2003)</span>.
+</div>
+</section>
+<section id="build-the-neural-language-model-from-that-example" class="slide level2">
+<h2>Build the neural language model from that example</h2>
+<div class="original-paper-figure">
+<img src="images/bengio-figure-1.png" alt="Original Figure 1 from Bengio et al. showing context word indices selecting shared feature vectors from matrix C, connections to a tanh hidden layer, direct connections to a softmax layer, and the next-word probability output.">
+<!--
+<svg viewBox="0 0 1240 600" role="img">
+  <defs>
+    <marker id="paper-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0 0 L10 5 L0 10 z"></path></marker>
+    <marker id="paper-input-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto"><path d="M0 0 L10 5 L0 10 z"></path></marker>
+  </defs>
+
+  <g class="paper-output">
+    <rect x="430" y="28" width="380" height="88" rx="18"></rect>
+    <text class="layer-name" x="620" y="62">SOFTMAX OVER VOCABULARY</text>
+    <text class="layer-detail" x="620" y="94">i-th output = P(w<tspan baseline-shift="sub">t</tspan> = i | context)</text>
+  </g>
+
+  <g class="paper-hidden">
+    <rect x="485" y="180" width="270" height="92" rx="18"></rect>
+    <text class="layer-name" x="620" y="218">tanh</text>
+    <text class="layer-detail" x="620" y="250">a = tanh(d + Hx)</text>
+  </g>
+
+  <path class="paper-edge hidden-output" d="M620 180 V118"></path>
+  <text class="weight-label" x="642" y="151">U</text>
+
+  <g class="paper-concat">
+    <rect x="330" y="335" width="580" height="76" rx="16"></rect>
+    <text class="layer-name" x="620" y="367">CONCATENATED WORD FEATURES · x</text>
+    <text class="layer-detail" x="620" y="397">[ C(w<tspan baseline-shift="sub">t−n+1</tspan>) ; ··· ; C(w<tspan baseline-shift="sub">t−2</tspan>) ; C(w<tspan baseline-shift="sub">t−1</tspan>) ]</text>
+  </g>
+
+  <path class="paper-edge concat-hidden" d="M620 335 V274"></path>
+  <text class="weight-label" x="642" y="307">H</text>
+  <path class="paper-edge direct-output" d="M910 373 C1115 365 1115 72 812 72"></path>
+  <text class="direct-label" x="1050" y="250">optional direct path · W</text>
+
+  <g class="lookup-group">
+    <g transform="translate(120 470)"><rect width="210" height="74" rx="14"></rect><text class="lookup-name" x="105" y="31">LOOKUP C</text><text class="lookup-detail" x="105" y="58">shared parameters</text></g>
+    <g transform="translate(515 470)"><rect width="210" height="74" rx="14"></rect><text class="lookup-name" x="105" y="31">LOOKUP C</text><text class="lookup-detail" x="105" y="58">same matrix</text></g>
+    <g transform="translate(910 470)"><rect width="210" height="74" rx="14"></rect><text class="lookup-name" x="105" y="31">LOOKUP C</text><text class="lookup-detail" x="105" y="58">same matrix</text></g>
+  </g>
+
+  <path class="paper-edge lookup-edge" d="M225 468 V414 H430"></path>
+  <path class="paper-edge lookup-edge" d="M620 468 V414"></path>
+  <path class="paper-edge lookup-edge" d="M1015 468 V414 H810"></path>
+
+  <g class="paper-inputs">
+    <text x="225" y="585">index for w<tspan baseline-shift="sub">t−n+1</tspan></text>
+    <text x="620" y="585">index for w<tspan baseline-shift="sub">t−2</tspan></text>
+    <text x="1015" y="585">index for w<tspan baseline-shift="sub">t−1</tspan></text>
+    <text class="ellipsis" x="420" y="514">···</text><text class="ellipsis" x="815" y="514">···</text>
+  </g>
+  <path class="paper-edge input-edge" d="M225 562 V548"></path>
+  <path class="paper-edge input-edge" d="M620 562 V548"></path>
+  <path class="paper-edge input-edge" d="M1015 562 V548"></path>
+</svg>
+-->
+</div>
+<div class="citation paper-full-citation">
+Original Figure 1 from Yoshua Bengio, Réjean Ducharme, Pascal Vincent, and Christian Jauvin (2003), “A Neural Probabilistic Language Model,” <em>Journal of Machine Learning Research</em> 3: 1137–1155, p.&nbsp;1142. <a href="https://jmlr.org/papers/v3/bengio03a.html">Paper and PDF</a>.
+</div>
+<aside class="notes">
+<p>This is Bengio et al.’s window-based neural probabilistic language model, shown with the same concrete context from the previous slide.</p>
+<ul>
+<li>Begin at the left: each discrete word index selects a learned vector from a shared embedding table.</li>
+<li>Concatenate the vectors for the fixed context window into one vector, <span class="math inline">\(\mathbf x=(C(w_{t-1}),C(w_{t-2}),\ldots,C(w_{t-n+1}))\)</span>.</li>
+<li>The hidden layer learns distributed features of that context: <span class="math inline">\(\mathbf a=\tanh(\mathbf d+H\mathbf x)\)</span>.</li>
+<li>The output layer produces one unnormalized log-probability per vocabulary item: <span class="math inline">\(\mathbf y=\mathbf b+W\mathbf x+U\mathbf a\)</span>; softmax normalizes these scores.</li>
+<li>In the original paper, the embedding parameters and probability network are learned jointly by maximizing the training-corpus log likelihood.</li>
+<li>The curved dashed route is the paper’s optional direct connection <span class="math inline">\(W\mathbf x\)</span>. When direct connections are disabled, <span class="math inline">\(W=0\)</span>.</li>
+<li>Emphasize the limitation without developing it yet: this is still a fixed context window. We will decide in the next review how to use that boundary to motivate recurrence.</li>
+</ul>
+<style type="text/css">
+        span.MJX_Assistive_MathML {
+          position:absolute!important;
+          clip: rect(1px, 1px, 1px, 1px);
+          padding: 1px 0 0 0!important;
+          border: 0!important;
+          height: 1px!important;
+          width: 1px!important;
+          overflow: hidden!important;
+          display:block!important;
+      }</style></aside>
+</section>
+<section id="a-fixed-window-neural-language-model" class="slide level2">
+<h2>A fixed-window neural language model</h2>
+<div class="fixed-window-example">
+<div class="fixed-window-equations">
+<div class="equation-row output-equation">
+<p><strong>output distribution</strong></p>
+<p><span class="math display">\[
+\hat{\mathbf y}=\operatorname{softmax}(U\mathbf h+\mathbf b_2)
+\in\mathbb R^{|V|}
+\]</span></p>
+</div>
+<div class="equation-row hidden-equation">
+<p><strong>hidden layer</strong></p>
+<p><span class="math display">\[
+\mathbf h=f(W\mathbf e+\mathbf b_1)
+\]</span></p>
+</div>
+<div class="equation-row embedding-equation">
+<p><strong>concatenated word embeddings</strong></p>
+<p><span class="math display">\[
+\mathbf e=[\mathbf e^{(1)};\mathbf e^{(2)};\mathbf e^{(3)};\mathbf e^{(4)}]
+\]</span></p>
+</div>
+<div class="equation-row input-equation">
+<p><strong>words / one-hot vectors</strong></p>
+<p><span class="math display">\[
+\mathbf x^{(1)},\mathbf x^{(2)},\mathbf x^{(3)},\mathbf x^{(4)}
+\]</span></p>
+</div>
+</div>
+<div class="fixed-window-architecture">
+<svg viewbox="0 0 720 650" role="img" aria-label="A fixed-window neural language model. The words the, students, opened, and their map to four embedding groups, which are concatenated and transformed into a hidden layer. A softmax output distribution assigns high probability to books and laptops among vocabulary items from a to zoo.">
+  <defs>
+    <marker id="fixed-arrow" viewbox="0 0 10 10" refx="9" refy="5" markerwidth="7" markerheight="7" orient="auto"><path d="M0 0 L10 5 L0 10 z"></path></marker>
+  </defs>
+
+  <g class="output-histogram">
+    <line x1="170" y1="138" x2="620" y2="138"></line>
+    <rect x="205" y="122" width="30" height="16"></rect>
+    <rect class="high-bar" x="240" y="25" width="30" height="113"></rect>
+    <rect x="275" y="92" width="30" height="46"></rect>
+    <rect x="310" y="72" width="30" height="66"></rect>
+    <rect x="345" y="118" width="30" height="20"></rect>
+    <rect x="380" y="70" width="30" height="68"></rect>
+    <rect x="415" y="72" width="30" height="66"></rect>
+    <rect class="high-bar" x="450" y="48" width="30" height="90"></rect>
+    <rect x="485" y="112" width="30" height="26"></rect>
+    <rect x="520" y="88" width="30" height="50"></rect>
+    <rect x="555" y="68" width="30" height="70"></rect>
+    <text class="candidate" x="255" y="-5">books</text>
+    <path class="candidate-arrow" d="M255 1 V24"></path>
+    <text class="candidate" x="465" y="18">laptops</text>
+    <path class="candidate-arrow" d="M465 22 V47"></path>
+    <path class="vocab-axis" d="M205 159 H585"></path>
+    <text class="vocab-edge" x="205" y="187">a</text>
+    <text class="vocab-edge" x="585" y="187">zoo</text>
+  </g>
+
+  <path class="layer-arrow" d="M395 286 V205"></path>
+  <text class="matrix-label" x="430" y="253">U</text>
+
+  <g class="hidden-vector">
+    <rect x="145" y="286" width="500" height="72" rx="14"></rect>
+    <circle cx="180" cy="322" r="14"></circle><circle cx="220" cy="322" r="14"></circle>
+    <circle cx="260" cy="322" r="14"></circle><circle cx="300" cy="322" r="14"></circle>
+    <circle cx="340" cy="322" r="14"></circle><circle cx="380" cy="322" r="14"></circle>
+    <circle cx="420" cy="322" r="14"></circle><circle cx="460" cy="322" r="14"></circle>
+    <circle cx="500" cy="322" r="14"></circle><circle cx="540" cy="322" r="14"></circle>
+    <circle cx="580" cy="322" r="14"></circle><circle cx="620" cy="322" r="14"></circle>
+  </g>
+
+  <path class="layer-arrow" d="M395 438 V360"></path>
+  <text class="matrix-label" x="430" y="407">W</text>
+
+  <g class="embedding-vector">
+    <rect x="35" y="438" width="680" height="72" rx="14"></rect>
+    <g transform="translate(68 474)"><circle cx="0" cy="0" r="13"></circle><circle cx="38" cy="0" r="13"></circle><circle cx="76" cy="0" r="13"></circle><circle cx="114" cy="0" r="13"></circle></g>
+    <g transform="translate(228 474)"><circle cx="0" cy="0" r="13"></circle><circle cx="38" cy="0" r="13"></circle><circle cx="76" cy="0" r="13"></circle><circle cx="114" cy="0" r="13"></circle></g>
+    <g transform="translate(410 474)"><circle cx="0" cy="0" r="13"></circle><circle cx="38" cy="0" r="13"></circle><circle cx="76" cy="0" r="13"></circle><circle cx="114" cy="0" r="13"></circle></g>
+    <g transform="translate(572 474)"><circle cx="0" cy="0" r="13"></circle><circle cx="38" cy="0" r="13"></circle><circle cx="76" cy="0" r="13"></circle><circle cx="114" cy="0" r="13"></circle></g>
+  </g>
+
+  <g class="input-words">
+    <path class="word-arrow" d="M125 592 V513"></path><path class="word-arrow" d="M285 592 V513"></path>
+    <path class="word-arrow" d="M467 592 V513"></path><path class="word-arrow" d="M629 592 V513"></path>
+    <text x="125" y="625">the</text><text x="285" y="625">students</text>
+    <text x="467" y="625">opened</text><text x="629" y="625">their</text>
+    <text class="input-index" x="125" y="649">x⁽¹⁾</text><text class="input-index" x="285" y="649">x⁽²⁾</text>
+    <text class="input-index" x="467" y="649">x⁽³⁾</text><text class="input-index" x="629" y="649">x⁽⁴⁾</text>
+  </g>
+</svg>
+</div>
+</div>
+<div class="citation paper-full-citation">
+Reproduced from Diyi Yang, “Language Models and Recurrent Neural Networks,” <em>Stanford CS224N/Ling284</em>, Winter 2026, slide 23. <a href="https://web.stanford.edu/class/cs224n/slides_w26/cs224n-2026-lecture04-rnnlm.pdf#page=21">Lecture slides</a>.
+</div>
+<aside class="notes">
+<ul>
+<li>Read the example from bottom to top.</li>
+<li>The fixed context is exactly four words: “the students opened their.” Each word begins as a one-hot vector <span class="math inline">\(\mathbf x^{(i)}\)</span>.</li>
+<li>A shared embedding table maps each one-hot vector to <span class="math inline">\(\mathbf e^{(i)}\)</span>, but the four embeddings are then concatenated into one position-specific vector <span class="math inline">\(\mathbf e\)</span>.</li>
+<li>The matrix <span class="math inline">\(W\)</span> maps that concatenated vector to a hidden representation <span class="math inline">\(\mathbf h\)</span>.</li>
+<li>The matrix <span class="math inline">\(U\)</span> maps the hidden representation to one score for every vocabulary item; softmax produces <span class="math inline">\(\hat{\mathbf y}\)</span>.</li>
+<li>Point to “books” and “laptops” as plausible continuations. “A zoo” indicates that the output covers the full vocabulary, including implausible candidates with low probability.</li>
+<li>Transition question for the next review: what happens if the useful word lies before this four-word window, or if we want five, fifty, or five hundred input words?</li>
+</ul>
+<style type="text/css">
+        span.MJX_Assistive_MathML {
+          position:absolute!important;
+          clip: rect(1px, 1px, 1px, 1px);
+          padding: 1px 0 0 0!important;
+          border: 0!important;
+          height: 1px!important;
+          width: 1px!important;
+          overflow: hidden!important;
+          display:block!important;
+      }</style></aside>
+</section>
+<section id="why-the-fixed-window-cannot-scale" class="slide level2">
+<h2>Why the fixed window cannot scale</h2>
+<div class="window-limit-layout">
+<div class="window-limit-story">
+<div class="window-improvements">
+<p><strong>IMPROVEMENTS OVER AN N-GRAM LM</strong></p>
+<p><span>✓ No sparsity problem</span> <span>✓ No table of all observed n-grams</span></p>
+</div>
+<div class="fragment window-problem small-window-problem" data-fragment-index="0">
+<b>1</b>
+<p>
+The fixed window is <strong>too small</strong>.
+</p>
+</div>
+<div class="fragment window-problem growing-w-problem" data-fragment-index="1">
+<b>2</b>
+<p>
+Enlarging the window enlarges <strong><span class="math inline">\(W\)</span></strong>.
+</p>
+<p><span class="math display">\[
+W\in\mathbb R^{d_h\times kd_e}
+\quad\Rightarrow\quad
+|W|=k\,d_h d_e
+\]</span></p>
+</div>
+<div class="fragment window-problem finite-window-problem" data-fragment-index="2">
+<b>3</b>
+<p>
+No finite window can always be large enough.
+</p>
+</div>
+<div class="fragment window-problem symmetry-problem" data-fragment-index="3">
+<b>4</b>
+<p>
+<span class="math inline">\(\mathbf x^{(1)}\)</span> and <span class="math inline">\(\mathbf x^{(2)}\)</span> use different blocks of <span class="math inline">\(W\)</span>: <strong>no position symmetry</strong>.
+</p>
+</div>
+</div>
+<div class="window-growth-visual">
+<svg viewbox="0 0 680 610" role="img" aria-label="A fixed-window neural language model whose concatenated input and weight matrix grow as more word positions are added. Each position uses a different block of W.">
+  <defs>
+    <marker id="growth-arrow" viewbox="0 0 10 10" refx="9" refy="5" markerwidth="7" markerheight="7" orient="auto"><path d="M0 0 L10 5 L0 10 z"></path></marker>
+  </defs>
+
+  <g class="growth-output">
+    <text x="470" y="28">next-word distribution</text>
+    <rect x="360" y="42" width="260" height="55" rx="12"></rect>
+    <circle cx="390" cy="70" r="10"></circle><circle cx="425" cy="70" r="10"></circle><circle cx="460" cy="70" r="10"></circle>
+    <circle cx="495" cy="70" r="10"></circle><circle cx="530" cy="70" r="10"></circle><circle cx="565" cy="70" r="10"></circle><circle cx="600" cy="70" r="10"></circle>
+  </g>
+  <path class="growth-edge" d="M490 183 V100"></path><text class="growth-matrix-label" x="520" y="145">U</text>
+
+  <g class="growth-hidden">
+    <text x="490" y="175">hidden state</text>
+    <rect x="335" y="184" width="310" height="62" rx="12"></rect>
+    <circle cx="370" cy="215" r="11"></circle><circle cx="410" cy="215" r="11"></circle><circle cx="450" cy="215" r="11"></circle>
+    <circle cx="490" cy="215" r="11"></circle><circle cx="530" cy="215" r="11"></circle><circle cx="570" cy="215" r="11"></circle><circle cx="610" cy="215" r="11"></circle>
+  </g>
+  <path class="growth-edge" d="M490 335 V249"></path><text class="growth-matrix-label" x="520" y="300">W</text>
+
+  <g class="base-window">
+    <rect x="205" y="335" width="440" height="66" rx="12"></rect>
+    <g transform="translate(245 368)"><circle cx="0" cy="0" r="10"></circle><circle cx="27" cy="0" r="10"></circle><circle cx="54" cy="0" r="10"></circle></g>
+    <g transform="translate(350 368)"><circle cx="0" cy="0" r="10"></circle><circle cx="27" cy="0" r="10"></circle><circle cx="54" cy="0" r="10"></circle></g>
+    <g transform="translate(455 368)"><circle cx="0" cy="0" r="10"></circle><circle cx="27" cy="0" r="10"></circle><circle cx="54" cy="0" r="10"></circle></g>
+    <g transform="translate(560 368)"><circle cx="0" cy="0" r="10"></circle><circle cx="27" cy="0" r="10"></circle><circle cx="54" cy="0" r="10"></circle></g>
+    <text x="425" y="430">4 positions · input width = 4dₑ</text>
+  </g>
+
+  <g class="fragment outside-context" data-fragment-index="0">
+    <text x="80" y="300">useful context</text><text class="outside-word" x="80" y="335">proctor</text>
+    <path d="M130 350 C165 370 170 370 200 370"></path>
+    <text class="discard-label" x="115" y="395">discarded</text>
+  </g>
+
+  <g class="fragment expanded-window" data-fragment-index="1">
+    <rect x="25" y="455" width="620" height="66" rx="12"></rect>
+    <g transform="translate(58 488)"><circle cx="0" cy="0" r="9"></circle><circle cx="24" cy="0" r="9"></circle><circle cx="48" cy="0" r="9"></circle></g>
+    <g transform="translate(150 488)"><circle cx="0" cy="0" r="9"></circle><circle cx="24" cy="0" r="9"></circle><circle cx="48" cy="0" r="9"></circle></g>
+    <g transform="translate(242 488)"><circle cx="0" cy="0" r="9"></circle><circle cx="24" cy="0" r="9"></circle><circle cx="48" cy="0" r="9"></circle></g>
+    <g transform="translate(334 488)"><circle cx="0" cy="0" r="9"></circle><circle cx="24" cy="0" r="9"></circle><circle cx="48" cy="0" r="9"></circle></g>
+    <g transform="translate(426 488)"><circle cx="0" cy="0" r="9"></circle><circle cx="24" cy="0" r="9"></circle><circle cx="48" cy="0" r="9"></circle></g>
+    <g transform="translate(518 488)"><circle cx="0" cy="0" r="9"></circle><circle cx="24" cy="0" r="9"></circle><circle cx="48" cy="0" r="9"></circle></g>
+    <text x="335" y="548">6 positions · input width = 6dₑ · W grows</text>
+    <path class="resize-arrow" d="M208 440 H30"></path><path class="resize-arrow" d="M642 440 H664"></path>
+  </g>
+
+  <g class="fragment position-blocks" data-fragment-index="3">
+    <path d="M240 402 V575"></path><path d="M345 402 V575"></path><path d="M450 402 V575"></path><path d="M555 402 V575"></path>
+    <text x="292" y="596">W⁽¹⁾</text><text x="397" y="596">W⁽²⁾</text><text x="502" y="596">W⁽³⁾</text><text x="607" y="596">W⁽⁴⁾</text>
+  </g>
+</svg>
+</div>
+</div>
+<div class="fragment any-length-need" data-fragment-index="4">
+<p>We need one neural architecture that can process <strong>any-length input</strong> without enlarging its parameter matrices.</p>
+</div>
+<div class="citation paper-full-citation">
+Adapted from Diyi Yang, “Language Models and Recurrent Neural Networks,” <em>Stanford CS224N/Ling284</em>, Winter 2026, slide 24. <a href="https://web.stanford.edu/class/cs224n/slides_w26/cs224n-2026-lecture04-rnnlm.pdf#page=22">Lecture slides</a>.
+</div>
+<aside class="notes">
+<ul>
+<li>Begin with the two improvements over an n-gram model: learned representations remove the exact-count sparsity problem, and the model does not store a table of observed n-grams.</li>
+<li>Reveal problem 1: the four-word window discards “proctor,” even if that word is useful for predicting “exams.”</li>
+<li>Reveal problem 2 and the lower expanded vector together. If the context contains <span class="math inline">\(k\)</span> embeddings of dimension <span class="math inline">\(d_e\)</span>, the concatenated vector has dimension <span class="math inline">\(kd_e\)</span>. Therefore <span class="math inline">\(W\)</span> has shape <span class="math inline">\(d_h\times kd_e\)</span> and gains <span class="math inline">\(d_h d_e\)</span> parameters for every new position.</li>
+<li>Reveal problem 3: choosing a larger <span class="math inline">\(k\)</span> delays the boundary but never removes it.</li>
+<li>Reveal problem 4: concatenation assigns a separate block of <span class="math inline">\(W\)</span> to each position. The same word is processed differently in position 1 and position 2; the architecture has no symmetry across time.</li>
+<li>Final reveal: ask for an architecture whose parameter count is independent of sequence length and whose same transformation can be reused at every position. This is the opening for recurrence; do not show the RNN equation yet.</li>
+</ul>
+<style type="text/css">
+        span.MJX_Assistive_MathML {
+          position:absolute!important;
+          clip: rect(1px, 1px, 1px, 1px);
+          padding: 1px 0 0 0!important;
+          border: 0!important;
+          height: 1px!important;
+          width: 1px!important;
+          overflow: hidden!important;
+          display:block!important;
+      }</style></aside>
+</section>
+<section id="recurrent-neural-networks" class="slide level2">
+<h2>Recurrent neural networks</h2>
+<div class="rnn-family-subtitle">
+<p>A family of neural architectures for sequences</p>
+</div>
+<div class="shared-rnn-visual">
+<svg viewbox="0 0 1240 590" role="img" aria-label="An unrolled recurrent neural network. A sequence of magenta inputs enters red hidden states, green optional outputs leave each state, and the same weight W is reused between every pair of states.">
+  <defs>
+    <marker id="shared-rnn-arrow" viewbox="0 0 10 10" refx="9" refy="5" markerwidth="7" markerheight="7" orient="auto"><path d="M0 0 L10 5 L0 10 z"></path></marker>
+  </defs>
+
+  <g class="rnn-row-labels">
+    <text x="125" y="110">outputs</text><text x="125" y="140">optional</text>
+    <text x="125" y="304">hidden states</text>
+    <text x="125" y="515">input sequence</text><text x="125" y="545">any length</text>
+  </g>
+
+  <g class="rnn-step step-1">
+    <path class="vertical-edge input-state" d="M330 485 V390"></path>
+    <path class="vertical-edge state-output" d="M330 205 V118"></path>
+    <g class="input-node"><rect x="280" y="490" width="100" height="62" rx="12"></rect><circle cx="305" cy="521" r="10"></circle><circle cx="330" cy="521" r="10"></circle><circle cx="355" cy="521" r="10"></circle><text x="330" y="580">x⁽¹⁾</text></g>
+    <g class="state-node"><rect x="285" y="205" width="90" height="185" rx="14"></rect><circle cx="330" cy="240" r="13"></circle><circle cx="330" cy="278" r="13"></circle><circle cx="330" cy="316" r="13"></circle><circle cx="330" cy="354" r="13"></circle><text x="330" y="193">h⁽¹⁾</text></g>
+    <g class="output-node"><rect x="280" y="54" width="100" height="62" rx="12"></rect><circle cx="305" cy="85" r="10"></circle><circle cx="330" cy="85" r="10"></circle><circle cx="355" cy="85" r="10"></circle><text x="330" y="42">ŷ⁽¹⁾</text></g>
+  </g>
+
+  <g class="rnn-step step-2">
+    <path class="recurrent-edge" d="M378 298 H515"></path><text class="shared-w" x="447" y="280">W</text>
+    <path class="vertical-edge input-state" d="M560 485 V390"></path><path class="vertical-edge state-output" d="M560 205 V118"></path>
+    <g class="input-node"><rect x="510" y="490" width="100" height="62" rx="12"></rect><circle cx="535" cy="521" r="10"></circle><circle cx="560" cy="521" r="10"></circle><circle cx="585" cy="521" r="10"></circle><text x="560" y="580">x⁽²⁾</text></g>
+    <g class="state-node"><rect x="515" y="205" width="90" height="185" rx="14"></rect><circle cx="560" cy="240" r="13"></circle><circle cx="560" cy="278" r="13"></circle><circle cx="560" cy="316" r="13"></circle><circle cx="560" cy="354" r="13"></circle><text x="560" y="193">h⁽²⁾</text></g>
+    <g class="output-node"><rect x="510" y="54" width="100" height="62" rx="12"></rect><circle cx="535" cy="85" r="10"></circle><circle cx="560" cy="85" r="10"></circle><circle cx="585" cy="85" r="10"></circle><text x="560" y="42">ŷ⁽²⁾</text></g>
+  </g>
+
+  <g class="rnn-step step-3">
+    <path class="recurrent-edge" d="M608 298 H745"></path><text class="shared-w" x="677" y="280">W</text>
+    <path class="vertical-edge input-state" d="M790 485 V390"></path><path class="vertical-edge state-output" d="M790 205 V118"></path>
+    <g class="input-node"><rect x="740" y="490" width="100" height="62" rx="12"></rect><circle cx="765" cy="521" r="10"></circle><circle cx="790" cy="521" r="10"></circle><circle cx="815" cy="521" r="10"></circle><text x="790" y="580">x⁽³⁾</text></g>
+    <g class="state-node"><rect x="745" y="205" width="90" height="185" rx="14"></rect><circle cx="790" cy="240" r="13"></circle><circle cx="790" cy="278" r="13"></circle><circle cx="790" cy="316" r="13"></circle><circle cx="790" cy="354" r="13"></circle><text x="790" y="193">h⁽³⁾</text></g>
+    <g class="output-node"><rect x="740" y="54" width="100" height="62" rx="12"></rect><circle cx="765" cy="85" r="10"></circle><circle cx="790" cy="85" r="10"></circle><circle cx="815" cy="85" r="10"></circle><text x="790" y="42">ŷ⁽³⁾</text></g>
+  </g>
+
+  <g class="rnn-step step-4">
+    <path class="recurrent-edge" d="M838 298 H975"></path><text class="shared-w" x="907" y="280">W</text>
+    <path class="vertical-edge input-state" d="M1020 485 V390"></path><path class="vertical-edge state-output" d="M1020 205 V118"></path>
+    <g class="input-node"><rect x="970" y="490" width="100" height="62" rx="12"></rect><circle cx="995" cy="521" r="10"></circle><circle cx="1020" cy="521" r="10"></circle><circle cx="1045" cy="521" r="10"></circle><text x="1020" y="580">x⁽⁴⁾</text></g>
+    <g class="state-node"><rect x="975" y="205" width="90" height="185" rx="14"></rect><circle cx="1020" cy="240" r="13"></circle><circle cx="1020" cy="278" r="13"></circle><circle cx="1020" cy="316" r="13"></circle><circle cx="1020" cy="354" r="13"></circle><text x="1020" y="193">h⁽⁴⁾</text></g>
+    <g class="output-node"><rect x="970" y="54" width="100" height="62" rx="12"></rect><circle cx="995" cy="85" r="10"></circle><circle cx="1020" cy="85" r="10"></circle><circle cx="1045" cy="85" r="10"></circle><text x="1020" y="42">ŷ⁽⁴⁾</text></g>
+    <path class="recurrent-edge continuation-edge" d="M1068 298 H1175"></path><text class="shared-w" x="1120" y="280">W</text><text class="continuation" x="1195" y="312">…</text>
+  </g>
+</svg>
+</div>
+<div class="shared-w-idea">
+<p><strong>CORE IDEA</strong> · Apply the same weights <span class="math inline">\(W\)</span> <strong>repeatedly</strong>.</p>
+</div>
+<div class="citation paper-full-citation">
+Adapted from Diyi Yang, “Language Models and Recurrent Neural Networks,” <em>Stanford CS224N/Ling284</em>, Winter 2026, slide 25. <a href="https://web.stanford.edu/class/cs224n/slides_w26/cs224n-2026-lecture04-rnnlm.pdf#page=23">Lecture slides</a>.
+</div>
+<aside class="notes">
+<ul>
+<li>Start with one input, one hidden state, and an optional output.</li>
+<li>Reveal successive time steps. At every reveal, point to the label <span class="math inline">\(W\)</span> on the horizontal connection.</li>
+<li>The important change from the fixed-window model is not merely that there are more boxes. It is that every time step uses the same transformation rather than receiving its own position-specific block of a growing matrix.</li>
+<li>The ellipsis means the sequence can continue without adding a new parameter matrix.</li>
+<li>Inputs, hidden states, and outputs may have different dimensions; weight sharing means the relevant matrices are reused at every time step.</li>
+<li>End on the core idea. Do not introduce the state-update equation until the next slide.</li>
+</ul>
+<style type="text/css">
+        span.MJX_Assistive_MathML {
+          position:absolute!important;
+          clip: rect(1px, 1px, 1px, 1px);
+          padding: 1px 0 0 0!important;
+          border: 0!important;
+          height: 1px!important;
+          width: 1px!important;
+          overflow: hidden!important;
+          display:block!important;
+      }</style></aside>
+</section>
+<section id="unfold-one-rnn-computation-through-the-clause" class="slide level2">
+<h2>Unfold one RNN computation through the clause</h2>
+<div class="clause-unfolding">
+<svg viewbox="0 0 1240 610" role="img" aria-label="An RNN computation graph unfolds sequentially over the words the, students, opened, and their. Each input enters a red hidden state, the same recurrent weight W connects the states, and the final state produces probabilities including books and laptops.">
+  <defs>
+    <marker id="clause-arrow" viewbox="0 0 10 10" refx="9" refy="5" markerwidth="7" markerheight="7" orient="auto"><path d="M0 0 L10 5 L0 10 z"></path></marker>
+  </defs>
+
+  <path class="time-guide" d="M170 330 H1080"></path>
+  <text class="time-label" x="1120" y="338">time →</text>
+
+  <g class="clause-step clause-step-1">
+    <path class="clause-input-edge" d="M230 510 V405"></path>
+    <g class="clause-input"><rect x="170" y="515" width="120" height="60" rx="12"></rect><circle cx="198" cy="545" r="10"></circle><circle cx="230" cy="545" r="10"></circle><circle cx="262" cy="545" r="10"></circle><text x="230" y="605">the</text></g>
+    <g class="clause-state"><rect x="180" y="250" width="100" height="155" rx="14"></rect><circle cx="230" cy="285" r="13"></circle><circle cx="230" cy="327" r="13"></circle><circle cx="230" cy="369" r="13"></circle><text x="230" y="235">h⁽¹⁾</text></g>
+  </g>
+
+  <g class="fragment clause-step clause-step-2" data-fragment-index="0">
+    <path class="clause-recurrent-edge" d="M283 327 H455"></path><text class="clause-w" x="370" y="307">W</text>
+    <path class="clause-input-edge" d="M505 510 V405"></path>
+    <g class="clause-input"><rect x="445" y="515" width="120" height="60" rx="12"></rect><circle cx="473" cy="545" r="10"></circle><circle cx="505" cy="545" r="10"></circle><circle cx="537" cy="545" r="10"></circle><text x="505" y="605">students</text></g>
+    <g class="clause-state"><rect x="455" y="250" width="100" height="155" rx="14"></rect><circle cx="505" cy="285" r="13"></circle><circle cx="505" cy="327" r="13"></circle><circle cx="505" cy="369" r="13"></circle><text x="505" y="235">h⁽²⁾</text></g>
+  </g>
+
+  <g class="fragment clause-step clause-step-3" data-fragment-index="1">
+    <path class="clause-recurrent-edge" d="M558 327 H730"></path><text class="clause-w" x="645" y="307">W</text>
+    <path class="clause-input-edge" d="M780 510 V405"></path>
+    <g class="clause-input"><rect x="720" y="515" width="120" height="60" rx="12"></rect><circle cx="748" cy="545" r="10"></circle><circle cx="780" cy="545" r="10"></circle><circle cx="812" cy="545" r="10"></circle><text x="780" y="605">opened</text></g>
+    <g class="clause-state"><rect x="730" y="250" width="100" height="155" rx="14"></rect><circle cx="780" cy="285" r="13"></circle><circle cx="780" cy="327" r="13"></circle><circle cx="780" cy="369" r="13"></circle><text x="780" y="235">h⁽³⁾</text></g>
+  </g>
+
+  <g class="fragment clause-step clause-step-4" data-fragment-index="2">
+    <path class="clause-recurrent-edge" d="M833 327 H1005"></path><text class="clause-w" x="920" y="307">W</text>
+    <path class="clause-input-edge" d="M1055 510 V405"></path>
+    <g class="clause-input"><rect x="995" y="515" width="120" height="60" rx="12"></rect><circle cx="1023" cy="545" r="10"></circle><circle cx="1055" cy="545" r="10"></circle><circle cx="1087" cy="545" r="10"></circle><text x="1055" y="605">their</text></g>
+    <g class="clause-state"><rect x="1005" y="250" width="100" height="155" rx="14"></rect><circle cx="1055" cy="285" r="13"></circle><circle cx="1055" cy="327" r="13"></circle><circle cx="1055" cy="369" r="13"></circle><text x="1055" y="235">h⁽⁴⁾</text></g>
+  </g>
+
+  <g class="fragment final-prediction" data-fragment-index="3">
+    <path class="clause-output-edge" d="M1055 247 V180"></path><text class="clause-u" x="1080" y="220">U</text>
+    <line class="prediction-axis" x1="815" y1="160" x2="1175" y2="160"></line>
+    <rect x="838" y="145" width="27" height="15"></rect><rect class="prediction-high" x="870" y="58" width="27" height="102"></rect>
+    <rect x="902" y="118" width="27" height="42"></rect><rect x="934" y="96" width="27" height="64"></rect>
+    <rect x="966" y="140" width="27" height="20"></rect><rect x="998" y="92" width="27" height="68"></rect>
+    <rect x="1030" y="94" width="27" height="66"></rect><rect class="prediction-high" x="1062" y="80" width="27" height="80"></rect>
+    <rect x="1094" y="132" width="27" height="28"></rect><rect x="1126" y="110" width="27" height="50"></rect>
+    <text class="prediction-word" x="883" y="22">books</text><path class="prediction-pointer" d="M883 27 V57"></path>
+    <text class="prediction-word" x="1075" y="44">laptops</text><path class="prediction-pointer" d="M1075 49 V79"></path>
+  </g>
+</svg>
+</div>
+<div class="unfolding-rule">
+<p>At every position: <strong>read one input → update the state with the same <span class="math inline">\(W\)</span> → pass the state forward</strong>.</p>
+</div>
+<div class="citation paper-full-citation">
+Clause and output candidates adapted from Diyi Yang, “Language Models and Recurrent Neural Networks,” <em>Stanford CS224N/Ling284</em>, Winter 2026, slides 23–26. <a href="https://web.stanford.edu/class/cs224n/slides_w26/cs224n-2026-lecture04-rnnlm.pdf#page=24">Lecture slides</a>.
+</div>
+<aside class="notes">
+<ul>
+<li>Reveal the clause one word at a time. Each new word creates one more application of the same computation.</li>
+<li>At “the,” there is only the first input and first hidden state.</li>
+<li>Reveal “students,” then point to the horizontal <span class="math inline">\(W\)</span>: the previous state is carried into the next computation.</li>
+<li>Repeat for “opened” and “their.” The graph grows in time, but its parameters do not; every horizontal edge uses the same <span class="math inline">\(W\)</span>.</li>
+<li>On the last reveal, map <span class="math inline">\(h^{(4)}\)</span> through <span class="math inline">\(U\)</span> and show the next-word distribution. “Books” receives the largest illustrated probability, while “laptops” remains plausible.</li>
+<li>Explain the terminology: this wide diagram is the RNN <strong>unfolded through time</strong>. The compact loop form folds these repeated copies back into one recurrent cell with shared parameters.</li>
+</ul>
+<style type="text/css">
+        span.MJX_Assistive_MathML {
+          position:absolute!important;
+          clip: rect(1px, 1px, 1px, 1px);
+          padding: 1px 0 0 0!important;
+          border: 0!important;
+          height: 1px!important;
+          width: 1px!important;
+          overflow: hidden!important;
+          display:block!important;
+      }</style></aside>
+</section>
+<section id="one-recurrent-cell-reused-through-time" class="slide level2">
+<h2>One recurrent cell, reused through time</h2>
+<div class="cell-math-layout">
+<div class="cell-math-left">
+<div class="single-cell-visual">
+<svg viewbox="0 0 720 350" role="img" aria-label="One recurrent neural network cell. A magenta input x t enters through W x, a red previous state h t minus 1 enters through W h, the cell produces the next red state h t, and an optional green output y hat t leaves through U.">
+  <defs>
+    <marker id="cell-arrow" viewbox="0 0 10 10" refx="9" refy="5" markerwidth="7" markerheight="7" orient="auto"><path d="M0 0 L10 5 L0 10 z"></path></marker>
+  </defs>
+
+  <g class="previous-state">
+    <rect x="35" y="130" width="120" height="90" rx="15"></rect>
+    <circle cx="65" cy="175" r="11"></circle><circle cx="95" cy="175" r="11"></circle><circle cx="125" cy="175" r="11"></circle>
+    <text x="95" y="115">h<tspan baseline-shift="sub">t−1</tspan></text>
+  </g>
+  <path class="cell-edge state-edge" d="M158 175 H275"></path><text class="cell-weight" x="215" y="155">W<tspan baseline-shift="sub">h</tspan></text>
+
+  <g class="current-input">
+    <rect x="300" y="260" width="120" height="70" rx="14"></rect>
+    <circle cx="330" cy="295" r="10"></circle><circle cx="360" cy="295" r="10"></circle><circle cx="390" cy="295" r="10"></circle>
+    <text x="360" y="343">x<tspan baseline-shift="sub">t</tspan></text>
+  </g>
+  <path class="cell-edge input-edge" d="M360 258 V224"></path><text class="cell-weight" x="322" y="245">W<tspan baseline-shift="sub">x</tspan></text>
+
+  <g class="rnn-cell-body">
+    <rect x="275" y="105" width="170" height="120" rx="24"></rect>
+    <text class="cell-title" x="360" y="158">RNN CELL</text>
+    <text class="cell-operation" x="360" y="194">tanh</text>
+  </g>
+
+  <path class="cell-edge state-edge" d="M448 175 H565"></path>
+  <g class="current-state">
+    <rect x="565" y="130" width="120" height="90" rx="15"></rect>
+    <circle cx="595" cy="175" r="11"></circle><circle cx="625" cy="175" r="11"></circle><circle cx="655" cy="175" r="11"></circle>
+    <text x="625" y="115">h<tspan baseline-shift="sub">t</tspan></text>
+  </g>
+
+  <path class="cell-edge output-edge" d="M625 128 V92"></path><text class="cell-weight output-weight" x="670" y="113">U</text>
+  <g class="current-output">
+    <rect x="565" y="25" width="120" height="65" rx="13"></rect>
+    <circle cx="595" cy="57" r="10"></circle><circle cx="625" cy="57" r="10"></circle><circle cx="655" cy="57" r="10"></circle>
+    <text x="625" y="22">ŷ<tspan baseline-shift="sub">t</tspan></text>
+  </g>
+</svg>
+</div>
+<div class="cell-equations">
+<div class="state-equation">
+<p><small>STATE UPDATE</small></p>
+<p><span class="math display">\[
+\mathbf h_t=\tanh\!\left(W_h\mathbf h_{t-1}+W_x\mathbf x_t+\mathbf b_h\right)
+\]</span></p>
+</div>
+<div class="output-equation-cell">
+<p><small>OPTIONAL OUTPUT</small></p>
+<p><span class="math display">\[
+\hat{\mathbf y}_t=\operatorname{softmax}\!\left(U\mathbf h_t+\mathbf b_y\right)
+\]</span></p>
+</div>
+</div>
+</div>
+<div class="cell-evaluation">
+<div class="evaluation-heading advantage-heading">
+WHAT THIS BUYS US
+</div>
+<div class="evaluation-point advantage-point">
+<b>1</b>
+<p>
+<strong>Any input length</strong><span>Repeat the cell for every arriving token.</span>
+</p>
+</div>
+<div class="fragment evaluation-point advantage-point" data-fragment-index="0">
+<b>2</b>
+<p>
+<strong>Fixed parameter count</strong><span><span class="math inline">\(W_h\)</span>, <span class="math inline">\(W_x\)</span>, and <span class="math inline">\(U\)</span> do not grow with sequence length.</span>
+</p>
+</div>
+<div class="fragment evaluation-point advantage-point" data-fragment-index="1">
+<b>3</b>
+<p>
+<strong>History reaches the present</strong><span><span class="math inline">\(\mathbf h_t\)</span> depends on <span class="math inline">\(\mathbf h_{t-1}\)</span>.</span>
+</p>
+</div>
+<div class="fragment evaluation-point advantage-point" data-fragment-index="2">
+<b>4</b>
+<p>
+<strong>Time-step symmetry</strong><span>The same matrices process every position.</span>
+</p>
+</div>
+<div class="fragment evaluation-heading disadvantage-heading" data-fragment-index="3">
+WHAT IT COSTS US
+</div>
+<div class="fragment evaluation-point disadvantage-point" data-fragment-index="3">
+<b>5</b>
+<p>
+<strong>Sequential computation</strong><span><span class="math inline">\(\mathbf h_t\)</span> must wait for <span class="math inline">\(\mathbf h_{t-1}\)</span>.</span>
+</p>
+</div>
+<div class="fragment evaluation-point disadvantage-point" data-fragment-index="4">
+<b>6</b>
+<p>
+<strong>Fragile long-range learning</strong><span>Repeated updates can make signals fade or explode.</span>
+</p>
+</div>
+<div class="fragment cell-next-question" data-fragment-index="5">
+<p>Can one state preserve useful information through many repeated updates?</p>
+</div>
+</div>
+</div>
+<div class="citation paper-full-citation">
+RNN formulation and trade-offs adapted from Diyi Yang, “Language Models and Recurrent Neural Networks,” <em>Stanford CS224N/Ling284</em>, Winter 2026, slides 25–27. <a href="https://web.stanford.edu/class/cs224n/slides_w26/cs224n-2026-lecture04-rnnlm.pdf#page=25">Lecture slides</a>.
+</div>
+<aside class="notes">
+<ul>
+<li>Read the diagram before the equations. The current input <span class="math inline">\(\mathbf x_t\)</span> and previous state <span class="math inline">\(\mathbf h_{t-1}\)</span> meet inside one recurrent cell.</li>
+<li>Match each arrow to a term in the state update: <span class="math inline">\(W_x\mathbf x_t\)</span>, <span class="math inline">\(W_h\mathbf h_{t-1}\)</span>, and the bias <span class="math inline">\(\mathbf b_h\)</span>.</li>
+<li>The nonlinearity produces the updated state <span class="math inline">\(\mathbf h_t\)</span>, which is both passed to the next time step and optionally mapped through <span class="math inline">\(U\)</span> to an output distribution.</li>
+<li>Reveal the advantages in order. Stress that arbitrary input length does not mean growing matrices; it means repeated application of the same matrices.</li>
+<li>Reveal the costs only after the benefits are established. Sequential computation is an architectural cost. Fragile long-range learning is a training problem that we have not explained yet.</li>
+<li>End with the question. It motivates inspecting repeated derivatives through the unfolded graph without prematurely teaching the vanishing-gradient derivation.</li>
+</ul>
+<style type="text/css">
+        span.MJX_Assistive_MathML {
+          position:absolute!important;
+          clip: rect(1px, 1px, 1px, 1px);
+          padding: 1px 0 0 0!important;
+          border: 0!important;
+          height: 1px!important;
+          width: 1px!important;
+          overflow: hidden!important;
+          display:block!important;
+      }</style></aside>
+</section>
+<section id="backpropagate-through-one-recurrent-cell" class="slide level2">
+<h2>Backpropagate through one recurrent cell</h2>
+<div class="single-cell-backprop-layout">
+<div class="single-cell-backprop-visual">
+<svg viewbox="0 -85 720 605" role="img" aria-label="Backpropagation through one recurrent cell. The loss gradient first reaches the output, then the hidden state, then the cell pre-activation, and finally the recurrent parameters, input parameters, and previous hidden state.">
+  <defs>
+    <marker id="bp-forward-arrow" viewbox="0 0 10 10" refx="9" refy="5" markerwidth="4.5" markerheight="4.5" orient="auto"><path class="bp-forward-arrowhead" d="M0 0 L10 5 L0 10 z"></path></marker>
+    <marker id="bp-loss-arrow" viewbox="0 0 10 10" refx="9" refy="5" markerwidth="4.5" markerheight="4.5" orient="auto"><path class="bp-loss-arrowhead" d="M0 0 L10 5 L0 10 z"></path></marker>
+    <marker id="bp-gradient-arrow" viewbox="0 0 10 10" refx="9" refy="5" markerwidth="4.5" markerheight="4.5" orient="auto"><path class="bp-gradient-arrowhead" d="M0 0 L10 5 L0 10 z"></path></marker>
+  </defs>
+
+  <g class="bp-forward-model">
+    <g class="bp-previous-state">
+      <rect x="28" y="235" width="125" height="92" rx="15"></rect>
+      <circle cx="60" cy="281" r="11"></circle><circle cx="91" cy="281" r="11"></circle><circle cx="122" cy="281" r="11"></circle>
+      <text x="91" y="218">h<tspan baseline-shift="sub">t−1</tspan></text>
+    </g>
+    <path class="bp-forward-edge" d="M156 281 H275"></path><text class="bp-weight" x="210" y="263">W<tspan baseline-shift="sub">h</tspan></text>
+
+    <g class="bp-current-input">
+      <rect x="300" y="415" width="125" height="74" rx="14"></rect>
+      <circle cx="332" cy="452" r="10"></circle><circle cx="363" cy="452" r="10"></circle><circle cx="394" cy="452" r="10"></circle>
+      <text x="363" y="510">x<tspan baseline-shift="sub">t</tspan></text>
+    </g>
+    <path class="bp-forward-edge" d="M363 412 V332"></path><text class="bp-weight" x="322" y="382">W<tspan baseline-shift="sub">x</tspan></text>
+
+    <g class="bp-cell-body">
+      <rect x="275" y="220" width="176" height="125" rx="24"></rect>
+      <text class="bp-cell-title" x="363" y="270">RNN CELL</text>
+      <text class="bp-cell-operation" x="363" y="308">tanh(a<tspan baseline-shift="sub">t</tspan>)</text>
+    </g>
+
+    <path class="bp-forward-edge" d="M454 281 H566"></path>
+    <g class="bp-current-state">
+      <rect x="566" y="235" width="125" height="92" rx="15"></rect>
+      <circle cx="598" cy="281" r="11"></circle><circle cx="629" cy="281" r="11"></circle><circle cx="660" cy="281" r="11"></circle>
+      <text class="bp-side-label" x="538" y="254">h<tspan baseline-shift="sub">t</tspan></text>
+    </g>
+
+    <path class="bp-forward-edge" d="M655 232 V177"></path><text class="bp-weight" x="683" y="208">U</text>
+    <g class="bp-current-output">
+      <rect x="566" y="100" width="125" height="76" rx="14"></rect>
+      <circle cx="598" cy="138" r="10"></circle><circle cx="629" cy="138" r="10"></circle><circle cx="660" cy="138" r="10"></circle>
+      <text class="bp-side-label" x="538" y="146">ŷ<tspan baseline-shift="sub">t</tspan></text>
+    </g>
+    <path class="bp-loss-edge" d="M655 98 V-8"></path>
+    <g class="bp-loss-box">
+      <rect x="535" y="-70" width="175" height="60" rx="13"></rect>
+      <text class="bp-loss-label" x="622" y="-33">LOSS · L<tspan baseline-shift="sub">t</tspan></text>
+    </g>
+  </g>
+
+  <g class="fragment bp-gradient-stage bp-gradient-output" data-fragment-index="0">
+    <path d="M585 -8 V98"></path>
+    <text x="548" y="52">δ<tspan baseline-shift="sub">z</tspan></text>
+    <text class="bp-stage-badge" x="575" y="-14">1</text>
+  </g>
+
+  <g class="fragment bp-gradient-stage bp-gradient-state" data-fragment-index="1">
+    <path d="M585 177 V232"></path>
+    <path d="M563 306 H455"></path>
+    <text x="520" y="294">g<tspan baseline-shift="sub">h</tspan></text>
+    <text class="bp-stage-badge" x="575" y="211">2</text>
+  </g>
+
+  <g class="fragment bp-gradient-stage bp-gradient-cell" data-fragment-index="2">
+    <path d="M451 320 H277"></path>
+    <text x="363" y="370">δ<tspan baseline-shift="sub">a</tspan></text>
+    <text class="bp-stage-badge" x="290" y="307">3</text>
+  </g>
+
+  <g class="fragment bp-gradient-stage bp-gradient-branches" data-fragment-index="3">
+    <path d="M275 252 H156"></path>
+    <path d="M330 345 V412"></path>
+    <text class="bp-stage-badge" x="240" y="302">4</text>
+  </g>
+</svg>
+<div class="bp-direction-cue">
+<p>Forward computation <span>→</span> · gradient flow <b>←</b></p>
+</div>
+</div>
+<div class="single-cell-backprop-formulas">
+<div class="bp-formula-card fragment" data-fragment-index="0">
+<p><b>1 · OUTPUT ERROR</b></p>
+<p><span class="math display">\[
+\boldsymbol\delta_z=\hat{\mathbf y}_t-\mathbf y_t
+\]</span></p>
+</div>
+<div class="bp-formula-card fragment" data-fragment-index="1">
+<p><b>2 · REACH THE HIDDEN STATE</b></p>
+<p><span class="math display">\[
+\mathbf g_h=U^\top\boldsymbol\delta_z
+\]</span></p>
+</div>
+<div class="bp-formula-card fragment" data-fragment-index="2">
+<p><b>3 · PASS THROUGH TANH</b></p>
+<p><span class="math display">\[
+\boldsymbol\delta_a
+=\mathbf g_h\odot(1-\mathbf h_t^2)
+\]</span></p>
+</div>
+<div class="bp-formula-card bp-parameter-card fragment" data-fragment-index="3">
+<p><b>4 · FOLLOW BOTH INPUT BRANCHES</b></p>
+<p><span class="math display">\[
+\begin{aligned}
+\nabla_{W_h}L_t&amp;=\boldsymbol\delta_a\mathbf h_{t-1}^{\top},
+&amp;\nabla_{\mathbf h_{t-1}}L_t&amp;=W_h^\top\boldsymbol\delta_a\\
+\nabla_{W_x}L_t&amp;=\boldsymbol\delta_a\mathbf x_t^{\top},
+&amp;\nabla_{\mathbf b_h}L_t&amp;=\boldsymbol\delta_a
+\end{aligned}
+\]</span></p>
+</div>
+</div>
+</div>
+<div class="citation">
+Local RNN backpropagation follows the computational graph from softmax cross-entropy through the hidden-state update <span class="citation" data-cites="jurafsky2026slp">(Jurafsky and Martin 2026, Ch. 9)</span>.
+</div>
+<aside class="notes">
+<ul>
+<li>Keep the complete forward cell visible, but reveal the backward path one stage at a time. Each numbered gradient overlay on the left is synchronized with the formula carrying the same number on the right.</li>
+<li>Stage 1: for softmax with cross-entropy, the derivative with respect to the logits is the prediction minus the one-hot target, <span class="math inline">\(\boldsymbol\delta_z=\hat{\mathbf y}_t-\mathbf y_t\)</span>.</li>
+<li>Stage 2: multiply by <span class="math inline">\(U^\top\)</span> to move the error from output space into hidden-state space. For this first local derivation, <span class="math inline">\(\mathbf g_h\)</span> contains only the contribution from the output at time <span class="math inline">\(t\)</span>.</li>
+<li>Stage 3: differentiate the tanh nonlinearity elementwise. Keep <span class="math inline">\(\boldsymbol\delta_a\)</span> visible; it is the reusable error signal for every branch entering the cell pre-activation.</li>
+<li>Stage 4: the same <span class="math inline">\(\boldsymbol\delta_a\)</span> produces gradients for <span class="math inline">\(W_h\)</span>, <span class="math inline">\(W_x\)</span>, and <span class="math inline">\(\mathbf b_h\)</span>. The branch <span class="math inline">\(W_h^\top\boldsymbol\delta_a\)</span> sends credit to the previous hidden state.</li>
+<li>End by pointing to <span class="math inline">\(\nabla_{\mathbf h_{t-1}}L_t\)</span>. We have derived one local backward step; the next slide expands the objective from one output loss to all output losses in the sequence.</li>
+</ul>
+<style type="text/css">
+        span.MJX_Assistive_MathML {
+          position:absolute!important;
+          clip: rect(1px, 1px, 1px, 1px);
+          padding: 1px 0 0 0!important;
+          border: 0!important;
+          height: 1px!important;
+          width: 1px!important;
+          overflow: hidden!important;
+          display:block!important;
+      }</style></aside>
+</section>
+<section id="one-prediction-one-cross-entropy-loss" class="slide level2">
+<h2>One prediction, one cross-entropy loss</h2>
+<div class="temporal-loss-layout">
+<div class="temporal-loss-example">
+<div class="loss-context">
+<span>the</span><span>students</span><span>opened</span><b>their</b>
+</div>
+<div class="loss-prediction">
+<p><small>AT TIME <span class="math inline">\(t\)</span></small></p>
+<p><span class="math display">\[
+\hat{\mathbf y}_t
+=P_\theta(w_{t+1}\mid w_{1:t})
+\]</span></p>
+<div class="target-probability">
+<span>target: <b>books</b></span><strong><span class="math inline">\(\hat y_{t,\text{books}}=0.62\)</span></strong>
+</div>
+</div>
+<div class="fragment loss-result" data-fragment-index="0">
+<p><small>CROSS-ENTROPY AT THIS OUTPUT</small></p>
+<p><span class="math display">\[
+J^{(t)}(\theta)
+=-\sum_{v\in V}y_{t,v}\log\hat y_{t,v}
+=-\log 0.62
+\approx 0.48
+\]</span></p>
+</div>
+</div>
+<div class="temporal-loss-sequence">
+<div class="loss-sequence-heading">
+ONE LOSS AT EVERY PREDICTED TOKEN
+</div>
+<div class="time-loss-row fragment" data-fragment-index="1">
+<b>t = 1</b><span>the → students</span><strong>J<sup>(1)</sup>(θ)</strong>
+</div>
+<div class="time-loss-row fragment" data-fragment-index="1">
+<b>t = 2</b><span>students → opened</span><strong>J<sup>(2)</sup>(θ)</strong>
+</div>
+<div class="time-loss-row fragment" data-fragment-index="1">
+<b>t = 3</b><span>opened → their</span><strong>J<sup>(3)</sup>(θ)</strong>
+</div>
+<div class="time-loss-row active-time-loss fragment" data-fragment-index="1">
+<b>t = 4</b><span>their → books</span><strong>J<sup>(4)</sup>(θ)</strong>
+</div>
+<div class="fragment sequence-objective" data-fragment-index="2">
+<p><span class="math display">\[
+J(\theta)=\sum_{t=1}^{T}J^{(t)}(\theta)
+\]</span></p>
+</div>
+</div>
+</div>
+<div class="pause-panel bptt-pause fragment" data-fragment-index="3">
+<p><strong>PAUSE · THE PARAMETERS ARE SHARED THROUGH TIME</strong></p>
+<p>How does the gradient from <strong>every</strong> <span class="math inline">\(J^{(t)}(\theta)\)</span> reach the same <span class="math inline">\(W_h\)</span>, <span class="math inline">\(W_x\)</span>, and <span class="math inline">\(U\)</span>—and how should those contributions be combined before one update?</p>
+</div>
+<div class="citation">
+Token-level cross-entropy losses and their sum over a sequence follow the recurrent language-model objective <span class="citation" data-cites="jurafsky2026slp">(Jurafsky and Martin 2026, Ch. 9)</span>.
+</div>
+<aside class="notes">
+<ul>
+<li>Keep the concrete prediction visible: after “the students opened their,” the target is “books,” and the model assigns it probability <span class="math inline">\(0.62\)</span>.</li>
+<li>Reveal the first calculation. Because the target is one-hot, the vocabulary-wide cross-entropy collapses to <span class="math inline">\(-\log\hat y_{t,\text{books}}=-\log 0.62\approx0.48\)</span>.</li>
+<li>Reveal the four time-indexed losses together. Each output is supervised by the next observed word.</li>
+<li>Reveal the total sequence objective as the sum of those losses.</li>
+<li>End on the PAUSE panel. Do not answer it here. Ask students to identify two issues: multiple losses can influence one earlier state, and the same parameter matrices occur at every time step.</li>
+</ul>
+<style type="text/css">
+        span.MJX_Assistive_MathML {
+          position:absolute!important;
+          clip: rect(1px, 1px, 1px, 1px);
+          padding: 1px 0 0 0!important;
+          border: 0!important;
+          height: 1px!important;
+          width: 1px!important;
+          overflow: hidden!important;
+          display:block!important;
+      }</style></aside>
+</section>
+<section id="when-two-gradient-paths-meet-they-add" class="slide level2">
+<h2>When two gradient paths meet, they add</h2>
+<div class="gradient-merge-layout">
+<div class="gradient-merge-graph">
+<svg viewbox="0 0 760 600" role="img" aria-label="A hidden state h t sends information to the current output loss J t and to the next hidden state h t plus 1. During backpropagation, blue gradient paths from both downstream branches meet at h t and add.">
+  <defs>
+    <marker id="merge-forward-arrow" viewbox="0 0 10 10" refx="9" refy="5" markerwidth="5" markerheight="5" orient="auto"><path d="M0 0 L10 5 L0 10 z" fill="#1a9a94"></path></marker>
+    <marker id="merge-backward-arrow" viewbox="0 0 10 10" refx="9" refy="5" markerwidth="5" markerheight="5" orient="auto"><path d="M0 0 L10 5 L0 10 z" fill="#356fa8" fill-opacity=".68"></path></marker>
+  </defs>
+
+  <g class="merge-forward">
+    <g class="merge-node merge-source"><rect x="275" y="245" width="210" height="120" rx="22"></rect><text class="merge-symbol" x="380" y="320">h<tspan baseline-shift="sub">t</tspan></text></g>
+    <path d="M430 243 C475 175 535 145 600 145"></path>
+    <path d="M488 305 H610"></path>
+    <g class="merge-node merge-loss"><rect x="580" y="55" width="150" height="88" rx="17"></rect><text class="merge-symbol" x="655" y="112">J<tspan baseline-shift="super">(t)</tspan></text></g>
+    <g class="merge-node merge-future"><rect x="610" y="255" width="120" height="100" rx="17"></rect><text x="670" y="292">NEXT STATE</text><text class="merge-symbol" x="670" y="330">h<tspan baseline-shift="sub">t+1</tspan></text></g>
+  </g>
+
+  <g class="fragment merge-backward merge-local" data-fragment-index="0">
+    <path d="M580 115 C505 125 455 175 420 245"></path>
+    <text x="490" y="155">local contribution</text>
+  </g>
+  <g class="fragment merge-backward merge-future-path" data-fragment-index="1">
+    <path d="M607 330 H488"></path>
+    <text x="550" y="390">future contribution</text>
+  </g>
+  <g class="fragment merge-sum-badge" data-fragment-index="2">
+    <circle cx="470" cy="275" r="32"></circle>
+    <text x="470" y="287">+</text>
+  </g>
+
+  <g class="fragment merge-update" data-fragment-index="3">
+    <path d="M275 305 H115"></path>
+    <g><rect x="25" y="250" width="145" height="110" rx="18"></rect><text x="97" y="291">TOTAL</text><text x="97" y="322">GRADIENT AT</text><text class="merge-symbol" x="97" y="350">h<tspan baseline-shift="sub">t</tspan></text></g>
+  </g>
+</svg>
+</div>
+<div class="gradient-merge-solution">
+<div class="merge-given">
+<small>THE FORWARD GRAPH BRANCHES</small>
+<p>
+<span class="math inline">\(\mathbf h_t\)</span> influences the loss now and the recurrent state next.
+</p>
+</div>
+<div class="fragment merge-contribution" data-fragment-index="0">
+<p><b>PATH 1 · CURRENT OUTPUT</b></p>
+<p><span class="math display">\[
+\left.\nabla_{\mathbf h_t}J\right|_{J^{(t)}}
+=U^\top\boldsymbol\delta_z^{(t)}
+\]</span></p>
+</div>
+<div class="fragment merge-contribution" data-fragment-index="1">
+<p><b>PATH 2 · FUTURE STATE</b></p>
+<p><span class="math display">\[
+\left.\nabla_{\mathbf h_t}J\right|_{\mathbf h_{t+1}}
+=W_h^\top\boldsymbol\delta_a^{(t+1)}
+\]</span></p>
+</div>
+<div class="fragment merge-total" data-fragment-index="2">
+<p><small>BACKPROPAGATION RULE AT A BRANCH</small></p>
+<p><span class="math display">\[
+\nabla_{\mathbf h_t}J
+=U^\top\boldsymbol\delta_z^{(t)}
++W_h^\top\boldsymbol\delta_a^{(t+1)}
+\]</span></p>
+<p><strong>Every downstream route contributes; the contributions add.</strong></p>
+</div>
+</div>
+</div>
+<div class="citation">
+Gradient accumulation at a branching node is the multivariable chain rule applied to the unfolded recurrent computation graph <span class="citation" data-cites="goodfellow2016deep jurafsky2026slp">(Goodfellow et al. 2016, Chs. 6 and 10; Jurafsky and Martin 2026, Ch. 9)</span>.
+</div>
+<aside class="notes">
+<ul>
+<li>This slide is the worked answer to the preceding PAUSE question at the level of one hidden state.</li>
+<li>Read the forward graph first. The state <span class="math inline">\(\mathbf h_t\)</span> has two downstream uses: it produces the current output and it enters the next recurrent state.</li>
+<li>Reveal the blue path from <span class="math inline">\(J^{(t)}\)</span>. It contributes <span class="math inline">\(U^\top\boldsymbol\delta_z^{(t)}\)</span>.</li>
+<li>Reveal the path returning from <span class="math inline">\(\mathbf h_{t+1}\)</span>. It contributes <span class="math inline">\(W_h^\top\boldsymbol\delta_a^{(t+1)}\)</span>.</li>
+<li>Reveal the plus sign and total gradient. Backpropagation does not choose one route; it sums all downstream contributions at the shared node.</li>
+<li>This same principle will repeat at every hidden state when the RNN is unfolded through time.</li>
+</ul>
+<style type="text/css">
+        span.MJX_Assistive_MathML {
+          position:absolute!important;
+          clip: rect(1px, 1px, 1px, 1px);
+          padding: 1px 0 0 0!important;
+          border: 0!important;
+          height: 1px!important;
+          width: 1px!important;
+          overflow: hidden!important;
+          display:block!important;
+      }</style></aside>
+</section>
+<section id="backpropagation-through-time" class="slide level2 bptt-illustration-slide">
+<h2>Backpropagation through time</h2>
+<div class="bptt-flow-illustration">
+<svg viewbox="0 0 1320 650" role="img" aria-label="An RNN unfolded over four tokens. Solid teal arrows carry activations forward from inputs through hidden states to token losses. Translucent blue arrows carry gradients backward from every loss and backward through the recurrent state chain, converging on shared parameters.">
+  <defs>
+    <marker id="bptt-forward-arrow" viewbox="0 0 10 10" refx="9" refy="5" markerwidth="4.5" markerheight="4.5" orient="auto"><path d="M0 0 L10 5 L0 10 z" fill="#1a9a94"></path></marker>
+    <marker id="bptt-backward-arrow" viewbox="0 0 10 10" refx="9" refy="5" markerwidth="4.5" markerheight="4.5" orient="auto"><path d="M0 0 L10 5 L0 10 z" fill="#356fa8" fill-opacity=".68"></path></marker>
+  </defs>
+
+  <g class="fragment bptt-parameter-hub" data-fragment-index="2">
+    <rect x="435" y="565" width="450" height="72" rx="20"></rect>
+    <text x="660" y="593">ADD EVERY TIME-STEP CONTRIBUTION</text>
+    <text class="hub-symbols" x="660" y="624">SUM TIME-STEP GRADIENTS  →  ONE UPDATE</text>
+  </g>
+
+  <g class="bptt-time-step" transform="translate(95 0)">
+    <g class="bptt-loss"><rect x="0" y="35" width="170" height="70" rx="15"></rect><text x="85" y="79">J⁽¹⁾</text></g>
+    <path class="bptt-forward-edge" d="M85 255 V108"></path>
+    <g class="bptt-state"><rect x="25" y="255" width="120" height="110" rx="18"></rect><text x="85" y="322">h₁</text></g>
+    <path class="bptt-forward-edge" d="M85 485 V368"></path>
+    <g class="bptt-input"><rect x="25" y="485" width="120" height="65" rx="14"></rect><text x="85" y="527">the</text></g>
+  </g>
+  <g class="bptt-time-step" transform="translate(390 0)">
+    <g class="bptt-loss"><rect x="0" y="35" width="170" height="70" rx="15"></rect><text x="85" y="79">J⁽²⁾</text></g>
+    <path class="bptt-forward-edge" d="M85 255 V108"></path>
+    <g class="bptt-state"><rect x="25" y="255" width="120" height="110" rx="18"></rect><text x="85" y="322">h₂</text></g>
+    <path class="bptt-forward-edge" d="M85 485 V368"></path>
+    <g class="bptt-input"><rect x="5" y="485" width="160" height="65" rx="14"></rect><text x="85" y="527">students</text></g>
+  </g>
+  <g class="bptt-time-step" transform="translate(685 0)">
+    <g class="bptt-loss"><rect x="0" y="35" width="170" height="70" rx="15"></rect><text x="85" y="79">J⁽³⁾</text></g>
+    <path class="bptt-forward-edge" d="M85 255 V108"></path>
+    <g class="bptt-state"><rect x="25" y="255" width="120" height="110" rx="18"></rect><text x="85" y="322">h₃</text></g>
+    <path class="bptt-forward-edge" d="M85 485 V368"></path>
+    <g class="bptt-input"><rect x="5" y="485" width="160" height="65" rx="14"></rect><text x="85" y="527">opened</text></g>
+  </g>
+  <g class="bptt-time-step" transform="translate(980 0)">
+    <g class="bptt-loss"><rect x="0" y="35" width="170" height="70" rx="15"></rect><text x="85" y="79">J⁽⁴⁾</text></g>
+    <path class="bptt-forward-edge" d="M85 255 V108"></path>
+    <g class="bptt-state"><rect x="25" y="255" width="120" height="110" rx="18"></rect><text x="85" y="322">h₄</text></g>
+    <path class="bptt-forward-edge" d="M85 485 V368"></path>
+    <g class="bptt-input"><rect x="5" y="485" width="160" height="65" rx="14"></rect><text x="85" y="527">their</text></g>
+  </g>
+
+  <g class="bptt-recurrence-forward">
+    <path d="M243 310 H413"></path><path d="M538 310 H708"></path><path d="M833 310 H1003"></path>
+    <text x="328" y="292">same Wₕ</text><text x="623" y="292">same Wₕ</text><text x="918" y="292">same Wₕ</text>
+  </g>
+
+  <g class="fragment bptt-backward-output" data-fragment-index="0">
+    <path d="M155 108 V252"></path><path d="M450 108 V252"></path><path d="M745 108 V252"></path><path d="M1040 108 V252"></path>
+  </g>
+  <g class="fragment bptt-backward-time" data-fragment-index="1">
+    <path d="M1003 338 H833"></path><path d="M708 338 H538"></path><path d="M413 338 H243"></path>
+  </g>
+  <g class="fragment bptt-parameter-gradients" data-fragment-index="2">
+    <path d="M180 368 C230 470 400 510 520 562"></path>
+    <path d="M475 368 C500 450 565 510 610 562"></path>
+    <path d="M770 368 C750 450 720 510 700 562"></path>
+    <path d="M1065 368 C1010 470 900 520 800 562"></path>
+  </g>
+</svg>
+</div>
+<div class="citation">
+Backpropagation through time is ordinary backpropagation applied to the RNN unfolded as a computation graph <span class="citation" data-cites="werbos1990backpropagation goodfellow2016deep jurafsky2026slp">(Werbos 1990; Goodfellow et al. 2016, Ch. 10; Jurafsky and Martin 2026, Ch. 9)</span>.
+</div>
+<aside class="notes">
+<ul>
+<li>This slide is intentionally illustration-only. Let the spatial structure carry the explanation.</li>
+<li>First read the solid teal forward pass: each input updates a hidden state; every hidden state produces a token-level loss; <span class="math inline">\(W_h\)</span> is reused along the horizontal chain.</li>
+<li>Reveal the first translucent-blue layer: every loss sends a local gradient into its hidden state.</li>
+<li>Reveal the second layer: those gradients then travel backward through the recurrent chain, from later states toward earlier states.</li>
+<li>Reveal the curved paths into the parameter hub: because the same <span class="math inline">\(W_h\)</span>, <span class="math inline">\(W_x\)</span>, and <span class="math inline">\(U\)</span> were used repeatedly, every time step contributes to the gradients of the same parameter tensors.</li>
+<li>Final reveal: the curved paths collect every time-step contribution into the shared parameter gradient; sum them, then perform one optimizer update.</li>
+<li>End with the full backward chain visible. The unresolved question is now how repeated Jacobian products behave when credit must travel across many time steps.</li>
+</ul>
+<style type="text/css">
+        span.MJX_Assistive_MathML {
+          position:absolute!important;
+          clip: rect(1px, 1px, 1px, 1px);
+          padding: 1px 0 0 0!important;
+          border: 0!important;
+          height: 1px!important;
+          width: 1px!important;
+          overflow: hidden!important;
+          display:block!important;
+      }</style></aside>
+</section>
+<section id="having-fun-with-rnns" class="slide level2">
+<h2>Having fun with RNNs</h2>
+<div class="recipe-generation-lead">
+<p>Train a character-level RNN on recipe text—then repeatedly sample its next character to invent a new “recipe” in the learned style.</p>
+</div>
+<div class="rnn-recipe-layout">
+<div class="generated-recipe-card">
+<div class="recipe-machine-label">
+SAMPLED FROM THE MODEL
+</div>
+<h3>
+CARAMEL CORN<br>GARLIC BEEF
+</h3>
+<div class="recipe-rule">
+
+</div>
+<div class="recipe-meta">
+<span><b>CATEGORIES</b> Savory, Desserts</span><span><b>YIELD</b> 4 confused servings</span>
+</div>
+<div class="recipe-section-label">
+INGREDIENTS
+</div>
+<ul>
+<li>2 tbsp Parmesan cheese, ground</li>
+<li>¼ tsp ground cloves</li>
+<li>1 tsp cayenne pepper</li>
+<li>1 cup pineapple chunks</li>
+<li>½ cup toasted pecans</li>
+<li>2 tbsp cocoa powder</li>
+<li>1 cup caramel sauce</li>
+</ul>
+<div class="recipe-section-label">
+DIRECTIONS
+</div>
+<ol type="1">
+<li>Glaze the ribs with caramel sauce.</li>
+<li>Fold in pineapple, pecans, and cocoa.</li>
+<li>Bake until the model predicts <code>&lt;END&gt;</code>.</li>
+</ol>
+<div class="recipe-warning">
+⚠ Structurally convincing does not mean edible—or safe.
+</div>
+</div>
+<div class="recipe-preview-panel">
+<p><img data-src="images/rnn-recipe-preview.png" alt="An original photographic preview of an intentionally unusual generated dish: caramel-glazed ribs with pineapple, pecans, cocoa dust, and herbs"></p>
+<div class="recipe-preview-caption">
+<b>THE MODEL LEARNS THE FORM</b><span>titles · quantities · ingredient lists · imperative instructions</span>
+</div>
+</div>
+</div>
+<div class="recipe-project-link">
+<b>CODING-PROJECT INSPIRATION</b><a href="https://gist.github.com/nylki/1efbaa36635956d35bcc">github.com/nylki/1efbaa36635956d35bcc</a>
+</div>
+<div class="citation paper-full-citation">
+Layout inspired by Diyi Yang, “Language Models and Recurrent Neural Networks,” <em>Stanford CS224N/Ling284</em>, Winter 2026, recipe-generation example. Fictional sample inspired by the generated titles in <a href="https://gist.github.com/nylki/1efbaa36635956d35bcc">“do androids dream of cooking?”</a>; original preview image generated for this lecture.
+</div>
+<aside class="notes">
+<ul>
+<li>This is a preview of the coding project: train a small character-level RNN on a corpus whose repeated structure is easy to recognize, then generate by feeding each sampled character back as the next input.</li>
+<li>Read the recipe card aloud. It is a compact fictional sample based on the style of the linked outputs. The model has learned recognizable surface conventions—an uppercase title, metadata, quantities, ingredients, and imperative cooking directions—even though the content is incoherent.</li>
+<li>The photograph is intentionally plausible but depicts the absurd combination suggested by the sampled recipe. It is an original lecture asset, not an image from the linked gist.</li>
+<li>Stress the warning: language-model fluency is not factuality, physical consistency, or safety. Students should treat outputs as text-generation artifacts, not cooking advice.</li>
+<li>Use the link as the project seed: students can inspect the historical char-RNN samples, then build a modern, small-scale version with transparent training and sampling code.</li>
+</ul>
+<style type="text/css">
+        span.MJX_Assistive_MathML {
+          position:absolute!important;
+          clip: rect(1px, 1px, 1px, 1px);
+          padding: 1px 0 0 0!important;
+          border: 0!important;
+          height: 1px!important;
+          width: 1px!important;
+          overflow: hidden!important;
+          display:block!important;
+      }</style></aside>
+</section>
+<section id="what-happens-to-a-gradient-as-it-flows-backward" class="slide level2">
+<h2>What happens to a gradient as it flows backward?</h2>
+<div class="gradient-flow-chain">
+<svg viewbox="0 0 1280 330" role="img" aria-label="Five recurrent hidden states connected forward by shared recurrent weights. A loss at the last state sends a translucent blue gradient backward across four repeated local Jacobians.">
+  <defs>
+    <marker id="flow-forward-arrow" viewbox="0 0 10 10" refx="9" refy="5" markerwidth="4.5" markerheight="4.5" orient="auto"><path d="M0 0 L10 5 L0 10 z" fill="#1a9a94"></path></marker>
+    <marker id="flow-backward-arrow" viewbox="0 0 10 10" refx="9" refy="5" markerwidth="4.5" markerheight="4.5" orient="auto"><path d="M0 0 L10 5 L0 10 z" fill="#356fa8" fill-opacity=".68"></path></marker>
+  </defs>
+
+  <g class="flow-loss"><rect x="1085" y="15" width="150" height="70" rx="15"></rect><text x="1160" y="58">J⁽⁴⁾</text></g>
+  <path class="flow-forward-vertical" d="M1160 205 V88"></path>
+  <path class="flow-backward-vertical fragment" data-fragment-index="0" d="M1125 88 V205"></path>
+
+  <g class="flow-state"><rect x="45" y="205" width="130" height="105" rx="18"></rect><text x="110" y="268">h₀</text></g>
+  <g class="flow-state"><rect x="305" y="205" width="130" height="105" rx="18"></rect><text x="370" y="268">h₁</text></g>
+  <g class="flow-state"><rect x="565" y="205" width="130" height="105" rx="18"></rect><text x="630" y="268">h₂</text></g>
+  <g class="flow-state"><rect x="825" y="205" width="130" height="105" rx="18"></rect><text x="890" y="268">h₃</text></g>
+  <g class="flow-state"><rect x="1085" y="205" width="130" height="105" rx="18"></rect><text x="1150" y="268">h₄</text></g>
+
+  <g class="flow-forward-horizontal">
+    <path d="M178 245 H302"></path><path d="M438 245 H562"></path><path d="M698 245 H822"></path><path d="M958 245 H1082"></path>
+  </g>
+  <g class="flow-forward-labels">
+    <text x="240" y="225">Wₕ</text><text x="500" y="225">Wₕ</text><text x="760" y="225">Wₕ</text><text x="1020" y="225">Wₕ</text>
+  </g>
+
+  <g class="flow-backward-horizontal fragment" data-fragment-index="1">
+    <path d="M1082 285 H958"></path><path d="M822 285 H698"></path><path d="M562 285 H438"></path><path d="M302 285 H178"></path>
+  </g>
+  <g class="flow-jacobian-labels fragment" data-fragment-index="1">
+    <text x="1020" y="320">× A₄</text><text x="760" y="320">× A₃</text><text x="500" y="320">× A₂</text><text x="240" y="320">× A₁</text>
+  </g>
+</svg>
+</div>
+<div class="gradient-flow-question-layout">
+<div class="gradient-product-rule fragment" data-fragment-index="2">
+<p><small>FOUR STEPS BACK</small></p>
+<div class="gradient-product-equation">
+<b>g₀ = A₁ᵀ A₂ᵀ A₃ᵀ A₄ᵀ g₄</b><span>Aₜ = ∂hₜ / ∂hₜ₋₁</span>
+</div>
+<p><span>The signal is multiplied again at every recurrent step.</span></p>
+</div>
+<div class="pause-panel gradient-flow-pause fragment" data-fragment-index="3">
+<p><strong>PAUSE · FOLLOW ONE SCALAR GRADIENT</strong></p>
+<p>Given <span class="math inline">\(g_4=1\)</span> and the same local multiplier <span class="math inline">\(a\)</span> at four steps, compute</p>
+<p><span class="math display">\[g_0=a^4g_4\]</span></p>
+<p>for <strong><span class="math inline">\(a=0.6\)</span></strong> and <strong><span class="math inline">\(a=1.5\)</span></strong>. What changes as the dependency becomes longer?</p>
+</div>
+</div>
+<div class="citation">
+Long-range RNN gradients contain products of repeated recurrent Jacobians <span class="citation" data-cites="bengio1994learning pascanu2013difficulty goodfellow2016deep">(Bengio et al. 1994; Pascanu et al. 2013; Goodfellow et al. 2016, Ch. 10)</span>.
+</div>
+<aside class="notes">
+<ul>
+<li>Start with the same visual grammar as the BPTT slide: solid teal is the forward recurrent computation; translucent blue is the backward gradient.</li>
+<li>Reveal the loss-to-state gradient, then reveal its four backward recurrent steps.</li>
+<li>Each <span class="math inline">\(A_t\)</span> is the local Jacobian of one recurrent update. The gradient arriving at <span class="math inline">\(h_0\)</span> contains their product.</li>
+<li>Reveal the product only after students have followed the arrows visually.</li>
+<li>End on the PAUSE calculation. Do not give the two numerical answers on this slide.</li>
+</ul>
+<style type="text/css">
+        span.MJX_Assistive_MathML {
+          position:absolute!important;
+          clip: rect(1px, 1px, 1px, 1px);
+          padding: 1px 0 0 0!important;
+          border: 0!important;
+          height: 1px!important;
+          width: 1px!important;
+          overflow: hidden!important;
+          display:block!important;
+      }</style></aside>
+</section>
+<section id="the-same-chain-can-erase-or-amplify-credit" class="slide level2">
+<h2>The same chain can erase or amplify credit</h2>
+<div class="gradient-instability-comparison">
+<svg viewbox="0 0 1320 580" role="img" aria-label="Two five-state recurrent chains compare backward gradient flow. In the upper chain, multiplying by 0.6 makes translucent blue arrows fade and the gradient falls from 1 to 0.13. In the lower chain, multiplying by 1.5 makes orange arrows strengthen and the gradient grows from 1 to 5.06.">
+  <defs>
+    <marker id="vanish-arrow" viewbox="0 0 10 10" refx="9" refy="5" markerwidth="4.2" markerheight="4.2" orient="auto"><path d="M0 0 L10 5 L0 10 z" fill="#356fa8"></path></marker>
+    <marker id="explode-arrow" viewbox="0 0 10 10" refx="9" refy="5" markerwidth="4.2" markerheight="4.2" orient="auto"><path d="M0 0 L10 5 L0 10 z" fill="#ef6c48"></path></marker>
+  </defs>
+
+  <text class="instability-title vanish-title" x="35" y="48">a = 0.6 · VANISHING — DISTANT CREDIT DISAPPEARS</text>
+  <text class="instability-equation" x="1285" y="48">gradient at h0 = 0.6⁴ × 1 ≈ 0.13</text>
+  <g class="instability-nodes vanish-nodes">
+    <g transform="translate(80 95)"><rect width="150" height="105" rx="18"></rect><text x="75" y="64">h₀</text></g>
+    <g transform="translate(335 95)"><rect width="150" height="105" rx="18"></rect><text x="75" y="64">h₁</text></g>
+    <g transform="translate(590 95)"><rect width="150" height="105" rx="18"></rect><text x="75" y="64">h₂</text></g>
+    <g transform="translate(845 95)"><rect width="150" height="105" rx="18"></rect><text x="75" y="64">h₃</text></g>
+    <g transform="translate(1100 95)"><rect width="150" height="105" rx="18"></rect><text x="75" y="64">h₄</text></g>
+  </g>
+  <g class="gradient-node-values vanish-values">
+    <text x="155" y="82">g = 0.13</text><text x="410" y="82">g = 0.22</text><text x="665" y="82">g = 0.36</text><text x="920" y="82">g = 0.60</text><text x="1175" y="82">g = 1.00</text>
+  </g>
+  <g class="vanishing-gradient-paths">
+    <path class="v1" d="M1097 130 H998"></path><path class="v2" d="M842 130 H743"></path><path class="v3" d="M587 130 H488"></path><path class="v4" d="M332 130 H233"></path>
+  </g>
+
+  <text class="instability-title explode-title" x="35" y="330">a = 1.5 · EXPLODING — UPDATES BECOME UNSTABLE</text>
+  <text class="instability-equation" x="1285" y="330">gradient at h0 = 1.5⁴ × 1 ≈ 5.06</text>
+  <g class="instability-nodes explode-nodes">
+    <g transform="translate(80 375)"><rect width="150" height="105" rx="18"></rect><text x="75" y="64">h₀</text></g>
+    <g transform="translate(335 375)"><rect width="150" height="105" rx="18"></rect><text x="75" y="64">h₁</text></g>
+    <g transform="translate(590 375)"><rect width="150" height="105" rx="18"></rect><text x="75" y="64">h₂</text></g>
+    <g transform="translate(845 375)"><rect width="150" height="105" rx="18"></rect><text x="75" y="64">h₃</text></g>
+    <g transform="translate(1100 375)"><rect width="150" height="105" rx="18"></rect><text x="75" y="64">h₄</text></g>
+  </g>
+  <g class="gradient-node-values explode-values">
+    <text x="155" y="362">g = 5.06</text><text x="410" y="362">g = 3.38</text><text x="665" y="362">g = 2.25</text><text x="920" y="362">g = 1.50</text><text x="1175" y="362">g = 1.00</text>
+  </g>
+  <g class="exploding-gradient-paths">
+    <path class="e1" d="M1097 410 H998"></path><path class="e2" d="M842 410 H743"></path><path class="e3" d="M587 410 H488"></path><path class="e4" d="M332 410 H233"></path>
+  </g>
+
+</svg>
+</div>
+<div class="instability-synthesis fragment" data-fragment-index="0">
+<p>The problem is not “recurrence” alone. It is the <strong>product of many local transformations</strong>: repeated contraction forgets; repeated expansion destabilizes.</p>
+</div>
+<div class="citation">
+Vanishing and exploding gradients in recurrent networks are analyzed through products of Jacobians and their spectral behavior <span class="citation" data-cites="bengio1994learning pascanu2013difficulty">(Bengio et al. 1994; Pascanu et al. 2013)</span>.
+</div>
+<aside class="notes">
+<ul>
+<li>Return to the two scalar cases from the PAUSE slide.</li>
+<li>Read the upper chain from right to left: <span class="math inline">\(1\)</span>, <span class="math inline">\(0.6\)</span>, <span class="math inline">\(0.36\)</span>, <span class="math inline">\(0.216\)</span>, <span class="math inline">\(0.1296\)</span>. The translucent arrows deliberately fade with the gradient.</li>
+<li>Read the lower chain: <span class="math inline">\(1\)</span>, <span class="math inline">\(1.5\)</span>, <span class="math inline">\(2.25\)</span>, <span class="math inline">\(3.375\)</span>, <span class="math inline">\(5.0625\)</span>. The orange arrows become more opaque and thicker as the signal grows.</li>
+<li>Reveal the consequences. A vanishing gradient prevents distant evidence from teaching early recurrent states. An exploding gradient produces unstable parameter updates and can create numerical overflow.</li>
+<li>Reveal the synthesis last. The scalar example is an intuition pump; in the vector RNN, matrix Jacobians contract or expand different directions at different rates.</li>
+<li>End with a forward-looking question for the next review: can the architecture create a path along which useful information and gradients travel with less repeated distortion?</li>
+</ul>
+<style type="text/css">
+        span.MJX_Assistive_MathML {
+          position:absolute!important;
+          clip: rect(1px, 1px, 1px, 1px);
+          padding: 1px 0 0 0!important;
+          border: 0!important;
+          height: 1px!important;
+          width: 1px!important;
+          overflow: hidden!important;
+          display:block!important;
+      }</style></aside>
+</section>
+<section id="a-practical-guardrail-gradient-clipping" class="slide level2">
+<h2>A practical guardrail: gradient clipping</h2>
+<div class="gradient-clipping-layout">
+<div class="gradient-clipping-story">
+<div class="clipping-story-heading">
+WHEN THE GRADIENT EXPLODES
+</div>
+<div class="clipping-step fragment" data-fragment-index="0">
+<b>1</b>
+<p>
+<strong>Measure the full gradient</strong><span>After BPTT, compute its global norm.</span>
+</p>
+</div>
+<div class="clipping-norm fragment" data-fragment-index="0">
+<div class="gradient-vector long-gradient">
+<i></i><strong>‖g‖₂ = 18.0</strong>
+</div>
+<div class="threshold-line">
+<span>maximum allowed norm</span><b>τ = 5.0</b>
+</div>
+</div>
+<div class="clipping-step fragment" data-fragment-index="1">
+<b>2</b>
+<p>
+<strong>Too large? Rescale it</strong><span>Keep the direction; reduce only the magnitude.</span>
+</p>
+</div>
+<div class="clipping-norm fragment" data-fragment-index="1">
+<div class="gradient-vector clipped-gradient">
+<i></i><strong>‖g̃‖₂ = 5.0</strong>
+</div>
+<div class="direction-preserved">
+same update direction · safer step length
+</div>
+</div>
+<div class="clipping-step fragment" data-fragment-index="2">
+<b>3</b>
+<p>
+<strong>Apply the optimizer update</strong><span>Use g̃ instead of the unstable g.</span>
+</p>
+</div>
+</div>
+<div class="gradient-clipping-algorithm">
+<div class="algorithm-label">
+ALGORITHM · CLIP BY GLOBAL NORM
+</div>
+<pre><code>input: gradient g, threshold τ
+
+r ← ‖g‖₂
+
+if r &gt; τ:
+    g̃ ← (τ / r) g
+else:
+    g̃ ← g
+
+θ ← θ − η g̃</code></pre>
+<div class="algorithm-invariant fragment" data-fragment-index="1">
+<div class="algorithm-formula">
+g̃ = min(1, τ / ‖g‖₂) g
+</div>
+<p><span>Norm capped at τ; direction preserved.</span></p>
+</div>
+</div>
+</div>
+<div class="clipping-limit-bridge fragment" data-fragment-index="3">
+<div class="clipping-fixes">
+<p><small>WHAT CLIPPING FIXES</small></p>
+<p><strong>Exploding gradients</strong><br>
+Prevents one enormous update from destabilizing training.</p>
+</div>
+<div class="clipping-does-not-fix">
+<p><small>WHAT IT DOES NOT FIX</small></p>
+<p><strong>Vanishing gradients</strong><br>
+It cannot restore distant credit that has already faded.</p>
+</div>
+<div class="gated-opening">
+<p>Can the recurrent cell create a <strong>protected memory path</strong> instead of repeatedly rewriting everything?</p>
+</div>
+</div>
+<div class="citation">
+Global-norm clipping is a practical treatment for exploding gradients, but it does not solve long-term credit assignment <span class="citation" data-cites="pascanu2013difficulty goodfellow2016deep">(Pascanu et al. 2013; Goodfellow et al. 2016, Ch. 10)</span>.
+</div>
+<aside class="notes">
+<ul>
+<li>Reveal the slide as a practical intervention, not as a new recurrent architecture.</li>
+<li>Stage 1: after BPTT has accumulated the complete gradient, compute its global Euclidean norm. In the visible example, the norm is <span class="math inline">\(18\)</span>, above the threshold <span class="math inline">\(\tau=5\)</span>.</li>
+<li>Stage 2: multiply the whole gradient vector by <span class="math inline">\(5/18\)</span>. The new norm is exactly <span class="math inline">\(5\)</span>, but every component is scaled by the same positive factor, so the update direction is preserved.</li>
+<li>Match the visual shortening on the left to the formula and pseudocode on the right.</li>
+<li>Stage 3: pass the clipped gradient to the optimizer. Clipping changes the step magnitude only when the norm exceeds the threshold.</li>
+<li>Reveal the final comparison. Clipping is highly useful for explosions, but it does not make a tiny long-range gradient large again.</li>
+<li>End on the question about a protected memory path. This creates the need for gated recurrent cells without introducing their equations yet.</li>
+</ul>
+<style type="text/css">
+        span.MJX_Assistive_MathML {
+          position:absolute!important;
+          clip: rect(1px, 1px, 1px, 1px);
+          padding: 1px 0 0 0!important;
+          border: 0!important;
+          height: 1px!important;
+          width: 1px!important;
+          overflow: hidden!important;
+          display:block!important;
+      }</style></aside>
+</section>
+<section id="two-gated-answers-to-fragile-memory" class="slide level2">
+<h2>Two gated answers to fragile memory</h2>
+<div class="gated-era-banner">
+<p><b>GATED-RNN HEYDAY · roughly 2012–2018</b><span>LSTM: 1997 · GRU: 2014 · Transformer: 2017, followed by a gradual transition away from recurrence</span></p>
+</div>
+<div class="gated-family-overview">
+<div class="gated-family-card lstm-family-card">
+<div class="gated-family-title">
+<b>LSTM</b><span>separate cell state · three gate roles</span>
+</div>
+<svg viewbox="0 0 600 390" role="img" aria-label="Classical shallow LSTM diagram with a protected cell-state path and forget, input, candidate, and output gates.">
+<defs><marker id="family-lstm-arrow" viewbox="0 0 10 10" refx="9" refy="5" markerunits="userSpaceOnUse" markerwidth="9" markerheight="9" orient="auto"><path fill="context-stroke" d="M0 0 L10 5 L0 10 z"></path></marker></defs> <path class="family-highway" d="M35 70 H560"></path><text x="52" y="46">cₜ₋₁</text><text x="548" y="46">cₜ</text> <circle cx="235" cy="70" r="23"></circle><text class="op-text" x="235" y="79">×</text><circle cx="410" cy="70" r="23"></circle><text class="op-text" x="410" y="79">+</text> <g class="family-gate"><rect x="170" y="240" width="100" height="62" rx="14"></rect><text x="220" y="278">forget</text></g> <g class="family-gate"><rect x="290" y="240" width="100" height="62" rx="14"></rect><text x="340" y="278">input</text></g> <g class="family-gate"><rect x="410" y="240" width="100" height="62" rx="14"></rect><text x="460" y="278">write</text></g> <g class="family-gate"><rect x="525" y="240" width="65" height="62" rx="14"></rect><text x="557" y="278">out</text></g> <path d="M220 240 V95"></path><path d="M340 240 V170 H410 V95"></path><path d="M460 240 V170 H410"></path><path d="M557 240 V115 H560"></path> <path class="family-input" d="M75 345 H555"></path><text x="110" y="375">[hₜ₋₁ ; xₜ]</text><path d="M560 95 V345"></path><text x="550" y="375">hₜ</text>
+</svg>
+<div class="gated-family-idea">
+<b>RETAIN · WRITE · EXPOSE</b><span>A distinct memory highway cₜ crosses time.</span>
+</div>
+</div>
+<div class="gated-family-card gru-family-card">
+<div class="gated-family-title">
+<b>GRU</b><span>one hidden state · two gates</span>
+</div>
+<svg viewbox="0 0 600 390" role="img" aria-label="Classical shallow GRU diagram with reset and update gates controlling a candidate and a mixture with the previous state.">
+<defs><marker id="family-gru-arrow" viewbox="0 0 10 10" refx="9" refy="5" markerunits="userSpaceOnUse" markerwidth="9" markerheight="9" orient="auto"><path fill="context-stroke" d="M0 0 L10 5 L0 10 z"></path></marker></defs> <path class="family-highway" d="M35 70 H560"></path><text x="52" y="46">hₜ₋₁</text><text x="548" y="46">hₜ</text> <circle cx="455" cy="70" r="23"></circle><text class="op-text" x="455" y="79">+</text><circle cx="245" cy="170" r="23"></circle><text class="op-text" x="245" y="179">×</text> <g class="family-gate"><rect x="175" y="240" width="110" height="62" rx="14"></rect><text x="230" y="278">reset r</text></g> <g class="family-gate"><rect x="315" y="240" width="110" height="62" rx="14"></rect><text x="370" y="278">update z</text></g> <g class="family-gate"><rect x="455" y="240" width="120" height="62" rx="14"></rect><text x="515" y="278">candidate</text></g> <path d="M230 240 V190 H245"></path><path d="M268 170 H515 V240"></path><path d="M370 240 V100 H455"></path><path d="M515 240 V110 H455"></path> <path class="family-input" d="M75 345 H540"></path><text x="110" y="375">[hₜ₋₁ ; xₜ]</text>
+</svg>
+<div class="gated-family-idea">
+<b>RESET · INTERPOLATE</b><span>The old state and a candidate share one highway hₜ.</span>
+</div>
+</div>
+</div>
+<div class="citation">
+LSTM introduced an explicit memory path <span class="citation" data-cites="hochreiter1997lstm">(Hochreiter and Schmidhuber 1997)</span>; GRU introduced a simpler gated state update <span class="citation" data-cites="cho2014gru">(Cho et al. 2014)</span>. The Transformer appeared in 2017 <span class="citation" data-cites="vaswani2017attention">(Vaswani et al. 2017)</span>.
+</div>
+<aside class="notes">
+<ul>
+<li>“2012–2018” is a useful label for the gated-RNN heyday, not the invention period. LSTM dates to 1997 and GRU to 2014.</li>
+<li>The Transformer arrived in 2017; the transition was gradual and task-dependent, not an overnight replacement.</li>
+<li>Keep this overview at the flow level only. LSTM separates memory c from the visible hidden state h. GRU combines them into one state.</li>
+<li>These are clean redraws of the classical mechanisms so students will recognize the standard paper diagrams later.</li>
+</ul>
+<style type="text/css">
+        span.MJX_Assistive_MathML {
+          position:absolute!important;
+          clip: rect(1px, 1px, 1px, 1px);
+          padding: 1px 0 0 0!important;
+          border: 0!important;
+          height: 1px!important;
+          width: 1px!important;
+          overflow: hidden!important;
+          display:block!important;
+      }</style></aside>
+</section>
+<section id="lstm-protect-write-then-expose" class="slide level2">
+<h2>LSTM: protect, write, then expose</h2>
+<div class="gated-detail-layout">
+<div class="gated-detail-visual">
+<svg viewbox="0 0 720 600" role="img" aria-label="LSTM cell with progressive highlights for forget, write, and output flows.">
+<defs><marker id="lstm-detail-arrow" viewbox="0 0 10 10" refx="9" refy="5" markerunits="userSpaceOnUse" markerwidth="10" markerheight="10" orient="auto"><path fill="context-stroke" d="M0 0 L10 5 L0 10 z"></path></marker></defs> <path class="detail-base" d="M45 95 H670"></path><text x="55" y="68">cₜ₋₁</text><text x="655" y="68">cₜ</text> <circle cx="270" cy="95" r="26"></circle><text class="op-text" x="270" y="104">×</text><circle cx="480" cy="95" r="26"></circle><text class="op-text" x="480" y="104">+</text> <circle cx="410" cy="240" r="26"></circle><text class="op-text" x="410" y="249">×</text><circle cx="625" cy="240" r="26"></circle><text class="op-text" x="625" y="249">×</text> <g class="detail-gate"><rect x="205" y="350" width="110" height="70" rx="15"></rect><text x="260" y="392">σ · fₜ</text></g> <g class="detail-gate"><rect x="335" y="350" width="110" height="70" rx="15"></rect><text x="390" y="392">σ · iₜ</text></g> <g class="detail-gate"><rect x="465" y="350" width="110" height="70" rx="15"></rect><text x="520" y="392">tanh · gₜ</text></g> <g class="detail-gate"><rect x="590" y="350" width="100" height="70" rx="15"></rect><text x="640" y="392">σ · oₜ</text></g> <path class="detail-base" d="M260 350 V124"></path><path class="detail-base" d="M390 350 V270 H410"></path><path class="detail-base" d="M520 350 V240 H436"></path><path class="detail-base" d="M410 214 V135 H480"></path><path class="detail-base" d="M640 350 V240"></path><path class="detail-base" d="M670 95 V240 H651"></path><path class="detail-base" d="M625 214 V155 H670"></path> <path class="detail-input" d="M90 515 H650"></path><text x="120" y="550">[hₜ₋₁ ; xₜ]</text><path class="detail-base" d="M670 240 V515"></path><text x="660" y="550">hₜ</text> <g class="fragment gate-highlight forget-highlight" data-fragment-index="0"><path d="M45 95 H244"></path><path d="M296 95 H480"></path><path d="M260 350 V124"></path></g> <g class="fragment gate-highlight write-highlight" data-fragment-index="1"><path d="M390 350 V270 H410"></path><path d="M520 350 V240 H436"></path><path d="M410 214 V135 H480"></path><path d="M506 95 H670"></path></g> <g class="fragment gate-highlight expose-highlight" data-fragment-index="2"><path d="M670 95 V240 H651"></path><path d="M640 350 V240"></path><path d="M625 214 V155 H670"></path><path d="M670 240 V515"></path></g>
+</svg>
+</div>
+<div class="gated-equation-sequence">
+<div class="gate-equation-card fragment" data-fragment-index="0">
+<b>1 · RETAIN OR FORGET</b><span>forget gate</span>
+<div>
+fₜ = σ(W_f [hₜ₋₁; xₜ] + b_f)
+</div>
+</div>
+<div class="gate-equation-card fragment" data-fragment-index="1">
+<b>2 · PREPARE A WRITE</b><span>input gate + candidate</span>
+<div>
+iₜ = σ(W_i [hₜ₋₁; xₜ] + b_i)
+</div>
+<div>
+gₜ = tanh(W_g [hₜ₋₁; xₜ] + b_g)
+</div>
+</div>
+<div class="gate-equation-card memory-update-card fragment" data-fragment-index="1">
+<b>3 · UPDATE MEMORY</b>
+<div>
+cₜ = fₜ ⊙ cₜ₋₁ + iₜ ⊙ gₜ
+</div>
+</div>
+<div class="gate-equation-card fragment" data-fragment-index="2">
+<b>4 · EXPOSE PART OF IT</b><span>output gate</span>
+<div>
+oₜ = σ(W_o [hₜ₋₁; xₜ] + b_o)
+</div>
+<div>
+hₜ = oₜ ⊙ tanh(cₜ)
+</div>
+</div>
+<div class="gate-shallow-takeaway fragment" data-fragment-index="3">
+<b>KEY PATH</b><span>cₜ uses an additive update that can preserve memory and gradient flow.</span>
+</div>
+</div>
+</div>
+<div class="citation">
+Pedagogical redraw of the LSTM gated memory mechanism <span class="citation" data-cites="hochreiter1997lstm goodfellow2016deep">(Hochreiter and Schmidhuber 1997; Goodfellow et al. 2016, Ch. 10)</span>.
+</div>
+<aside class="notes">
+<ul>
+<li>Reveal the forget path, then the write path, then the exposed hidden state. Match each colored overlay to the equation card with the same reveal.</li>
+<li>Keep the discussion shallow; the coding project will handle dimensions and implementation.</li>
+<li>The main conceptual difference is the additive cell-state update. LSTM does not guarantee perfect memory, but it creates a less distorted route.</li>
+</ul>
+<style type="text/css">
+        span.MJX_Assistive_MathML {
+          position:absolute!important;
+          clip: rect(1px, 1px, 1px, 1px);
+          padding: 1px 0 0 0!important;
+          border: 0!important;
+          height: 1px!important;
+          width: 1px!important;
+          overflow: hidden!important;
+          display:block!important;
+      }</style></aside>
+</section>
+<section id="gru-reset-propose-then-interpolate" class="slide level2">
+<h2>GRU: reset, propose, then interpolate</h2>
+<div class="gated-detail-layout">
+<div class="gated-detail-visual">
+<svg viewbox="0 0 720 600" role="img" aria-label="GRU cell with progressive highlights for reset, candidate, and update interpolation flows.">
+<defs><marker id="gru-detail-arrow" viewbox="0 0 10 10" refx="9" refy="5" markerunits="userSpaceOnUse" markerwidth="10" markerheight="10" orient="auto"><path fill="context-stroke" d="M0 0 L10 5 L0 10 z"></path></marker></defs> <path class="detail-base" d="M45 100 H670"></path><text x="58" y="72">hₜ₋₁</text><text x="655" y="72">hₜ</text> <circle cx="535" cy="100" r="26"></circle><text class="op-text" x="535" y="109">+</text><circle cx="300" cy="235" r="26"></circle><text class="op-text" x="300" y="244">×</text> <g class="detail-gate"><rect x="215" y="350" width="120" height="70" rx="15"></rect><text x="275" y="392">σ · rₜ</text></g> <g class="detail-gate"><rect x="375" y="350" width="130" height="70" rx="15"></rect><text x="440" y="392">tanh · h̃ₜ</text></g> <g class="detail-gate"><rect x="540" y="350" width="120" height="70" rx="15"></rect><text x="600" y="392">σ · zₜ</text></g> <path class="detail-base" d="M275 350 V235"></path><path class="detail-base" d="M326 235 H440 V350"></path><path class="detail-base" d="M440 350 V155 H535"></path><path class="detail-base" d="M600 350 V126 H535"></path> <path class="detail-input" d="M90 515 H625"></path><text x="120" y="550">[hₜ₋₁ ; xₜ]</text><path class="detail-base" d="M670 100 V515"></path> <g class="fragment gate-highlight reset-highlight" data-fragment-index="0"><path d="M45 100 H300 V209"></path><path d="M275 350 V235"></path></g> <g class="fragment gate-highlight candidate-highlight" data-fragment-index="1"><path d="M326 235 H440 V350"></path><path d="M440 350 V155 H535"></path></g> <g class="fragment gate-highlight update-highlight" data-fragment-index="2"><path d="M600 350 V126 H535"></path><path d="M45 100 H509"></path><path d="M561 100 H670"></path></g>
+</svg>
+</div>
+<div class="gated-equation-sequence">
+<div class="gate-equation-card fragment" data-fragment-index="0">
+<b>1 · RESET THE OLD STATE</b><span>reset gate</span>
+<div>
+rₜ = σ(W_r [hₜ₋₁; xₜ] + b_r)
+</div>
+</div>
+<div class="gate-equation-card fragment" data-fragment-index="1">
+<b>2 · PROPOSE A CANDIDATE</b>
+<div>
+h̃ₜ = tanh(W_h [rₜ ⊙ hₜ₋₁; xₜ] + b_h)
+</div>
+</div>
+<div class="gate-equation-card memory-update-card fragment" data-fragment-index="2">
+<b>3 · INTERPOLATE</b><span>update gate</span>
+<div>
+zₜ = σ(W_z [hₜ₋₁; xₜ] + b_z)
+</div>
+<div>
+hₜ = (1 − zₜ) ⊙ hₜ₋₁ + zₜ ⊙ h̃ₜ
+</div>
+</div>
+<div class="gate-shallow-takeaway fragment" data-fragment-index="3">
+<b>KEY PATH</b><span>zₜ directly mixes the old state with the proposed new state.</span>
+</div>
+</div>
+</div>
+<div class="citation">
+GRU formulation introduced with the RNN Encoder–Decoder <span class="citation" data-cites="cho2014gru">(Cho et al. 2014)</span> and compared empirically with LSTM <span class="citation" data-cites="chung2014empirical">(Chung et al. 2014)</span>.
+</div>
+<aside class="notes">
+<ul>
+<li>Reveal reset, candidate, then interpolation. Match the highlighted arrow to the equation card.</li>
+<li>GRU combines memory and visible hidden state into one vector, with fewer gate roles than LSTM.</li>
+<li>End on the direct mixture between old and candidate state. Leave implementation details for the coding project.</li>
+</ul>
+<style type="text/css">
+        span.MJX_Assistive_MathML {
+          position:absolute!important;
+          clip: rect(1px, 1px, 1px, 1px);
+          padding: 1px 0 0 0!important;
+          border: 0!important;
+          height: 1px!important;
+          width: 1px!important;
+          overflow: hidden!important;
+          display:block!important;
+      }</style></aside>
+</section>
+<section id="from-language-modeling-to-neural-machine-translation" class="slide level2">
+<h2>From language modeling to neural machine translation</h2>
+<div class="nmt-definition">
+<p><small>MT · MACHINE TRANSLATION</small><b>Generate a sentence in a target language that preserves the meaning of a source sentence.</b></p>
+</div>
+<div class="nmt-omnipresence-layout">
+<div class="nmt-example-stage">
+<div class="nmt-example-content fragment" data-fragment-index="0">
+<div class="nmt-language source-language">
+<small>SOURCE · FRENCH</small><strong>Le colis arrivera demain.</strong>
+</div>
+<div class="nmt-sequence-arrow">
+<span>one sequence</span><b>→</b><span>another sequence</span>
+</div>
+<div class="nmt-language target-language">
+<small>TARGET · ENGLISH</small><strong>The package will arrive tomorrow.</strong>
+</div>
+<div class="nmt-model-question">
+Learn <b>p(target sentence | source sentence)</b>
+</div>
+</div>
+<div class="nmt-2016-replacement fragment" data-fragment-index="6">
+<p><small>2016 · A PRODUCTION TURNING POINT</small> <b>Google Neural Machine Translation</b> <span>One end-to-end neural system replaced the previous phrase-based translation pipeline.</span> <i>The task was no longer a research demo—it was operating at global scale.</i></p>
+</div>
+</div>
+<div class="nmt-everywhere">
+<div class="nmt-everywhere-heading fragment" data-fragment-index="1">
+TRANSLATION BECAME EVERYDAY INFRASTRUCTURE
+</div>
+<div class="nmt-use-grid">
+<div class="fragment" data-fragment-index="2">
+<b>MESSAGES</b><span>cross-language conversations</span>
+</div>
+<div class="fragment" data-fragment-index="3">
+<b>WEB + SEARCH</b><span>access beyond one language</span>
+</div>
+<div class="fragment" data-fragment-index="4">
+<b>MEETINGS</b><span>captions and live interpretation</span>
+</div>
+<div class="fragment" data-fragment-index="5">
+<b>TRAVEL + SUPPORT</b><span>communication at the point of need</span>
+</div>
+</div>
+<div class="nmt-reach-synthesis fragment" data-fragment-index="5">
+Different interfaces—one recurring need: <b>communicate across languages.</b>
+</div>
+</div>
+</div>
+<div class="nmt-transformer-seed fragment" data-fragment-index="7">
+<p>The task is simple to state—but difficult to model: <b>how can a system preserve an entire source sentence while generating a new one?</b></p>
+</div>
+<div class="citation">
+Google described its large-scale Neural Machine Translation system in 2016 <span class="citation" data-cites="wu2016gnmt">(Wu et al. 2016)</span>. This sequence-to-sequence problem later became the original proving ground for the Transformer <span class="citation" data-cites="vaswani2017attention">(Vaswani et al. 2017)</span>.
+</div>
+<aside class="notes">
+<ul>
+<li>Begin with the acronym: MT means Machine Translation. Define the task before introducing any architecture.</li>
+<li>Reveal the concrete French–English pair. The output is not a word-for-word substitution: it must preserve meaning and produce a fluent target sentence.</li>
+<li>Reveal the headline, then one modern use at a time. Do not read all four uses as a list; let each new setting broaden the same task.</li>
+<li>When the 2016 milestone appears, it covers and retires the example. This is not the invention of NMT: it marks Google’s highly visible production-scale deployment of GNMT.</li>
+<li>Reveal the final question last. It creates the need for the encoder–decoder architecture on the next slide.</li>
+</ul>
+<style type="text/css">
+        span.MJX_Assistive_MathML {
+          position:absolute!important;
+          clip: rect(1px, 1px, 1px, 1px);
+          padding: 1px 0 0 0!important;
+          border: 0!important;
+          height: 1px!important;
+          width: 1px!important;
+          overflow: hidden!important;
+          display:block!important;
+      }</style></aside>
+</section>
+<section id="one-recurrent-chain-read-then-write" class="slide level2">
+<h2>One recurrent chain: read, then write</h2>
+<div class="seq2seq-lead">
+<p>The encoder’s <b>final hidden state</b> becomes the decoder’s <b>initial hidden state</b>.</p>
+</div>
+<div class="seq2seq-stage">
+<svg viewbox="0 0 1320 560" role="img" aria-label="An encoder RNN reads a French sentence from left to right. Its final hidden state initializes a decoder RNN that generates the English translation from left to right.">
+<defs> <marker id="seq2seq-arrow" viewbox="0 0 10 10" refx="9" refy="5" markerunits="userSpaceOnUse" markerwidth="8" markerheight="8" orient="auto"><path d="M0 0 L10 5 L0 10 z"></path></marker> </defs> <g class="fragment seq2seq-encoder" data-fragment-index="0"> <rect class="phase-field encoder-field" x="20" y="30" width="615" height="455" rx="25"></rect> <text class="phase-kicker" x="50" y="75">1 · ENCODE THE SOURCE</text> <text class="phase-description" x="50" y="108">Read every French token into a running state.</text> <path class="state-chain encoder-chain" d="M105 245 H570"></path> <g class="rnn-state"><rect x="65" y="195" width="100" height="100" rx="18"></rect><text x="115" y="255">h₁</text></g> <g class="rnn-state"><rect x="220" y="195" width="100" height="100" rx="18"></rect><text x="270" y="255">h₂</text></g> <g class="rnn-state"><rect x="375" y="195" width="100" height="100" rx="18"></rect><text x="425" y="255">h₃</text></g> <g class="rnn-state final-encoder-state"><rect x="530" y="195" width="100" height="100" rx="18"></rect><text x="580" y="255">h₄</text></g> <g class="token-input"><path d="M115 375 V305"></path><text x="115" y="415">Le</text></g> <g class="token-input"><path d="M270 375 V305"></path><text x="270" y="415">colis</text></g> <g class="token-input"><path d="M425 375 V305"></path><text x="425" y="415">arrivera</text></g> <g class="token-input"><path d="M580 375 V305"></path><text x="580" y="415">demain</text></g> <text class="sequence-label" x="335" y="462">SOURCE SEQUENCE · x₁ … x₄</text> </g> <g class="fragment seq2seq-bridge" data-fragment-index="1"> <path class="context-bridge" d="M630 245 H735"></path> <circle cx="682" cy="245" r="38"></circle> <text class="context-symbol" x="682" y="253">c</text> <text class="context-label" x="682" y="160">CONTEXT</text> <text class="context-note" x="682" y="330">c = h₄</text> <text class="context-note small" x="682" y="357">all source information</text> </g> <g class="fragment seq2seq-decoder" data-fragment-index="2"> <rect class="phase-field decoder-field" x="735" y="30" width="565" height="455" rx="25"></rect> <text class="phase-kicker" x="765" y="75">2 · DECODE THE TARGET</text> <text class="phase-description" x="765" y="108">Start from c, then generate one English token at a time.</text> <path class="state-chain decoder-chain" d="M735 245 H1245"></path> <g class="rnn-state decoder-state"><rect x="750" y="195" width="100" height="100" rx="18"></rect><text x="800" y="255">s₁</text></g> <g class="rnn-state decoder-state"><rect x="895" y="195" width="100" height="100" rx="18"></rect><text x="945" y="255">s₂</text></g> <g class="rnn-state decoder-state"><rect x="1040" y="195" width="100" height="100" rx="18"></rect><text x="1090" y="255">s₃</text></g> <g class="rnn-state decoder-state"><rect x="1185" y="195" width="100" height="100" rx="18"></rect><text x="1235" y="255">s₄</text></g> <g class="token-output"><path d="M800 295 V355"></path><text x="800" y="390">The</text></g> <g class="token-output"><path d="M945 295 V355"></path><text x="945" y="390">package</text></g> <g class="token-output"><path d="M1090 295 V355"></path><text x="1090" y="390">will arrive</text></g> <g class="token-output"><path d="M1235 295 V355"></path><text x="1235" y="390">tomorrow</text></g> <text class="sequence-label" x="1015" y="462">TARGET SEQUENCE · y₁ … y₄</text> </g>
+</svg>
+</div>
+<div class="seq2seq-takeaway fragment" data-fragment-index="3">
+<p>The whole source sentence must pass through <b>one fixed-size vector, c</b>.</p>
+</div>
+<div class="citation">
+The sequence-to-sequence encoder–decoder maps a variable-length source to a variable-length target through a fixed-dimensional state <span class="citation" data-cites="sutskever2014sequence cho2014gru">(Sutskever et al. 2014; Cho et al. 2014)</span>.
+</div>
+<aside class="notes">
+<ul>
+<li>Reveal only the blue encoder region first. Follow the French tokens and point out that its state is updated after every input.</li>
+<li>Reveal the bridge second. The final encoder state h4 is renamed context c and used to initialize the decoder.</li>
+<li>Reveal the coral decoder region third. It continues recurrent computation, but now produces the English sequence token by token.</li>
+<li>“One RNN reads; another writes” describes two recurrent roles. The visual is one continuous recurrent chain joined by c; implementations may use separate encoder and decoder parameters.</li>
+<li>Reveal the fixed-size-vector statement last. This is the limitation that will make attention necessary.</li>
+</ul>
+<style type="text/css">
+        span.MJX_Assistive_MathML {
+          position:absolute!important;
+          clip: rect(1px, 1px, 1px, 1px);
+          padding: 1px 0 0 0!important;
+          border: 0!important;
+          height: 1px!important;
+          width: 1px!important;
+          overflow: hidden!important;
+          display:block!important;
+      }</style></aside>
+</section>
+<section id="beyond-translation-the-encoderdecoder-pattern" class="slide level2">
+<h2>Beyond translation: the encoder–decoder pattern</h2>
+<div class="conditional-generalization">
+<div>
+<small>ENCODER</small><b>Represent an input x</b>
+</div>
+<span>→</span>
+<div>
+<small>DECODER</small><b>Generate an output y</b>
+</div>
+</div>
+<div class="conditional-task-stage">
+<div class="conditional-task-card fragment current-visible" data-fragment-index="0">
+<div class="task-number">
+1
+</div>
+<div class="task-name">
+<small>SUMMARIZATION</small><b>Compress while preserving the central information</b>
+</div>
+<div class="task-io source-io">
+<small>DOCUMENT · x</small><span>The city approved a new nighttime bus service after a six-month trial showed increased demand…</span>
+</div>
+<div class="task-arrow">
+→
+</div>
+<div class="task-io target-io">
+<small>SUMMARY · y</small><strong>City approves nighttime buses after successful trial.</strong>
+</div>
+<div class="task-paper">
+<a href="https://aclanthology.org/D15-1044/">Rush et al.&nbsp;· Abstractive Sentence Summarization (2015)</a>
+</div>
+</div>
+<div class="conditional-task-card fragment current-visible" data-fragment-index="1">
+<div class="task-number">
+2
+</div>
+<div class="task-name">
+<small>DIALOGUE</small><b>Continue a conversation appropriately</b>
+</div>
+<div class="task-io source-io">
+<small>CONVERSATION · x</small><span>USER: My package has not arrived.<br>AGENT: Let me check the order.</span>
+</div>
+<div class="task-arrow">
+→
+</div>
+<div class="task-io target-io">
+<small>NEXT RESPONSE · y</small><strong>Could you share your order number?</strong>
+</div>
+<div class="task-paper">
+<a href="https://arxiv.org/abs/1506.05869">Vinyals &amp; Le · A Neural Conversational Model (2015)</a>
+</div>
+</div>
+<div class="conditional-task-card fragment current-visible" data-fragment-index="2">
+<div class="task-number">
+3
+</div>
+<div class="task-name">
+<small>PARSING · AS SEQUENCE GENERATION</small><b>Linearize linguistic structure, then generate it</b>
+</div>
+<div class="task-io source-io">
+<small>SENTENCE · x</small><span>The package arrived.</span>
+</div>
+<div class="task-arrow">
+→
+</div>
+<div class="task-io target-io tree-output">
+<small>LINEARIZED TREE · y</small><strong>(S (NP The package) (VP arrived))</strong>
+</div>
+<div class="task-paper">
+<a href="https://papers.nips.cc/paper/5635-grammar-as-a-foreign-language">Vinyals et al.&nbsp;· Grammar as a Foreign Language (2015)</a>
+</div>
+</div>
+<div class="conditional-task-card fragment current-visible" data-fragment-index="3">
+<div class="task-number">
+4
+</div>
+<div class="task-name">
+<small>CODE GENERATION</small><b>Translate an intent into an executable sequence</b>
+</div>
+<div class="task-io source-io">
+<small>SPECIFICATION · x</small><span>Return the longest word in a list.</span>
+</div>
+<div class="task-arrow">
+→
+</div>
+<div class="task-io target-io code-output">
+<small>PROGRAM · y</small><strong>max(words, key=len)</strong>
+</div>
+<div class="task-paper">
+<a href="https://aclanthology.org/P17-1041/">Yin &amp; Neubig · General-Purpose Code Generation (2017)</a>
+</div>
+</div>
+<div class="conditional-task-synthesis fragment" data-fragment-index="4">
+<div class="task-chip">
+document <b>→</b> summary
+</div>
+<div class="task-chip">
+dialogue <b>→</b> response
+</div>
+<div class="task-chip">
+sentence <b>→</b> tree
+</div>
+<div class="task-chip">
+specification <b>→</b> code
+</div>
+</div>
+</div>
+<div class="conditional-lm-definition fragment" data-fragment-index="4">
+<div class="conditional-lm-title">
+<small>ONE NAME FOR THE PATTERN</small><b>Conditional language model</b>
+</div>
+<div class="conditional-lm-equation">
+P(y | x) = ∏<sub>t=1</sub><sup>T</sup> P(y<sub>t</sub> | y<sub>&lt;t</sub>, x)
+</div>
+<div class="conditional-lm-why">
+<b>LANGUAGE MODEL</b><span>generates y token by token</span><b>CONDITIONAL</b><span>every prediction also depends on x</span>
+</div>
+</div>
+<div class="citation">
+Representative early encoder–decoder applications include summarization, dialogue, linearized parsing, and code generation <span class="citation" data-cites="rush2015summarization vinyals2015conversation vinyals2015grammar yin2017code">(Rush et al. 2015; Vinyals and Le 2015; Vinyals et al. 2015; Yin and Neubig 2017)</span>.
+</div>
+<aside class="notes">
+<ul>
+<li>Start from the abstract pattern. Translation used source language x and target language y, but the architecture only requires an input and a generated output.</li>
+<li>Reveal one task card at a time; each replaces the previous card so students inspect one mapping rather than scan four boxes.</li>
+<li>For parsing, state the qualification explicitly: parsing becomes conditional sequence generation when the tree is linearized into tokens. Not every parser is a language model.</li>
+<li>After code generation, replace the example with four compact mappings. The changing task is defined by what x and y mean.</li>
+<li>Reveal the name and factorization with the synthesis. It is a language model because y is generated autoregressively. It is conditional because x remains an argument of every next-token distribution.</li>
+</ul>
+<style type="text/css">
+        span.MJX_Assistive_MathML {
+          position:absolute!important;
+          clip: rect(1px, 1px, 1px, 1px);
+          padding: 1px 0 0 0!important;
+          border: 0!important;
+          height: 1px!important;
+          width: 1px!important;
+          overflow: hidden!important;
+          display:block!important;
+      }</style></aside>
+</section>
+<section id="training-seq2seq-loss-there-credit-everywhere" class="slide level2">
+<h2>Training seq2seq: loss there, credit everywhere</h2>
+<div class="seq2seq-training-lead">
+<p>The targets supervise the <b>decoder outputs</b>—then backpropagation trains the <b>entire encoder–decoder chain</b>.</p>
+</div>
+<div class="seq2seq-training-stage">
+<svg viewbox="0 0 1320 555" role="img" aria-label="An unfolded encoder decoder RNN. Cross-entropy losses are attached only to decoder predictions, while translucent gradient arrows flow backward through the decoder, context state, and encoder.">
+<defs><marker id="train-forward-arrow" viewbox="0 0 10 10" refx="9" refy="5" markerunits="userSpaceOnUse" markerwidth="8" markerheight="8" orient="auto"><path d="M0 0 L10 5 L0 10 z"></path></marker><marker id="train-loss-arrow" viewbox="0 0 10 10" refx="9" refy="5" markerunits="userSpaceOnUse" markerwidth="8" markerheight="8" orient="auto"><path d="M0 0 L10 5 L0 10 z"></path></marker><marker id="train-backward-arrow" viewbox="0 0 10 10" refx="9" refy="5" markerunits="userSpaceOnUse" markerwidth="9" markerheight="9" orient="auto"><path d="M0 0 L10 5 L0 10 z"></path></marker></defs> <g class="training-forward fragment" data-fragment-index="0"> <rect class="training-zone encoder-zone" x="20" y="125" width="590" height="315" rx="24"></rect><text class="training-zone-title" x="50" y="165">ENCODER · NO DIRECT TARGET LOSS</text><rect class="training-zone decoder-zone" x="710" y="125" width="590" height="315" rx="24"></rect><text class="training-zone-title" x="740" y="165">DECODER · PREDICT TARGET TOKENS</text><path class="training-forward-chain" d="M90 275 H1230"></path> <g class="training-state encoder-training-state"><rect x="55" y="230" width="90" height="90" rx="16"></rect><text x="100" y="285">h₁</text></g><g class="training-state encoder-training-state"><rect x="200" y="230" width="90" height="90" rx="16"></rect><text x="245" y="285">h₂</text></g><g class="training-state encoder-training-state"><rect x="345" y="230" width="90" height="90" rx="16"></rect><text x="390" y="285">h₃</text></g><g class="training-state encoder-training-state"><rect x="490" y="230" width="90" height="90" rx="16"></rect><text x="535" y="285">h₄</text></g><g class="training-context"><circle cx="660" cy="275" r="40"></circle><text x="660" y="284">c</text></g> <g class="training-state decoder-training-state"><rect x="730" y="230" width="90" height="90" rx="16"></rect><text x="775" y="285">s₁</text></g><g class="training-state decoder-training-state"><rect x="875" y="230" width="90" height="90" rx="16"></rect><text x="920" y="285">s₂</text></g><g class="training-state decoder-training-state"><rect x="1020" y="230" width="90" height="90" rx="16"></rect><text x="1065" y="285">s₃</text></g><g class="training-state decoder-training-state"><rect x="1165" y="230" width="90" height="90" rx="16"></rect><text x="1210" y="285">s₄</text></g> <g class="training-source"><path d="M100 390 V325"></path><text x="100" y="420">Le</text><path d="M245 390 V325"></path><text x="245" y="420">colis</text><path d="M390 390 V325"></path><text x="390" y="420">arrivera</text><path d="M535 390 V325"></path><text x="535" y="420">demain</text></g><g class="training-predictions"><path d="M775 225 V175"></path><text x="775" y="105">ŷ₁</text><path d="M920 225 V175"></path><text x="920" y="105">ŷ₂</text><path d="M1065 225 V175"></path><text x="1065" y="105">ŷ₃</text><path d="M1210 225 V175"></path><text x="1210" y="105">ŷ₄</text></g> </g> <g class="training-losses fragment" data-fragment-index="1"><g class="training-loss"><rect x="725" y="20" width="100" height="54" rx="12"></rect><text x="775" y="55">J⁽¹⁾</text><path d="M775 96 V78"></path></g><g class="training-loss"><rect x="870" y="20" width="100" height="54" rx="12"></rect><text x="920" y="55">J⁽²⁾</text><path d="M920 96 V78"></path></g><g class="training-loss"><rect x="1015" y="20" width="100" height="54" rx="12"></rect><text x="1065" y="55">J⁽³⁾</text><path d="M1065 96 V78"></path></g><g class="training-loss"><rect x="1160" y="20" width="100" height="54" rx="12"></rect><text x="1210" y="55">J⁽⁴⁾</text><path d="M1210 96 V78"></path></g><text class="decoder-loss-note" x="995" y="475">J⁽ᵗ⁾ = −log p(yₜ | y&lt;t, x)</text></g> <g class="training-total fragment" data-fragment-index="2"><rect x="465" y="470" width="390" height="65" rx="13"></rect><text x="660" y="512">J = J⁽¹⁾ + J⁽²⁾ + J⁽³⁾ + J⁽⁴⁾</text></g> <g class="training-backward fragment" data-fragment-index="3"><path d="M1210 215 C1210 185 1160 180 1120 205"></path><path d="M1065 215 C1065 185 1015 180 975 205"></path><path d="M920 215 C920 185 870 180 830 205"></path><path class="backward-main" d="M1210 335 H70"></path><text x="660" y="370">∂J flows through decoder → c → encoder</text><path d="M775 335 V320"></path><path d="M920 335 V320"></path><path d="M1065 335 V320"></path><path d="M1210 335 V320"></path></g>
+</svg>
+</div>
+<div class="seq2seq-training-synthesis fragment" data-fragment-index="4">
+<div class="training-where-loss">
+<p><small>WHERE IS LOSS COMPUTED?</small><b>Only where target tokens are predicted.</b></p>
+</div>
+<div class="training-what-updates">
+<p><small>WHAT GETS UPDATED?</small><b>Decoder parameters, context path, and encoder parameters.</b></p>
+</div>
+</div>
+<div class="citation">
+Sequence-to-sequence models are trained end-to-end with target-side token losses and gradients propagated through the full computation graph <span class="citation" data-cites="sutskever2014sequence goodfellow2016deep">(Sutskever et al. 2014; Goodfellow et al. 2016, Ch. 10)</span>.
+</div>
+<aside class="notes">
+<ul>
+<li>Reveal the forward computation first. The encoder reads source tokens; the context initializes the decoder; the decoder predicts target tokens.</li>
+<li>Reveal the four decoder losses. Each prediction is compared with its gold target token using cross-entropy. No separate loss is attached to the encoder states.</li>
+<li>Sum the token losses into one sequence objective.</li>
+<li>Reveal the translucent backward path. Although supervision appears on the decoder side, the chain rule carries credit through every decoder state, through c, and back into every encoder state.</li>
+<li>End with the two-answer synthesis: loss location and parameter-update reach are different questions.</li>
+</ul>
+<style type="text/css">
+        span.MJX_Assistive_MathML {
+          position:absolute!important;
+          clip: rect(1px, 1px, 1px, 1px);
+          padding: 1px 0 0 0!important;
+          border: 0!important;
+          height: 1px!important;
+          width: 1px!important;
+          overflow: hidden!important;
+          display:block!important;
+      }</style></aside>
+</section>
+<section id="one-vector-must-remember-everything" class="slide level2">
+<h2>One vector must remember everything</h2>
+<div class="nmt-bottleneck-stage">
+<svg viewbox="0 0 1320 425" role="img" aria-label="The full French source sentence is compressed through a single context vector before an English decoder generates its translation, highlighting the fixed-context bottleneck.">
+<defs><marker id="bottleneck-arrow" viewbox="0 0 10 10" refx="9" refy="5" markerunits="userSpaceOnUse" markerwidth="8" markerheight="8" orient="auto"><path d="M0 0 L10 5 L0 10 z"></path></marker></defs> <rect class="bottleneck-zone bottleneck-encoder-zone" x="25" y="45" width="560" height="330" rx="24"></rect><text class="bottleneck-zone-title" x="55" y="85">ENCODER · READ THE WHOLE SOURCE</text><rect class="bottleneck-zone bottleneck-decoder-zone" x="735" y="45" width="560" height="330" rx="24"></rect><text class="bottleneck-zone-title" x="765" y="85">DECODER · GENERATE THE WHOLE TARGET</text><path class="bottleneck-forward" d="M95 220 H1225"></path> <g class="bottleneck-state encoder-bottleneck-state"><rect x="55" y="175" width="90" height="90" rx="16"></rect><text x="100" y="230">h₁</text></g><g class="bottleneck-state encoder-bottleneck-state"><rect x="190" y="175" width="90" height="90" rx="16"></rect><text x="235" y="230">h₂</text></g><g class="bottleneck-state encoder-bottleneck-state"><rect x="325" y="175" width="90" height="90" rx="16"></rect><text x="370" y="230">h₃</text></g><g class="bottleneck-state encoder-bottleneck-state"><rect x="460" y="175" width="90" height="90" rx="16"></rect><text x="505" y="230">h₄</text></g><g class="bottleneck-context"><circle cx="660" cy="220" r="47"></circle><text x="660" y="230">c</text><text class="bottleneck-context-label" x="660" y="133">ONE FIXED-SIZE VECTOR</text></g> <g class="bottleneck-state decoder-bottleneck-state"><rect x="755" y="175" width="90" height="90" rx="16"></rect><text x="800" y="230">s₁</text></g><g class="bottleneck-state decoder-bottleneck-state"><rect x="890" y="175" width="90" height="90" rx="16"></rect><text x="935" y="230">s₂</text></g><g class="bottleneck-state decoder-bottleneck-state"><rect x="1025" y="175" width="90" height="90" rx="16"></rect><text x="1070" y="230">s₃</text></g><g class="bottleneck-state decoder-bottleneck-state"><rect x="1160" y="175" width="90" height="90" rx="16"></rect><text x="1205" y="230">s₄</text></g> <g class="bottleneck-source"><text x="100" y="315">Le</text><text x="235" y="315">colis</text><text x="370" y="315">arrivera</text><text x="505" y="315">demain</text></g><g class="bottleneck-target"><text x="800" y="315">The</text><text x="935" y="315">package</text><text x="1070" y="315">will arrive</text><text x="1205" y="315">tomorrow</text></g> <g class="fragment bottleneck-pressure" data-fragment-index="0"><path d="M100 340 C250 405 500 405 620 255"></path><path d="M235 340 C350 390 520 380 625 250"></path><path d="M370 340 C455 365 550 350 630 245"></path><path d="M505 340 C560 340 605 300 635 245"></path><text x="355" y="405">every source detail must survive inside c</text></g>
+</svg>
+</div>
+<div class="bottleneck-question fragment current-visible" data-fragment-index="0">
+<p><small>PAUSE · FIND THE LIMITATION</small> <b>What happens when the source is long, information-rich, or difficult to compress into one vector?</b></p>
+</div>
+<div class="bottleneck-answer fragment" data-fragment-index="1">
+<div class="bottleneck-limit">
+<small>THE BOTTLENECK</small><b>The decoder can consult only c—even when it needs one specific source detail.</b>
+</div>
+<div class="bottleneck-next">
+<span>COMING NEXT WEEK</span><strong>ATTENTION</strong><i>Can the decoder recover what it needs without forcing everything through one fixed-size memory?</i>
+</div>
+</div>
+<div class="citation">
+The fixed-length context vector was a central limitation of early encoder–decoder translation models; attention was introduced to address it <span class="citation" data-cites="bahdanau2015align">(Bahdanau et al. 2015)</span>.
+</div>
+<aside class="notes">
+<ul>
+<li>Reuse the familiar translation graph; students should spend no effort decoding a new visual grammar.</li>
+<li>Reveal the translucent compression curves and pause. Ask what information the decoder can access after the encoder has finished.</li>
+<li>Let students name the fixed-context bottleneck before revealing the answer.</li>
+<li>Reveal only the word attention and the motivating question. Do not explain alignment scores, weights, or context sums in this lecture.</li>
+<li>Leave the final question visible as the bridge into next week.</li>
+</ul>
+<style type="text/css">
+        span.MJX_Assistive_MathML {
+          position:absolute!important;
+          clip: rect(1px, 1px, 1px, 1px);
+          padding: 1px 0 0 0!important;
+          border: 0!important;
+          height: 1px!important;
+          width: 1px!important;
+          overflow: hidden!important;
+          display:block!important;
+      }</style></aside>
+
+
+</section></section>
+    </div>
+  <div class="quarto-auto-generated-content" style="display: none;">
+<div class="footer footer-default">
+<p>CS 351 · Neural Networks for Sequences</p>
+</div>
+</div></div>
+
+  <script>window.backupDefine = window.define; window.define = undefined;</script>
+  <script src="../../site_libs/revealjs/dist/reveal.js"></script>
+  <!-- reveal.js plugins -->
+  <script src="../../site_libs/revealjs/plugin/quarto-line-highlight/line-highlight.js"></script>
+  <script src="../../site_libs/revealjs/plugin/pdf-export/pdfexport.js"></script>
+  <script src="../../site_libs/revealjs/plugin/reveal-menu/menu.js"></script>
+  <script src="../../site_libs/revealjs/plugin/reveal-menu/quarto-menu.js"></script>
+  <script src="../../site_libs/revealjs/plugin/quarto-support/support.js"></script>
+  
+
+  <script src="../../site_libs/revealjs/plugin/notes/notes.js"></script>
+  <script src="../../site_libs/revealjs/plugin/search/search.js"></script>
+  <script src="../../site_libs/revealjs/plugin/zoom/zoom.js"></script>
+  <script src="../../site_libs/revealjs/plugin/math/math.js"></script>
+  <script>window.define = window.backupDefine; window.backupDefine = undefined;</script>
+
+  <script>
+
+      // Full list of configuration options available at:
+      // https://revealjs.com/config/
+      Reveal.initialize({
+'controlsAuto': false,
+'previewLinksAuto': false,
+'pdfSeparateFragments': false,
+'autoAnimateEasing': "ease",
+'autoAnimateDuration': 1,
+'autoAnimateUnmatched': true,
+'jumpToSlide': true,
+'menu': {"side":"left","useTextContentForMissingTitles":true,"markers":false,"loadIcons":false,"custom":[{"title":"Tools","icon":"<i class=\"fas fa-gear\"></i>","content":"<ul class=\"slide-menu-items\">\n<li class=\"slide-tool-item active\" data-item=\"0\"><a href=\"#\" onclick=\"RevealMenuToolHandlers.fullscreen(event)\"><kbd>f</kbd> Fullscreen</a></li>\n<li class=\"slide-tool-item\" data-item=\"1\"><a href=\"#\" onclick=\"RevealMenuToolHandlers.speakerMode(event)\"><kbd>s</kbd> Speaker View</a></li>\n<li class=\"slide-tool-item\" data-item=\"2\"><a href=\"#\" onclick=\"RevealMenuToolHandlers.overview(event)\"><kbd>o</kbd> Slide Overview</a></li>\n<li class=\"slide-tool-item\" data-item=\"3\"><a href=\"#\" onclick=\"RevealMenuToolHandlers.togglePdfExport(event)\"><kbd>e</kbd> PDF Export Mode</a></li>\n<li class=\"slide-tool-item\" data-item=\"4\"><a href=\"#\" onclick=\"RevealMenuToolHandlers.toggleScrollView(event)\"><kbd>r</kbd> Scroll View Mode</a></li>\n<li class=\"slide-tool-item\" data-item=\"5\"><a href=\"#\" onclick=\"RevealMenuToolHandlers.keyboardHelp(event)\"><kbd>?</kbd> Keyboard Help</a></li>\n</ul>"}],"openButton":true},
+'smaller': false,
+ 
+        // Display controls in the bottom right corner
+        controls: true,
+
+        // Help the user learn the controls by providing hints, for example by
+        // bouncing the down arrow when they first encounter a vertical slide
+        controlsTutorial: false,
+
+        // Determines where controls appear, "edges" or "bottom-right"
+        controlsLayout: 'edges',
+
+        // Visibility rule for backwards navigation arrows; "faded", "hidden"
+        // or "visible"
+        controlsBackArrows: 'faded',
+
+        // Display a presentation progress bar
+        progress: true,
+
+        // Display the page number of the current slide
+        slideNumber: 'c/t',
+
+        // 'all', 'print', or 'speaker'
+        showSlideNumber: 'all',
+
+        // Add the current slide number to the URL hash so that reloading the
+        // page/copying the URL will return you to the same slide
+        hash: true,
+
+        // Start with 1 for the hash rather than 0
+        hashOneBasedIndex: false,
+
+        // Flags if we should monitor the hash and change slides accordingly
+        respondToHashChanges: true,
+
+        // Push each slide change to the browser history
+        history: true,
+
+        // Enable keyboard shortcuts for navigation
+        keyboard: true,
+
+        // Enable the slide overview mode
+        overview: true,
+
+        // Disables the default reveal.js slide layout (scaling and centering)
+        // so that you can use custom CSS layout
+        disableLayout: false,
+
+        // Vertical centering of slides
+        center: false,
+
+        // Enables touch navigation on devices with touch input
+        touch: true,
+
+        // Loop the presentation
+        loop: false,
+
+        // Change the presentation direction to be RTL
+        rtl: false,
+
+        // see https://revealjs.com/vertical-slides/#navigation-mode
+        navigationMode: 'linear',
+
+        // Randomizes the order of slides each time the presentation loads
+        shuffle: false,
+
+        // Turns fragments on and off globally
+        fragments: true,
+
+        // Flags whether to include the current fragment in the URL,
+        // so that reloading brings you to the same fragment position
+        fragmentInURL: false,
+
+        // Flags if the presentation is running in an embedded mode,
+        // i.e. contained within a limited portion of the screen
+        embedded: false,
+
+        // Flags if we should show a help overlay when the questionmark
+        // key is pressed
+        help: true,
+
+        // Flags if it should be possible to pause the presentation (blackout)
+        pause: true,
+
+        // Flags if speaker notes should be visible to all viewers
+        showNotes: false,
+
+        // Global override for autoplaying embedded media (null/true/false)
+        autoPlayMedia: null,
+
+        // Global override for preloading lazy-loaded iframes (null/true/false)
+        preloadIframes: null,
+
+        // Number of milliseconds between automatically proceeding to the
+        // next slide, disabled when set to 0, this value can be overwritten
+        // by using a data-autoslide attribute on your slides
+        autoSlide: 0,
+
+        // Stop auto-sliding after user input
+        autoSlideStoppable: true,
+
+        // Use this method for navigation when auto-sliding
+        autoSlideMethod: null,
+
+        // Specify the average time in seconds that you think you will spend
+        // presenting each slide. This is used to show a pacing timer in the
+        // speaker view
+        defaultTiming: null,
+
+        // Enable slide navigation via mouse wheel
+        mouseWheel: false,
+
+        // The display mode that will be used to show slides
+        display: 'block',
+
+        // Hide cursor if inactive
+        hideInactiveCursor: true,
+
+        // Time before the cursor is hidden (in ms)
+        hideCursorTime: 5000,
+
+        // Opens links in an iframe preview overlay
+        previewLinks: false,
+
+        // Transition style (none/fade/slide/convex/concave/zoom)
+        transition: 'fade',
+
+        // Transition speed (default/fast/slow)
+        transitionSpeed: 'default',
+
+        // Transition style for full page slide backgrounds
+        // (none/fade/slide/convex/concave/zoom)
+        backgroundTransition: 'fade',
+
+        // Number of slides away from the current that are visible
+        viewDistance: 3,
+
+        // Number of slides away from the current that are visible on mobile
+        // devices. It is advisable to set this to a lower number than
+        // viewDistance in order to save resources.
+        mobileViewDistance: 2,
+
+        // The "normal" size of the presentation, aspect ratio will be preserved
+        // when the presentation is scaled to fit different resolutions. Can be
+        // specified using percentage units.
+        width: 1440,
+
+        height: 900,
+
+        // Factor of the display size that should remain empty around the content
+        margin: 6.0e-2,
+
+        math: {
+          mathjax: 'https://cdn.jsdelivr.net/npm/mathjax@2.7.9/MathJax.js',
+          config: 'TeX-AMS_HTML-full',
+          tex2jax: {
+            inlineMath: [['\\(','\\)']],
+            displayMath: [['\\[','\\]']],
+            balanceBraces: true,
+            processEscapes: false,
+            processRefs: true,
+            processEnvironments: true,
+            preview: 'TeX',
+            skipTags: ['script','noscript','style','textarea','pre','code'],
+            ignoreClass: 'tex2jax_ignore',
+            processClass: 'tex2jax_process'
+          },
+        },
+
+        // reveal.js plugins
+        plugins: [QuartoLineHighlight, PdfExport, RevealMenu, QuartoSupport,
+
+          RevealMath,
+          RevealNotes,
+          RevealSearch,
+          RevealZoom
+        ]
+      });
+    </script>
+    <script id="quarto-html-after-body" type="application/javascript">
+      window.document.addEventListener("DOMContentLoaded", function (event) {
+        const tabsets =  window.document.querySelectorAll(".panel-tabset-tabby")
+        tabsets.forEach(function(tabset) {
+          const tabby = new Tabby('#' + tabset.id);
+        });
+        const isCodeAnnotation = (el) => {
+          for (const clz of el.classList) {
+            if (clz.startsWith('code-annotation-')) {                     
+              return true;
+            }
+          }
+          return false;
+        }
+        const onCopySuccess = function(e) {
+          // button target
+          const button = e.trigger;
+          // don't keep focus
+          button.blur();
+          // flash "checked"
+          button.classList.add('code-copy-button-checked');
+          var currentTitle = button.getAttribute("title");
+          button.setAttribute("title", "Copied!");
+          let tooltip;
+          if (window.bootstrap) {
+            button.setAttribute("data-bs-toggle", "tooltip");
+            button.setAttribute("data-bs-placement", "left");
+            button.setAttribute("data-bs-title", "Copied!");
+            tooltip = new bootstrap.Tooltip(button, 
+              { trigger: "manual", 
+                customClass: "code-copy-button-tooltip",
+                offset: [0, -8]});
+            tooltip.show();    
+          }
+          setTimeout(function() {
+            if (tooltip) {
+              tooltip.hide();
+              button.removeAttribute("data-bs-title");
+              button.removeAttribute("data-bs-toggle");
+              button.removeAttribute("data-bs-placement");
+            }
+            button.setAttribute("title", currentTitle);
+            button.classList.remove('code-copy-button-checked');
+          }, 1000);
+          // clear code selection
+          e.clearSelection();
+        }
+        const getTextToCopy = function(trigger) {
+          const outerScaffold = trigger.parentElement.cloneNode(true);
+          const codeEl = outerScaffold.querySelector('code');
+          for (const childEl of codeEl.children) {
+            if (isCodeAnnotation(childEl)) {
+              childEl.remove();
+            }
+          }
+          return codeEl.innerText;
+        }
+        const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+          text: getTextToCopy
+        });
+        clipboard.on('success', onCopySuccess);
+        if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+          const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+            text: getTextToCopy,
+            container: window.document.getElementById('quarto-embedded-source-code-modal')
+          });
+          clipboardModal.on('success', onCopySuccess);
+        }
+          var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+          var mailtoRegex = new RegExp(/^mailto:/);
+            var filterRegex = new RegExp("https:\/\/anassbelcaid\.github\.io\/nlp-course-2026\/");
+          var isInternal = (href) => {
+              return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+          }
+          // Inspect non-navigation links and adorn them if external
+         var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+          for (var i=0; i<links.length; i++) {
+            const link = links[i];
+            if (!isInternal(link.href)) {
+              // undo the damage that might have been done by quarto-nav.js in the case of
+              // links that we want to consider external
+              if (link.dataset.originalHref !== undefined) {
+                link.href = link.dataset.originalHref;
+              }
+            }
+          }
+        function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+          const config = {
+            allowHTML: true,
+            maxWidth: 500,
+            delay: 100,
+            arrow: false,
+            appendTo: function(el) {
+                return el.closest('section.slide') || el.parentElement;
+            },
+            interactive: true,
+            interactiveBorder: 10,
+            theme: 'light-border',
+            placement: 'bottom-start',
+          };
+          if (contentFn) {
+            config.content = contentFn;
+          }
+          if (onTriggerFn) {
+            config.onTrigger = onTriggerFn;
+          }
+          if (onUntriggerFn) {
+            config.onUntrigger = onUntriggerFn;
+          }
+            config['offset'] = [0,0];
+            config['maxWidth'] = 700;
+          window.tippy(el, config); 
+        }
+        const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+        for (var i=0; i<noterefs.length; i++) {
+          const ref = noterefs[i];
+          tippyHover(ref, function() {
+            // use id or data attribute instead here
+            let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+            try { href = new URL(href).hash; } catch {}
+            const id = href.replace(/^#\/?/, "");
+            const note = window.document.getElementById(id);
+            if (note) {
+              return note.innerHTML;
+            } else {
+              return "";
+            }
+          });
+        }
+        const findCites = (el) => {
+          const parentEl = el.parentElement;
+          if (parentEl) {
+            const cites = parentEl.dataset.cites;
+            if (cites) {
+              return {
+                el,
+                cites: cites.split(' ')
+              };
+            } else {
+              return findCites(el.parentElement)
+            }
+          } else {
+            return undefined;
+          }
+        };
+        var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+        for (var i=0; i<bibliorefs.length; i++) {
+          const ref = bibliorefs[i];
+          const citeInfo = findCites(ref);
+          if (citeInfo) {
+            tippyHover(citeInfo.el, function() {
+              var popup = window.document.createElement('div');
+              citeInfo.cites.forEach(function(cite) {
+                var citeDiv = window.document.createElement('div');
+                citeDiv.classList.add('hanging-indent');
+                citeDiv.classList.add('csl-entry');
+                var biblioDiv = window.document.getElementById('ref-' + cite);
+                if (biblioDiv) {
+                  citeDiv.innerHTML = biblioDiv.innerHTML;
+                }
+                popup.appendChild(citeDiv);
+              });
+              return popup.innerHTML;
+            });
+          }
+        }
+      });
+      </script>
+    
+
+</body></html>

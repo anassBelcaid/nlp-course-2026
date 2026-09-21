@@ -1,0 +1,1235 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.10.18">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="author" content="Dr.&nbsp;A. Belcaid">
+<meta name="description" content="Position, feed-forward networks, masking, residual connections, LayerNorm, encoder and decoder stacks, cross-attention, Transformer families, results, and quadratic attention.">
+
+<title>The Transformer Architecture – CS 351 · NLP</title>
+<style>
+/* Default styles provided by pandoc.
+** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+*/
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: 1.5em;}
+div.column{flex: auto;}
+@media screen {
+div.columns{gap: min(4vw, 1.5em);}
+div.column{overflow-x: auto;}
+}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+/* CSS for citations */
+div.csl-bib-body { }
+div.csl-entry {
+  clear: both;
+}
+.hanging-indent div.csl-entry {
+  margin-left:2em;
+  text-indent:-2em;
+}
+div.csl-left-margin {
+  min-width:2em;
+  float:left;
+}
+div.csl-right-inline {
+  margin-left:2em;
+  padding-left:1em;
+}
+div.csl-indent {
+  margin-left: 2em;
+}</style>
+
+
+<script src="../../site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="../../site_libs/clipboard/clipboard.min.js"></script>
+<script src="../../site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="../../site_libs/quarto-search/fuse.min.js"></script>
+<script src="../../site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="../../">
+<script src="../../site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="../../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="../../site_libs/quarto-html/popper.min.js"></script>
+<script src="../../site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="../../site_libs/quarto-html/anchor.min.js"></script>
+<link href="../../site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="../../site_libs/quarto-html/quarto-syntax-highlighting-095245003bb80bd2beb305de39928752.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="../../site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="../../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="../../site_libs/bootstrap/bootstrap-bae81809e9689276853494912f89ea28.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<script id="quarto-search-options" type="application/json">{
+  "location": "navbar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "end",
+  "type": "overlay",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script>
+<style>html{ scroll-behavior: smooth; }</style>
+
+  <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
+  <script defer="" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-chtml.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN" && texText && texText.data) {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script>
+
+<link rel="stylesheet" href="../../styles.css">
+</head>
+
+<body class="floating nav-fixed quarto-light">
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+    <nav class="navbar navbar-expand-lg " data-bs-theme="dark">
+      <div class="navbar-container container-fluid">
+      <div class="navbar-brand-container mx-auto">
+    <a class="navbar-brand" href="../../index.html">
+    <span class="navbar-title">CS 351 · NLP</span>
+    </a>
+  </div>
+            <div id="quarto-search" class="" title="Search"></div>
+          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse" aria-controls="navbarCollapse" role="menu" aria-expanded="false" aria-label="Toggle navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+  <span class="navbar-toggler-icon"></span>
+</button>
+          <div class="collapse navbar-collapse" id="navbarCollapse">
+            <ul class="navbar-nav navbar-nav-scroll me-auto">
+  <li class="nav-item">
+    <a class="nav-link" href="../../index.html"> 
+<span class="menu-text">Home</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../../logistics.html"> 
+<span class="menu-text">Logistics</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../../schedule.html"> 
+<span class="menu-text">Schedule</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../../coding-projects.html"> 
+<span class="menu-text">Coding Projects</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../../student-projects.html"> 
+<span class="menu-text">Student Projects</span></a>
+  </li>  
+</ul>
+            <ul class="navbar-nav navbar-nav-scroll ms-auto">
+  <li class="nav-item compact">
+    <a class="nav-link" href="https://github.com/anassBelcaid"> <i class="bi bi-github" role="img" aria-label="Instructor GitHub profile">
+</i> 
+<span class="menu-text"></span></a>
+  </li>  
+</ul>
+          </div> <!-- /navcollapse -->
+            <div class="quarto-navbar-tools">
+</div>
+      </div> <!-- /container-fluid -->
+    </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
+<!-- sidebar -->
+  <nav id="quarto-sidebar" class="sidebar collapse collapse-horizontal quarto-sidebar-collapse-item sidebar-navigation floating overflow-auto">
+    <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">On this page</h2>
+   
+  <ul>
+  <li><a href="#sec-position" id="toc-sec-position" class="nav-link active" data-scroll-target="#sec-position"><span class="header-section-number">1</span> Position: attention needs an order</a>
+  <ul class="collapse">
+  <li><a href="#sec-permutation" id="toc-sec-permutation" class="nav-link" data-scroll-target="#sec-permutation"><span class="header-section-number">1.1</span> The permutation problem</a></li>
+  <li><a href="#sec-add-position" id="toc-sec-add-position" class="nav-link" data-scroll-target="#sec-add-position"><span class="header-section-number">1.2</span> Add content and position</a></li>
+  <li><a href="#sec-sinusoidal" id="toc-sec-sinusoidal" class="nav-link" data-scroll-target="#sec-sinusoidal"><span class="header-section-number">1.3</span> Sinusoidal positions</a></li>
+  </ul></li>
+  <li><a href="#sec-ffn" id="toc-sec-ffn" class="nav-link" data-scroll-target="#sec-ffn"><span class="header-section-number">2</span> Transform features: the position-wise FFN</a></li>
+  <li><a href="#sec-causal-mask" id="toc-sec-causal-mask" class="nav-link" data-scroll-target="#sec-causal-mask"><span class="header-section-number">3</span> Decode without looking ahead</a></li>
+  <li><a href="#sec-depth" id="toc-sec-depth" class="nav-link" data-scroll-target="#sec-depth"><span class="header-section-number">4</span> Build depth safely</a>
+  <ul class="collapse">
+  <li><a href="#sec-multihead-recall" id="toc-sec-multihead-recall" class="nav-link" data-scroll-target="#sec-multihead-recall"><span class="header-section-number">4.1</span> Multi-head attention revisited</a></li>
+  <li><a href="#sec-residual" id="toc-sec-residual" class="nav-link" data-scroll-target="#sec-residual"><span class="header-section-number">4.2</span> Residual connections</a></li>
+  <li><a href="#sec-layernorm" id="toc-sec-layernorm" class="nav-link" data-scroll-target="#sec-layernorm"><span class="header-section-number">4.3</span> Layer normalization</a></li>
+  </ul></li>
+  <li><a href="#sec-stacks" id="toc-sec-stacks" class="nav-link" data-scroll-target="#sec-stacks"><span class="header-section-number">5</span> Encoder and decoder stacks</a>
+  <ul class="collapse">
+  <li><a href="#sec-decoder" id="toc-sec-decoder" class="nav-link" data-scroll-target="#sec-decoder"><span class="header-section-number">5.1</span> The decoder</a></li>
+  <li><a href="#sec-encoder-no-mask" id="toc-sec-encoder-no-mask" class="nav-link" data-scroll-target="#sec-encoder-no-mask"><span class="header-section-number">5.2</span> Why the encoder has no causal mask</a></li>
+  </ul></li>
+  <li><a href="#sec-cross-attention" id="toc-sec-cross-attention" class="nav-link" data-scroll-target="#sec-cross-attention"><span class="header-section-number">6</span> Cross-attention connects both towers</a></li>
+  <li><a href="#sec-families" id="toc-sec-families" class="nav-link" data-scroll-target="#sec-families"><span class="header-section-number">7</span> Three Transformer families</a></li>
+  <li><a href="#sec-evidence" id="toc-sec-evidence" class="nav-link" data-scroll-target="#sec-evidence"><span class="header-section-number">8</span> Evidence and limitations</a>
+  <ul class="collapse">
+  <li><a href="#sec-translation-results" id="toc-sec-translation-results" class="nav-link" data-scroll-target="#sec-translation-results"><span class="header-section-number">8.1</span> Translation results</a></li>
+  <li><a href="#sec-transfer-results" id="toc-sec-transfer-results" class="nav-link" data-scroll-target="#sec-transfer-results"><span class="header-section-number">8.2</span> Transfer across tasks</a></li>
+  <li><a href="#sec-quadratic" id="toc-sec-quadratic" class="nav-link" data-scroll-target="#sec-quadratic"><span class="header-section-number">8.3</span> Full attention is quadratic</a></li>
+  </ul></li>
+  <li><a href="#sec-synthesis" id="toc-sec-synthesis" class="nav-link" data-scroll-target="#sec-synthesis"><span class="header-section-number">9</span> Synthesis</a>
+  <ul class="collapse">
+  <li><a href="#sec-further-reading" id="toc-sec-further-reading" class="nav-link" data-scroll-target="#sec-further-reading"><span class="header-section-number">9.1</span> Further reading</a></li>
+  </ul></li>
+  <li><a href="#references" id="toc-references" class="nav-link" data-scroll-target="#references">References</a></li>
+  </ul>
+<div class="quarto-alternate-formats"><h2>Other Formats</h2><ul><li><a href="index.pdf"><i class="bi bi-file-pdf"></i>PDF</a></li></ul></div></nav>
+</nav>
+<div id="quarto-sidebar-glass" class="quarto-sidebar-collapse-item" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item"></div>
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar zindex-bottom">
+    </div>
+<!-- main -->
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title">The Transformer Architecture</h1>
+<p class="subtitle lead">Chapter 7 · Building the complete block</p>
+</div>
+
+<div>
+  <div class="description">
+    Position, feed-forward networks, masking, residual connections, LayerNorm, encoder and decoder stacks, cross-attention, Transformer families, results, and quadratic attention.
+  </div>
+</div>
+
+
+<div class="quarto-title-meta">
+
+    <div>
+    <div class="quarto-title-meta-heading">Author</div>
+    <div class="quarto-title-meta-contents">
+             <p>Dr.&nbsp;A. Belcaid </p>
+          </div>
+  </div>
+    
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<p><img src="../../images/uae-logo.png" class="img-fluid"></p>
+<p>CS 351 · Introduction to Natural Language Processing<br> Chapter 7 · The Transformer architecture</p>
+<p>Attention gives a model a powerful communication rule: each token can retrieve a weighted mixture of other representations. A complete Transformer needs more. It must encode order, transform each retrieved message nonlinearly, prevent information leakage during generation, and remain trainable when many blocks are stacked.</p>
+<p>This chapter follows the lecture’s construction rather than presenting the final diagram all at once. Each addition repairs one concrete limitation. By the end, the encoder, decoder, and encoder–decoder Transformer will be consequences of a few explicit design choices.</p>
+<div id="fig-transformer-overview" class="chapter-overview-image quarto-float quarto-figure quarto-figure-center anchored" data-fig-align="center">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-transformer-overview-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="../../lectures/07-transformer-architecture/images/transformer-architecture-overview.png" class="chapter-overview-image img-fluid quarto-figure quarto-figure-center figure-img" style="width:94.0%">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-transformer-overview-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;1: The complete conceptual journey: position-aware inputs enter encoder and decoder stacks, encoder memory crosses into the decoder, and the decoder produces an output distribution.
+</figcaption>
+</figure>
+</div>
+<div class="callout callout-style-simple callout-note callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>Learning objectives
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>After this chapter, you should be able to:</p>
+<ol type="1">
+<li>explain why self-attention needs positional information;</li>
+<li>compute sinusoidal positional encodings;</li>
+<li>describe the role of the position-wise feed-forward network;</li>
+<li>construct a causal attention mask;</li>
+<li>explain residual connections and LayerNorm;</li>
+<li>distinguish encoder, decoder, and encoder–decoder blocks;</li>
+<li>identify the origins of queries, keys, and values in cross-attention;</li>
+<li>select an architecture family for a task; and</li>
+<li>derive the quadratic cost of full self-attention.</li>
+</ol>
+</div>
+</div>
+<section id="sec-position" class="level1" data-number="1">
+<h1 data-number="1"><span class="header-section-number">1</span> Position: attention needs an order</h1>
+<section id="sec-permutation" class="level2" data-number="1.1">
+<h2 data-number="1.1" class="anchored" data-anchor-id="sec-permutation"><span class="header-section-number">1.1</span> The permutation problem</h2>
+<p>Compare “Alice thanked Bob” with “Bob thanked Alice.” The token identities are the same, but their roles are reversed. Without a separate position signal, self-attention is <strong>permutation equivariant</strong>. If a permutation matrix <span class="math inline">\(P\)</span> reorders the rows of <span class="math inline">\(X\)</span>, then</p>
+<p><span class="math display">\[
+\operatorname{Attn}(PX)=P\operatorname{Attn}(X).
+\]</span></p>
+<p>The outputs follow the reordered inputs, but the attention mechanism has no independent fact saying which occurrence came first. This is why the original Transformer adds position representations before the first layer <span class="citation" data-cites="vaswani2017attention">(<a href="#ref-vaswani2017attention" role="doc-biblioref">Vaswani et al. 2017</a>)</span>. See also <a href="https://web.stanford.edu/class/cs224n/slides_w26/cs224n-2026-lecture05-transformers.pdf">Stanford CS224N Lecture 5</a> and <a href="https://jalammar.github.io/illustrated-transformer/">The Illustrated Transformer</a>.</p>
+<div id="fig-position-signal" class="quarto-float quarto-figure quarto-figure-center anchored" data-fig-align="center">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-position-signal-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="images/position-signal.svg" class="img-fluid quarto-figure quarto-figure-center figure-img" style="width:92.0%">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-position-signal-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;2: Without a position signal, self-attention follows a permutation but cannot identify the changed order. This standalone vector figure is generated from the lecture’s original SVG code.
+</figcaption>
+</figure>
+</div>
+</section>
+<section id="sec-add-position" class="level2" data-number="1.2">
+<h2 data-number="1.2" class="anchored" data-anchor-id="sec-add-position"><span class="header-section-number">1.2</span> Add content and position</h2>
+<p>For token <span class="math inline">\(i\)</span>, the Transformer input is</p>
+<p><span id="eq-token-plus-position"><span class="math display">\[
+\boxed{z_i=e(\text{token}_i)+p_i}.
+\tag{1}\]</span></span></p>
+<p>Both vectors have dimension <span class="math inline">\(d_{\text{model}}\)</span>, so addition preserves one vector per token. The word <em>cats</em> keeps the same lexical embedding wherever it occurs, but adding <span class="math inline">\(p_1\)</span> or <span class="math inline">\(p_3\)</span> produces different Transformer inputs.</p>
+<div class="callout callout-style-simple callout-important">
+<div class="callout-body d-flex">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-body-container">
+<p>The positional vector does not replace the token embedding. It perturbs it with an order-dependent signal while preserving the interface expected by attention.</p>
+</div>
+</div>
+</div>
+</section>
+<section id="sec-sinusoidal" class="level2" data-number="1.3">
+<h2 data-number="1.3" class="anchored" data-anchor-id="sec-sinusoidal"><span class="header-section-number">1.3</span> Sinusoidal positions</h2>
+<p>The classical fixed encoding uses paired sine and cosine waves:</p>
+<p><span class="math display">\[
+\operatorname{PE}(pos,2i)=\sin\!\left(pos/10000^{2i/d_{\text{model}}}\right),
+\]</span></p>
+<p><span class="math display">\[
+\operatorname{PE}(pos,2i+1)=\cos\!\left(pos/10000^{2i/d_{\text{model}}}\right).
+\]</span></p>
+<p>Each feature uses a different wavelength. Nearby positions change smoothly, while the collection of frequencies gives each position a distinctive pattern. The design also makes fixed offsets expressible through linear combinations of sine and cosine terms.</p>
+<div id="fig-sinusoidal-position" class="quarto-float quarto-figure quarto-figure-center anchored" data-fig-align="center">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-sinusoidal-position-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="images/sinusoidal-position.svg" class="img-fluid quarto-figure quarto-figure-center figure-img" style="width:92.0%">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-sinusoidal-position-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;3: Sinusoidal position encoding: waves at different frequencies, rendered directly from the lecture’s SVG source.
+</figcaption>
+</figure>
+</div>
+<p>Other approaches include <a href="https://aclanthology.org/N19-1423/">learned absolute embeddings</a>, <a href="https://aclanthology.org/N18-2074/">relative position representations</a>, <a href="https://aclanthology.org/P19-1285/">Transformer-XL relative attention</a>, <a href="https://arxiv.org/abs/2104.09864">RoPE</a>, and <a href="https://arxiv.org/abs/2108.12409">ALiBi</a>. We focus here on the original sinusoidal construction because it makes the architectural role of position especially clear.</p>
+</section>
+</section>
+<section id="sec-ffn" class="level1" data-number="2">
+<h1 data-number="2"><span class="header-section-number">2</span> Transform features: the position-wise FFN</h1>
+<p>Attention communicates across tokens through weighted sums. If we only stack linear weighted mixing operations, the model lacks a strong nonlinear transformation at each position. The Transformer therefore applies the same two-layer network independently to every token:</p>
+<p><span id="eq-positionwise-ffn"><span class="math display">\[
+\operatorname{FFN}(x)=W_2\,\sigma(W_1x+b_1)+b_2.
+\tag{2}\]</span></span></p>
+<p>In the original architecture, <span class="math inline">\(sigma\)</span> is ReLU, <span class="math inline">\(W_1\)</span> expands from <span class="math inline">\(d_{\text{model}}\)</span> to <span class="math inline">\(d_{ff}\)</span>, and <span class="math inline">\(W_2\)</span> projects back. Modern variants often use <a href="https://arxiv.org/abs/1606.08415">GELU</a>, <a href="https://arxiv.org/abs/2002.05202">SwiGLU</a>, or gated variants.</p>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>Sublayer</th>
+<th>Operates across</th>
+<th>Main role</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Self-attention</td>
+<td>token positions</td>
+<td>communicate and retrieve</td>
+</tr>
+<tr class="even">
+<td>Position-wise FFN</td>
+<td>feature dimensions</td>
+<td>nonlinear transformation</td>
+</tr>
+</tbody>
+</table>
+<p>The same FFN parameters are reused at every position <strong>within a layer</strong>. Different Transformer layers have different learned parameters.</p>
+<div id="fig-ffn-network" class="quarto-float quarto-figure quarto-figure-center anchored" data-fig-align="center">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-ffn-network-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="images/ffn-network.svg" class="img-fluid quarto-figure quarto-figure-center figure-img" style="width:90.0%">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-ffn-network-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;4: The lecture’s neural-network view of the position-wise FFN: a first affine layer, ReLU, and a second affine layer return each token to the model dimension.
+</figcaption>
+</figure>
+</div>
+</section>
+<section id="sec-causal-mask" class="level1" data-number="3">
+<h1 data-number="3"><span class="header-section-number">3</span> Decode without looking ahead</h1>
+<p>During autoregressive generation, predicting token <span class="math inline">\(y_t\)</span> may depend on <span class="math inline">\(y_{&lt;t}\)</span> but not on future answers <span class="math inline">\(y_{&gt;t}\)</span>. The decoder implements this rule before softmax:</p>
+<p><span id="eq-causal-attention"><span class="math display">\[
+M_{ij}=\begin{cases}
+0,&amp;j\le i,\\
+-\infty,&amp;j&gt;i,
+\end{cases}
+\qquad
+A=\operatorname{softmax}\!\left(\frac{QK^\top}{\sqrt{d_k}}+M\right).
+\tag{3}\]</span></span></p>
+<p>Because <span class="math inline">\(e^{-\infty}=0\)</span>, forbidden positions receive zero probability. Applying the mask <strong>after</strong> softmax is incorrect: the remaining weights would no longer be normalized.</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>scores <span class="op">=</span> q <span class="op">@</span> k.transpose(<span class="op">-</span><span class="dv">2</span>, <span class="op">-</span><span class="dv">1</span>) <span class="op">/</span> math.sqrt(d_k)</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>mask <span class="op">=</span> torch.triu(torch.ones(T, T, dtype<span class="op">=</span>torch.<span class="bu">bool</span>), diagonal<span class="op">=</span><span class="dv">1</span>)</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>scores <span class="op">=</span> scores.masked_fill(mask, <span class="bu">float</span>(<span class="st">"-inf"</span>))</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>weights <span class="op">=</span> torch.softmax(scores, dim<span class="op">=-</span><span class="dv">1</span>)</span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>output <span class="op">=</span> weights <span class="op">@</span> v</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Compare this explicit calculation with <a href="https://pytorch.org/docs/stable/generated/torch.nn.functional.scaled_dot_product_attention.html"><code>torch.nn.functional.scaled_dot_product_attention</code></a>, which supports causal attention directly.</p>
+</section>
+<section id="sec-depth" class="level1" data-number="4">
+<h1 data-number="4"><span class="header-section-number">4</span> Build depth safely</h1>
+<section id="sec-multihead-recall" class="level2" data-number="4.1">
+<h2 data-number="4.1" class="anchored" data-anchor-id="sec-multihead-recall"><span class="header-section-number">4.1</span> Multi-head attention revisited</h2>
+<p>One head produces one attention distribution per query. Different heads have separate projection matrices and may learn different relations—for example, a subject–verb relation in one head and an entity-reference relation in another:</p>
+<p><span class="math display">\[
+\operatorname{MHA}(X)=\operatorname{Concat}(head_1,\ldots,head_h)W_O.
+\]</span></p>
+<p>This is a capacity argument, not a guarantee that every head receives a clean linguistic interpretation. <a href="https://aclanthology.org/W19-4828/">Clark et al.</a> analyze BERT attention patterns; <a href="https://github.com/jessevig/bertviz">BertViz</a> provides an interactive inspection tool.</p>
+</section>
+<section id="sec-residual" class="level2" data-number="4.2">
+<h2 data-number="4.2" class="anchored" data-anchor-id="sec-residual"><span class="header-section-number">4.2</span> Residual connections</h2>
+<p>A residual sublayer learns a correction to its input:</p>
+<p><span class="math display">\[
+y=x+F(x).
+\]</span></p>
+<p>The identity path carries representations and gradients through depth even when the learned branch is initially unhelpful. The loss-landscape visual used in the lecture comes from <a href="https://papers.nips.cc/paper/7875-visualizing-the-loss-landscape-of-neural-nets">Li et al., <em>Visualizing the Loss Landscape of Neural Nets</em></a>.</p>
+</section>
+<section id="sec-layernorm" class="level2" data-number="4.3">
+<h2 data-number="4.3" class="anchored" data-anchor-id="sec-layernorm"><span class="header-section-number">4.3</span> Layer normalization</h2>
+<p>For one token vector <span class="math inline">\(x\in\mathbb R^d\)</span>, LayerNorm computes statistics across its <strong>feature dimension</strong>:</p>
+<p><span class="math display">\[
+\mu=\frac1d\sum_{j=1}^d x_j,
+\qquad
+\sigma^2=\frac1d\sum_{j=1}^d(x_j-\mu)^2,
+\]</span></p>
+<p><span id="eq-layernorm"><span class="math display">\[
+\operatorname{LN}(x)_j=\gamma_j\frac{x_j-\mu}{\sqrt{\sigma^2+\epsilon}}+\beta_j.
+\tag{4}\]</span></span></p>
+<p><span class="math inline">\(\gamma\)</span> and <span class="math inline">\(\beta\)</span> are learned feature-wise parameters. Statistics are computed independently for each token and example—not across tokens in the batch. Consult the <a href="https://arxiv.org/abs/1607.06450">original Layer Normalization paper</a> and the <a href="https://pytorch.org/docs/stable/generated/torch.nn.LayerNorm.html"><code>torch.nn.LayerNorm</code> documentation</a>.</p>
+<div id="fig-layernorm-features" class="quarto-float quarto-figure quarto-figure-center anchored" data-fig-align="center">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-layernorm-features-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="images/layernorm-features.svg" class="img-fluid quarto-figure quarto-figure-center figure-img" style="width:92.0%">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-layernorm-features-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;5: LayerNorm operates along the feature dimension of each token representation; it does not aggregate across tokens or batches.
+</figcaption>
+</figure>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="kw">class</span> ExplicitLayerNorm(nn.Module):</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> <span class="fu">__init__</span>(<span class="va">self</span>, d_model, eps<span class="op">=</span><span class="fl">1e-5</span>):</span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>        <span class="bu">super</span>().<span class="fu">__init__</span>()</span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>.gamma <span class="op">=</span> nn.Parameter(torch.ones(d_model))</span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>.beta <span class="op">=</span> nn.Parameter(torch.zeros(d_model))</span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>.eps <span class="op">=</span> eps</span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> forward(<span class="va">self</span>, x):</span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a>        mean <span class="op">=</span> x.mean(dim<span class="op">=-</span><span class="dv">1</span>, keepdim<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a>        var <span class="op">=</span> x.var(dim<span class="op">=-</span><span class="dv">1</span>, keepdim<span class="op">=</span><span class="va">True</span>, unbiased<span class="op">=</span><span class="va">False</span>)</span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> <span class="va">self</span>.gamma <span class="op">*</span> (x <span class="op">-</span> mean) <span class="op">/</span> torch.sqrt(var <span class="op">+</span> <span class="va">self</span>.eps) <span class="op">+</span> <span class="va">self</span>.beta</span>
+<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a>layer_norm <span class="op">=</span> nn.LayerNorm(d_model)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>The original Transformer uses post-norm sublayers:</p>
+<p><span class="math display">\[
+\operatorname{LayerNorm}(x+\operatorname{Sublayer}(x)).
+\]</span></p>
+<div id="fig-add-and-norm" class="quarto-float quarto-figure quarto-figure-center anchored" data-fig-align="center">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-add-and-norm-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="images/add-and-norm.svg" class="img-fluid quarto-figure quarto-figure-center figure-img" style="width:88.0%">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-add-and-norm-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;6: The classical post-norm block used in the lecture: each learned sublayer has a residual route followed by Add &amp; Norm.
+</figcaption>
+</figure>
+</div>
+<p>Many later large models use pre-norm. The distinction matters for optimization, but it does not change the conceptual roles of attention, FFN, residual routing, and normalization.</p>
+</section>
+</section>
+<section id="sec-stacks" class="level1" data-number="5">
+<h1 data-number="5"><span class="header-section-number">5</span> Encoder and decoder stacks</h1>
+<section id="sec-decoder" class="level2" data-number="5.1">
+<h2 data-number="5.1" class="anchored" data-anchor-id="sec-decoder"><span class="header-section-number">5.1</span> The decoder</h2>
+<p>A decoder block contains masked multi-head self-attention, Add &amp; Norm, a position-wise FFN, and another Add &amp; Norm. Repeating the block <span class="math inline">\(L\)</span> times gives</p>
+<p><span class="math display">\[
+Z^{(\ell)}=\operatorname{DecoderBlock}_{\ell}(Z^{(\ell-1)}).
+\]</span></p>
+<p>The final states pass through a vocabulary projection and softmax to produce next-token probabilities. Inputs are shifted target tokens plus position representations.</p>
+<div id="fig-decoder-stack" class="quarto-float quarto-figure quarto-figure-center anchored" data-fig-align="center">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-decoder-stack-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="images/decoder-stack.svg" class="img-fluid quarto-figure quarto-figure-center figure-img" style="width:92.0%">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-decoder-stack-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;7: A decoder is a stack of repeated decoder blocks. Masked self-attention, residual normalization, and the FFN repeat before the final Linear + Softmax head.
+</figcaption>
+</figure>
+</div>
+</section>
+<section id="sec-encoder-no-mask" class="level2" data-number="5.2">
+<h2 data-number="5.2" class="anchored" data-anchor-id="sec-encoder-no-mask"><span class="header-section-number">5.2</span> Why the encoder has no causal mask</h2>
+<p>In translation, the complete source sentence is available before generation begins. The decoder must not inspect future French target words, because those are answers it must predict. The encoder, however, should use the complete English sentence: its job is to construct informed source representations.</p>
+<p>For “She visited the bank to deposit cash,” the representation of <em>bank</em> benefits from both <em>visited</em> on its left and <em>deposit cash</em> on its right. Thus encoder self-attention uses the full <span class="math inline">\(T\times T\)</span> score matrix without a triangular causal mask.</p>
+<p>An encoder block contains unmasked multi-head self-attention, Add &amp; Norm, a position-wise FFN, and Add &amp; Norm. Repeating it gives</p>
+<p><span class="math display">\[
+X^{(\ell)}=\operatorname{EncoderBlock}_{\ell}(X^{(\ell-1)}).
+\]</span></p>
+<div id="fig-encoder-stack" class="quarto-float quarto-figure quarto-figure-center anchored" data-fig-align="center">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-encoder-stack-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="images/encoder-stack.svg" class="img-fluid quarto-figure quarto-figure-center figure-img" style="width:92.0%">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-encoder-stack-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;8: The corresponding encoder stack uses the same repeated-block visual language but removes the causal mask, allowing full source context.
+</figcaption>
+</figure>
+</div>
+</section>
+</section>
+<section id="sec-cross-attention" class="level1" data-number="6">
+<h1 data-number="6"><span class="header-section-number">6</span> Cross-attention connects both towers</h1>
+<p>Let <span class="math inline">\(H_{enc}\)</span> be the complete encoder memory and <span class="math inline">\(Z_{dec}\)</span> the current decoder representation. Cross-attention uses</p>
+<p><span class="math display">\[
+Q=Z_{dec}W_Q,
+\qquad K=H_{enc}W_K,
+\qquad V=H_{enc}W_V,
+\]</span></p>
+<p><span id="eq-cross-attention"><span class="math display">\[
+\operatorname{CrossAttn}(Z,H)=
+\operatorname{softmax}\!\left(\frac{QK^\top}{\sqrt{d_k}}\right)V.
+\tag{5}\]</span></span></p>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>Mechanism</th>
+<th>Query source</th>
+<th>Key/value source</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Encoder self-attention</td>
+<td>encoder</td>
+<td>encoder</td>
+</tr>
+<tr class="even">
+<td>Decoder masked self-attention</td>
+<td>decoder prefix</td>
+<td>decoder prefix</td>
+</tr>
+<tr class="odd">
+<td>Cross-attention</td>
+<td>decoder</td>
+<td>encoder memory</td>
+</tr>
+</tbody>
+</table>
+<p>At each target position, the decoder query expresses what information is needed now. It scores every encoded source key, then retrieves a weighted mixture of source values. Each decoder block places this cross-attention sublayer between masked self-attention and the FFN.</p>
+<div id="fig-cross-attention" class="quarto-float quarto-figure quarto-figure-center anchored" data-fig-align="center">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-cross-attention-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="images/cross-attention.svg" class="img-fluid quarto-figure quarto-figure-center figure-img" style="width:92.0%">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-cross-attention-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;9: Cross-attention keeps the origins inspectable: the decoder supplies the query while the complete encoder memory supplies keys and values.
+</figcaption>
+</figure>
+</div>
+<div id="fig-complete-encoder-decoder" class="quarto-float quarto-figure quarto-figure-center anchored" data-fig-align="center">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-complete-encoder-decoder-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="images/encoder-decoder.svg" class="img-fluid quarto-figure quarto-figure-center figure-img" style="width:94.0%">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-complete-encoder-decoder-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;10: The complete encoder–decoder Transformer. The curved connection makes the decisive architectural fact visible: encoder memory enters the cross-attention sublayer of every decoder block.
+</figcaption>
+</figure>
+</div>
+<p>For a complementary implementation-oriented derivation, see the <a href="https://nlp.seas.harvard.edu/annotated-transformer/">Annotated Transformer</a> and <a href="https://pytorch.org/tutorials/beginner/translation_transformer.html">PyTorch’s language translation tutorial</a>.</p>
+</section>
+<section id="sec-families" class="level1" data-number="7">
+<h1 data-number="7"><span class="header-section-number">7</span> Three Transformer families</h1>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 25%">
+<col style="width: 25%">
+<col style="width: 25%">
+<col style="width: 25%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Family</th>
+<th>Visibility pattern</th>
+<th>Typical output</th>
+<th>Representative applications</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Encoder-only</td>
+<td>full bidirectional input</td>
+<td>representation or label</td>
+<td>classification, tagging, extractive QA, retrieval</td>
+</tr>
+<tr class="even">
+<td>Decoder-only</td>
+<td>causal prefix</td>
+<td>next-token distribution</td>
+<td>generation, dialogue, code completion, in-context learning</td>
+</tr>
+<tr class="odd">
+<td>Encoder–decoder</td>
+<td>full source + causal target</td>
+<td>target sequence</td>
+<td>translation, summarization, generative QA</td>
+</tr>
+</tbody>
+</table>
+<p><a href="https://aclanthology.org/N19-1423/">BERT</a> exemplifies encoder-only pretraining, <a href="https://arxiv.org/abs/2005.14165">GPT-3</a> exemplifies decoder-only autoregressive modeling, and <a href="https://www.jmlr.org/papers/v21/20-074.html">T5</a> develops a unified encoder–decoder text-to-text framework. The family is determined primarily by the permitted communication pattern and the form of the desired output.</p>
+</section>
+<section id="sec-evidence" class="level1" data-number="8">
+<h1 data-number="8"><span class="header-section-number">8</span> Evidence and limitations</h1>
+<section id="sec-translation-results" class="level2" data-number="8.1">
+<h2 data-number="8.1" class="anchored" data-anchor-id="sec-translation-results"><span class="header-section-number">8.1</span> Translation results</h2>
+<p>The original Transformer achieved 28.4 BLEU on WMT 2014 English→German and 41.8 on English→French. The former improved over the previously reported best systems, including ensembles, by more than two BLEU points. The large model trained for 3.5 days on eight GPUs <span class="citation" data-cites="vaswani2017attention">(<a href="#ref-vaswani2017attention" role="doc-biblioref">Vaswani et al. 2017</a>)</span>. These results mattered because the architecture combined quality with a much more parallel training computation than recurrence.</p>
+</section>
+<section id="sec-transfer-results" class="level2" data-number="8.2">
+<h2 data-number="8.2" class="anchored" data-anchor-id="sec-transfer-results"><span class="header-section-number">8.2</span> Transfer across tasks</h2>
+<p>BERT-Large reported a GLUE score of 80.5, SQuAD 1.1 F1 of 93.2, and SWAG accuracy of 86.3. The important result was not only each number: one pretrained bidirectional encoder could be fine-tuned across many language-understanding tasks. T5 extended this transfer principle by representing every task as text-to-text and reported gains across GLUE, SuperGLUE, question answering, summarization, and translation.</p>
+<div class="callout callout-style-simple callout-caution">
+<div class="callout-body d-flex">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-body-container">
+<p>Benchmark metrics are not interchangeable. Compare systems within the same dataset, split, and metric—not a BLEU score directly with an F1 or accuracy score.</p>
+</div>
+</div>
+</div>
+</section>
+<section id="sec-quadratic" class="level2" data-number="8.3">
+<h2 data-number="8.3" class="anchored" data-anchor-id="sec-quadratic"><span class="header-section-number">8.3</span> Full attention is quadratic</h2>
+<p>With <span class="math inline">\(Q,K\in\mathbb R^{T\times d_k}\)</span>,</p>
+<p><span class="math display">\[
+S=QK^\top/\sqrt{d_k}\in\mathbb R^{T\times T}.
+\]</span></p>
+<p>There are <span class="math inline">\(T^2\)</span> query–key scores per head and example, and the classical per-layer attention time is <span class="math inline">\(\mathcal O(T^2d)\)</span> <span class="citation" data-cites="vaswani2017attention">(<a href="#ref-vaswani2017attention" role="doc-biblioref">Vaswani et al. 2017</a>)</span>. Doubling context length quadruples the number of scores:</p>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th style="text-align: right;">Context length <span class="math inline">\(T\)</span></th>
+<th style="text-align: right;">Scores <span class="math inline">\(T^2\)</span></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: right;">128</td>
+<td style="text-align: right;">16,384</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">256</td>
+<td style="text-align: right;">65,536</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">512</td>
+<td style="text-align: right;">262,144</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">1,024</td>
+<td style="text-align: right;">1,048,576</td>
+</tr>
+</tbody>
+</table>
+<p>This limitation motivates sparse attention, linear attention, recurrence or memory, and optimized exact algorithms. Useful entry points include <a href="https://arxiv.org/abs/1904.10509">Sparse Transformers</a>, <a href="https://arxiv.org/abs/2004.05150">Longformer</a>, <a href="https://arxiv.org/abs/2006.16236">Transformers are RNNs</a>, and <a href="https://arxiv.org/abs/2205.14135">FlashAttention</a>. These approaches make different trade-offs: some approximate or restrict the attention pattern; FlashAttention computes exact attention while reducing memory traffic.</p>
+</section>
+</section>
+<section id="sec-synthesis" class="level1" data-number="9">
+<h1 data-number="9"><span class="header-section-number">9</span> Synthesis</h1>
+<p>The complete architecture now follows from the limitations we repaired:</p>
+<ol type="1">
+<li><strong>Position</strong> distinguishes order.</li>
+<li><strong>Multi-head attention</strong> communicates across tokens.</li>
+<li><strong>The FFN</strong> transforms each token nonlinearly.</li>
+<li><strong>Causal masking</strong> prevents target leakage.</li>
+<li><strong>Residual connections and LayerNorm</strong> make depth trainable.</li>
+<li><strong>The encoder</strong> reads a complete input.</li>
+<li><strong>The decoder</strong> generates from a prefix.</li>
+<li><strong>Cross-attention</strong> lets the decoder retrieve encoder memory.</li>
+</ol>
+<p>The remaining question is not architectural but statistical: how can a large Transformer learn useful language representations from text without requiring a human label for every example? The next chapter answers this through <strong>pretraining and BERT</strong>.</p>
+<section id="sec-further-reading" class="level2" data-number="9.1">
+<h2 data-number="9.1" class="anchored" data-anchor-id="sec-further-reading"><span class="header-section-number">9.1</span> Further reading</h2>
+<ul>
+<li><a href="https://web.stanford.edu/class/cs224n/slides_w26/cs224n-2026-lecture05-transformers.pdf">Stanford CS224N · Attention and Transformers</a></li>
+<li><a href="https://papers.neurips.cc/paper/7181-attention-is-all-you-need">Vaswani et al.&nbsp;· Attention Is All You Need</a></li>
+<li><a href="https://jalammar.github.io/illustrated-transformer/">Jay Alammar · The Illustrated Transformer</a></li>
+<li><a href="https://nlp.seas.harvard.edu/annotated-transformer/">Harvard NLP · The Annotated Transformer</a></li>
+<li><a href="https://pytorch.org/tutorials/intermediate/transformer_building_blocks.html">PyTorch · Transformer building blocks</a></li>
+<li><a href="https://d2l.ai/chapter_attention-mechanisms-and-transformers/transformer.html">Dive into Deep Learning · Transformers</a></li>
+<li><a href="https://aclanthology.org/N19-1423/">BERT paper</a></li>
+<li><a href="https://www.jmlr.org/papers/v21/20-074.html">T5 paper</a></li>
+<li><a href="https://arxiv.org/abs/2205.14135">FlashAttention paper</a></li>
+</ul>
+</section>
+</section>
+<section id="references" class="level1 unnumbered">
+<h1 class="unnumbered">References</h1>
+<div id="refs" class="references csl-bib-body hanging-indent" role="list">
+<div id="ref-vaswani2017attention" class="csl-entry" role="listitem">
+Vaswani, Ashish, Noam Shazeer, Niki Parmar, et al. 2017. <span>“Attention Is All You Need.”</span> <em>Advances in Neural Information Processing Systems</em> 30. <a href="https://arxiv.org/abs/1706.03762">https://arxiv.org/abs/1706.03762</a>.
+</div>
+</div>
+
+
+</section>
+
+</main> <!-- /main -->
+<script>
+(() => {
+  const padding = 24;
+
+  function cropMermaid(svg) {
+    const root = svg.querySelector(":scope > g, g.root");
+    if (!root) return;
+
+    let box;
+    try {
+      box = root.getBBox();
+    } catch (_) {
+      return;
+    }
+
+    if (!box.width || !box.height) return;
+
+    svg.setAttribute(
+      "viewBox",
+      `${box.x - padding} ${box.y - padding} ${box.width + 2 * padding} ${box.height + 2 * padding}`
+    );
+    svg.setAttribute("width", "100%");
+    svg.removeAttribute("height");
+    svg.style.width = "100%";
+    svg.style.height = "auto";
+    svg.style.maxWidth = "100%";
+    svg.style.display = "block";
+    svg.style.marginInline = "auto";
+    svg.dataset.cropped = "true";
+  }
+
+  function cropAllMermaid() {
+    document
+      .querySelectorAll("svg.mermaid-js:not([data-cropped])")
+      .forEach(cropMermaid);
+  }
+
+  const observer = new MutationObserver(cropAllMermaid);
+  observer.observe(document.documentElement, { childList: true, subtree: true });
+
+  window.addEventListener("load", () => {
+    cropAllMermaid();
+    window.setTimeout(cropAllMermaid, 250);
+    window.setTimeout(cropAllMermaid, 1000);
+  });
+})();
+</script>
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp("https:\/\/anassbelcaid\.github\.io\/nlp-course-2026\/");
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+            // target, if specified
+            link.setAttribute("target", "_blank");
+            if (link.getAttribute("rel") === null) {
+              link.setAttribute("rel", "noopener");
+            }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+</div> <!-- /content -->
+<footer class="footer">
+  <div class="nav-footer">
+    <div class="nav-footer-left">
+<p>Natural Language Processing · Université Abdelmalek Essaâdi</p>
+</div>   
+    <div class="nav-footer-center">
+      &nbsp;
+    </div>
+    <div class="nav-footer-right">
+<p>Built with Quarto</p>
+</div>
+  </div>
+</footer>
+
+
+
+
+<script src="../../site_libs/quarto-html/zenscroll-min.js"></script>
+</body></html>

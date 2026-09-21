@@ -1,0 +1,1494 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.10.18">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="author" content="Dr.&nbsp;A. Belcaid">
+<meta name="description" content="How modern NLP turns text into tokens and tokens into useful geometric representations.">
+
+<title>From Text to Meaning – CS 351 · NLP</title>
+<style>
+/* Default styles provided by pandoc.
+** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+*/
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: 1.5em;}
+div.column{flex: auto;}
+@media screen {
+div.columns{gap: min(4vw, 1.5em);}
+div.column{overflow-x: auto;}
+}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+/* CSS for citations */
+div.csl-bib-body { }
+div.csl-entry {
+  clear: both;
+}
+.hanging-indent div.csl-entry {
+  margin-left:2em;
+  text-indent:-2em;
+}
+div.csl-left-margin {
+  min-width:2em;
+  float:left;
+}
+div.csl-right-inline {
+  margin-left:2em;
+  padding-left:1em;
+}
+div.csl-indent {
+  margin-left: 2em;
+}</style>
+
+
+<script src="../../site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="../../site_libs/clipboard/clipboard.min.js"></script>
+<script src="../../site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="../../site_libs/quarto-search/fuse.min.js"></script>
+<script src="../../site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="../../">
+<script src="../../site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="../../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="../../site_libs/quarto-html/popper.min.js"></script>
+<script src="../../site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="../../site_libs/quarto-html/anchor.min.js"></script>
+<link href="../../site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="../../site_libs/quarto-html/quarto-syntax-highlighting-095245003bb80bd2beb305de39928752.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="../../site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="../../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="../../site_libs/bootstrap/bootstrap-bae81809e9689276853494912f89ea28.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<script id="quarto-search-options" type="application/json">{
+  "location": "navbar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "end",
+  "type": "overlay",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script>
+<style>html{ scroll-behavior: smooth; }</style>
+<script src="../../site_libs/quarto-diagram/mermaid.min.js"></script>
+<script src="../../site_libs/quarto-diagram/mermaid-init.js"></script>
+<link href="../../site_libs/quarto-diagram/mermaid.css" rel="stylesheet">
+
+  <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
+  <script defer="" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-chtml.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN" && texText && texText.data) {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script>
+
+<link rel="stylesheet" href="../../styles.css">
+</head>
+
+<body class="floating nav-fixed quarto-light">
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+    <nav class="navbar navbar-expand-lg " data-bs-theme="dark">
+      <div class="navbar-container container-fluid">
+      <div class="navbar-brand-container mx-auto">
+    <a class="navbar-brand" href="../../index.html">
+    <span class="navbar-title">CS 351 · NLP</span>
+    </a>
+  </div>
+            <div id="quarto-search" class="" title="Search"></div>
+          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse" aria-controls="navbarCollapse" role="menu" aria-expanded="false" aria-label="Toggle navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+  <span class="navbar-toggler-icon"></span>
+</button>
+          <div class="collapse navbar-collapse" id="navbarCollapse">
+            <ul class="navbar-nav navbar-nav-scroll me-auto">
+  <li class="nav-item">
+    <a class="nav-link" href="../../index.html"> 
+<span class="menu-text">Home</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../../logistics.html"> 
+<span class="menu-text">Logistics</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../../schedule.html"> 
+<span class="menu-text">Schedule</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../../coding-projects.html"> 
+<span class="menu-text">Coding Projects</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../../student-projects.html"> 
+<span class="menu-text">Student Projects</span></a>
+  </li>  
+</ul>
+            <ul class="navbar-nav navbar-nav-scroll ms-auto">
+  <li class="nav-item compact">
+    <a class="nav-link" href="https://github.com/anassBelcaid"> <i class="bi bi-github" role="img" aria-label="Instructor GitHub profile">
+</i> 
+<span class="menu-text"></span></a>
+  </li>  
+</ul>
+          </div> <!-- /navcollapse -->
+            <div class="quarto-navbar-tools">
+</div>
+      </div> <!-- /container-fluid -->
+    </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
+<!-- sidebar -->
+  <nav id="quarto-sidebar" class="sidebar collapse collapse-horizontal quarto-sidebar-collapse-item sidebar-navigation floating overflow-auto">
+    <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">On this page</h2>
+   
+  <ul>
+  <li><a href="#sec-tokenization" id="toc-sec-tokenization" class="nav-link active" data-scroll-target="#sec-tokenization"><span class="header-section-number">1</span> What is tokenization?</a>
+  <ul class="collapse">
+  <li><a href="#one-string-several-valid-segmentations" id="toc-one-string-several-valid-segmentations" class="nav-link" data-scroll-target="#one-string-several-valid-segmentations"><span class="header-section-number">1.1</span> One string, several valid segmentations</a></li>
+  <li><a href="#token-type-and-vocabulary" id="toc-token-type-and-vocabulary" class="nav-link" data-scroll-target="#token-type-and-vocabulary"><span class="header-section-number">1.2</span> Token, type, and vocabulary</a></li>
+  </ul></li>
+  <li><a href="#sec-characters" id="toc-sec-characters" class="nav-link" data-scroll-target="#sec-characters"><span class="header-section-number">2</span> Why not tokenize into characters?</a></li>
+  <li><a href="#sec-words" id="toc-sec-words" class="nav-link" data-scroll-target="#sec-words"><span class="header-section-number">3</span> Why not tokenize into words?</a>
+  <ul class="collapse">
+  <li><a href="#the-granularity-dilemma" id="toc-the-granularity-dilemma" class="nav-link" data-scroll-target="#the-granularity-dilemma"><span class="header-section-number">3.1</span> The granularity dilemma</a></li>
+  </ul></li>
+  <li><a href="#sec-subwords" id="toc-sec-subwords" class="nav-link" data-scroll-target="#sec-subwords"><span class="header-section-number">4</span> The modern compromise: subwords</a>
+  <ul class="collapse">
+  <li><a href="#the-intuition-behind-byte-pair-encoding" id="toc-the-intuition-behind-byte-pair-encoding" class="nav-link" data-scroll-target="#the-intuition-behind-byte-pair-encoding"><span class="header-section-number">4.1</span> The intuition behind byte-pair encoding</a></li>
+  <li><a href="#names-you-will-encounter" id="toc-names-you-will-encounter" class="nav-link" data-scroll-target="#names-you-will-encounter"><span class="header-section-number">4.2</span> Names you will encounter</a></li>
+  </ul></li>
+  <li><a href="#sec-practice" id="toc-sec-practice" class="nav-link" data-scroll-target="#sec-practice"><span class="header-section-number">5</span> Tokenization in practice</a>
+  <ul class="collapse">
+  <li><a href="#a-deliberately-small-regular-expression-tokenizer" id="toc-a-deliberately-small-regular-expression-tokenizer" class="nav-link" data-scroll-target="#a-deliberately-small-regular-expression-tokenizer"><span class="header-section-number">5.1</span> A deliberately small regular-expression tokenizer</a></li>
+  <li><a href="#a-linguistic-tokenizer-with-spacy" id="toc-a-linguistic-tokenizer-with-spacy" class="nav-link" data-scroll-target="#a-linguistic-tokenizer-with-spacy"><span class="header-section-number">5.2</span> A linguistic tokenizer with spaCy</a></li>
+  <li><a href="#a-pretrained-model-tokenizer" id="toc-a-pretrained-model-tokenizer" class="nav-link" data-scroll-target="#a-pretrained-model-tokenizer"><span class="header-section-number">5.3</span> A pretrained model tokenizer</a></li>
+  </ul></li>
+  <li><a href="#sec-ids" id="toc-sec-ids" class="nav-link" data-scroll-target="#sec-ids"><span class="header-section-number">6</span> Token IDs are not meanings</a></li>
+  <li><a href="#sec-embeddings" id="toc-sec-embeddings" class="nav-link" data-scroll-target="#sec-embeddings"><span class="header-section-number">7</span> Embeddings: meaning as geometry</a>
+  <ul class="collapse">
+  <li><a href="#measuring-similarity" id="toc-measuring-similarity" class="nav-link" data-scroll-target="#measuring-similarity"><span class="header-section-number">7.1</span> Measuring similarity</a></li>
+  <li><a href="#the-classical-analogy" id="toc-the-classical-analogy" class="nav-link" data-scroll-target="#the-classical-analogy"><span class="header-section-number">7.2</span> The classical analogy</a></li>
+  </ul></li>
+  <li><a href="#sec-gensim" id="toc-sec-gensim" class="nav-link" data-scroll-target="#sec-gensim"><span class="header-section-number">8</span> Exploring pretrained embeddings with Gensim</a>
+  <ul class="collapse">
+  <li><a href="#plot-a-small-part-of-the-embedding-space" id="toc-plot-a-small-part-of-the-embedding-space" class="nav-link" data-scroll-target="#plot-a-small-part-of-the-embedding-space"><span class="header-section-number">8.1</span> Plot a small part of the embedding space</a></li>
+  </ul></li>
+  <li><a href="#sec-next" id="toc-sec-next" class="nav-link" data-scroll-target="#sec-next"><span class="header-section-number">9</span> What comes next?</a></li>
+  <li><a href="#sec-resources" id="toc-sec-resources" class="nav-link" data-scroll-target="#sec-resources"><span class="header-section-number">10</span> Further reading and tools</a>
+  <ul class="collapse">
+  <li><a href="#good-reads" id="toc-good-reads" class="nav-link" data-scroll-target="#good-reads"><span class="header-section-number">10.1</span> Good reads</a></li>
+  <li><a href="#libraries-used-in-this-chapter" id="toc-libraries-used-in-this-chapter" class="nav-link" data-scroll-target="#libraries-used-in-this-chapter"><span class="header-section-number">10.2</span> Libraries used in this chapter</a></li>
+  </ul></li>
+  </ul>
+<div class="quarto-alternate-formats"><h2>Other Formats</h2><ul><li><a href="index.pdf"><i class="bi bi-file-pdf"></i>PDF</a></li></ul></div></nav>
+</nav>
+<div id="quarto-sidebar-glass" class="quarto-sidebar-collapse-item" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item"></div>
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar zindex-bottom">
+    </div>
+<!-- main -->
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title">From Text to Meaning</h1>
+<p class="subtitle lead">Chapter 2 · Tokenization and an introduction to word embeddings</p>
+</div>
+
+<div>
+  <div class="description">
+    How modern NLP turns text into tokens and tokens into useful geometric representations.
+  </div>
+</div>
+
+
+<div class="quarto-title-meta">
+
+    <div>
+    <div class="quarto-title-meta-heading">Author</div>
+    <div class="quarto-title-meta-contents">
+             <p>Dr.&nbsp;A. Belcaid </p>
+          </div>
+  </div>
+    
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<p><img src="../../images/uae-logo.png" class="img-fluid"></p>
+<p>CS 351 · Introduction to Natural Language Processing<br>
+Chapter 2 · Tokenization and embeddings</p>
+<p>In the previous chapter, we treated “text” as if it could be handed directly to a model. It cannot. A model operates on numbers, so we need to make two decisions:</p>
+<ol type="1">
+<li><strong>Tokenization:</strong> which pieces of text will be the model’s units?</li>
+<li><strong>Representation:</strong> which numbers will stand for those units?</li>
+</ol>
+<p>This chapter develops the main ideas and leaves most implementation details to the libraries that solve them well.</p>
+<div class="cell" data-fig-width="7.2" data-layout-align="default">
+<div class="cell-output-display">
+<div id="fig-chapter-journey" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-chapter-journey-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<div>
+<pre class="mermaid mermaid-js" data-label="fig-chapter-journey">flowchart LR
+    A[Raw text] --&gt; B[Tokens]
+    B --&gt; C[Token IDs]
+    C --&gt; D[Vectors]
+    D --&gt; E[Model]
+
+    B -. tokenization .-&gt; B
+    D -. embedding .-&gt; D
+
+    classDef raw fill:#f4efe4,stroke:#b48a32,color:#17364a
+    classDef units fill:#e8f2f0,stroke:#0f6f78,color:#17364a
+    classDef vectors fill:#eaf0f5,stroke:#315f7d,color:#17364a
+    class A raw
+    class B,C units
+    class D,E vectors
+</pre>
+</div>
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-chapter-journey-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;1: Our journey: choose units, assign identifiers, then represent those units in a space where useful relationships can emerge.
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<div class="callout callout-style-simple callout-note callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>Learning objectives
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>After this chapter, you should be able to:</p>
+<ol type="1">
+<li>explain what tokenization does and why it is a modeling decision;</li>
+<li>describe the limitations of character- and word-level tokenization;</li>
+<li>explain why subwords are the dominant modern compromise;</li>
+<li>inspect tokenization with regular expressions, spaCy, and a pretrained model tokenizer;</li>
+<li>distinguish token identifiers, one-hot vectors, and dense embeddings; and</li>
+<li>use pretrained embeddings to explore similarity and analogy.</li>
+</ol>
+</div>
+</div>
+<section id="sec-tokenization" class="level1" data-number="1">
+<h1 data-number="1"><span class="header-section-number">1</span> What is tokenization?</h1>
+<p><strong>Tokenization</strong> segments text into the units a model will process. Each observed unit is a <strong>token</strong>. The set of distinct units known to the model is its <strong>vocabulary</strong>.</p>
+<pre class="text"><code>Text       "NLP is fascinating!"
+Tokens     ["NLP", "is", "fascinating", "!"]
+Token IDs  [314, 27, 8921, 4]</code></pre>
+<p>The identifiers are vocabulary addresses. The number <code>8921</code> does not mean that <em>fascinating</em> is greater than <em>NLP</em>; it only points to a row in a table.</p>
+<section id="one-string-several-valid-segmentations" class="level2" data-number="1.1">
+<h2 data-number="1.1" class="anchored" data-anchor-id="one-string-several-valid-segmentations"><span class="header-section-number">1.1</span> One string, several valid segmentations</h2>
+<p>What is the correct tokenization of <code>don't</code>?</p>
+<pre class="text"><code>["don't"]
+["do", "n't"]
+["don", "'", "t"]
+["d", "o", "n", "'", "t"]</code></pre>
+<p>All four are mechanically possible. A linguistically informed system might preserve the contraction or separate its grammatical components. A subword model might choose reusable character sequences. A character model uses individual symbols.</p>
+<div class="callout callout-style-simple callout-important">
+<div class="callout-body d-flex">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-body-container">
+<p>Tokenization is not neutral cleanup. It determines the units the model can see, the vocabulary it must store, and the length of every input.</p>
+</div>
+</div>
+</div>
+</section>
+<section id="token-type-and-vocabulary" class="level2" data-number="1.2">
+<h2 data-number="1.2" class="anchored" data-anchor-id="token-type-and-vocabulary"><span class="header-section-number">1.2</span> Token, type, and vocabulary</h2>
+<p>In the sentence:</p>
+<blockquote class="blockquote">
+<p>A model is a model.</p>
+</blockquote>
+<p>there are six word/punctuation <strong>tokens</strong>, but fewer distinct <strong>types</strong> because <code>a</code> and <code>model</code> occur twice. A vocabulary contains types; an input contains token instances.</p>
+<div class="cell" data-fig-width="6.7" data-layout-align="default">
+<div class="cell-output-display">
+<div id="fig-type-token" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-type-token-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<div>
+<pre class="mermaid mermaid-js" data-label="fig-type-token">flowchart TB
+    S["A model is a model ."]
+    S --&gt; T1[A]
+    S --&gt; T2[model]
+    S --&gt; T3[is]
+    S --&gt; T4[a]
+    S --&gt; T5[model]
+    S --&gt; T6[.]
+    T1 --&gt; V1["vocabulary: a"]
+    T4 --&gt; V1
+    T2 --&gt; V2["vocabulary: model"]
+    T5 --&gt; V2
+    T3 --&gt; V3["vocabulary: is"]
+    T6 --&gt; V4["vocabulary: ."]
+
+    classDef text fill:#f4efe4,stroke:#b48a32,color:#17364a
+    classDef token fill:#e8f2f0,stroke:#0f6f78,color:#17364a
+    classDef vocab fill:#eaf0f5,stroke:#315f7d,color:#17364a
+    class S text
+    class T1,T2,T3,T4,T5,T6 token
+    class V1,V2,V3,V4 vocab
+</pre>
+</div>
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-type-token-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;2: Repeated token instances point to the same vocabulary entry.
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+</section>
+</section>
+<section id="sec-characters" class="level1" data-number="2">
+<h1 data-number="2"><span class="header-section-number">2</span> Why not tokenize into characters?</h1>
+<p>A character vocabulary is small and can spell any new word.</p>
+<pre class="text"><code>"token" → ["t", "o", "k", "e", "n"]</code></pre>
+<p>This avoids unknown words and preserves spelling. It also creates long sequences whose individual units carry little meaning. A model must learn that five distant character decisions together form the familiar concept <em>token</em>.</p>
+<p>For modern sequence models, length matters: longer sequences require more computation and make long-range relationships harder to manage.</p>
+<div class="cell" data-fig-width="6.5" data-layout-align="default">
+<div class="cell-output-display">
+<div id="fig-character-tradeoff" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-character-tradeoff-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<div>
+<pre class="mermaid mermaid-js" data-label="fig-character-tradeoff">flowchart LR
+    A[Small vocabulary] --&gt; B[No unknown words]
+    B --&gt; C[Long sequences]
+    C --&gt; D[More computation]
+    C --&gt; E[Meaning spread across many positions]
+
+    classDef benefit fill:#e8f2f0,stroke:#0f6f78,color:#17364a
+    classDef cost fill:#f8eeee,stroke:#a34f4f,color:#17364a
+    class A,B benefit
+    class C,D,E cost
+</pre>
+</div>
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-character-tradeoff-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;3: Character tokenization buys universal coverage at the cost of long sequences.
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+</section>
+<section id="sec-words" class="level1" data-number="3">
+<h1 data-number="3"><span class="header-section-number">3</span> Why not tokenize into words?</h1>
+<p>Word tokens are intuitive and produce shorter sequences:</p>
+<pre class="text"><code>"Tokenization is useful" → ["Tokenization", "is", "useful"]</code></pre>
+<p>But language continually creates new names, inflections, compounds, technical terms, hashtags, and spelling variants. A fixed vocabulary can never contain every word form.</p>
+<pre class="text"><code>train        known
+trained      perhaps known
+retrained    perhaps unknown
+retraining   perhaps unknown</code></pre>
+<p>A word-level system either grows an enormous vocabulary or maps unfamiliar words to a single <code>&lt;UNK&gt;</code> token. Both choices waste useful structure.</p>
+<section id="the-granularity-dilemma" class="level2" data-number="3.1">
+<h2 data-number="3.1" class="anchored" data-anchor-id="the-granularity-dilemma"><span class="header-section-number">3.1</span> The granularity dilemma</h2>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 16%">
+<col style="width: 22%">
+<col style="width: 22%">
+<col style="width: 22%">
+<col style="width: 16%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Unit</th>
+<th style="text-align: right;">Vocabulary</th>
+<th style="text-align: right;">Sequence</th>
+<th style="text-align: right;">New words</th>
+<th>Main weakness</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Character</td>
+<td style="text-align: right;">Small</td>
+<td style="text-align: right;">Long</td>
+<td style="text-align: right;">Always representable</td>
+<td>Meaning is distributed across many positions</td>
+</tr>
+<tr class="even">
+<td>Word</td>
+<td style="text-align: right;">Very large</td>
+<td style="text-align: right;">Short</td>
+<td style="text-align: right;">Often unknown</td>
+<td>Vocabulary cannot cover productive language</td>
+</tr>
+<tr class="odd">
+<td>Subword</td>
+<td style="text-align: right;">Moderate</td>
+<td style="text-align: right;">Moderate</td>
+<td style="text-align: right;">Usually decomposable</td>
+<td>Segmentation can be unintuitive</td>
+</tr>
+</tbody>
+</table>
+<div class="cell" data-fig-width="7" data-layout-align="default">
+<div class="cell-output-display">
+<div id="fig-granularity" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-granularity-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<div>
+<pre class="mermaid mermaid-js" data-label="fig-granularity">flowchart LR
+    C[Characters&lt;br/&gt;small vocabulary&lt;br/&gt;long sequence]
+    S[Subwords&lt;br/&gt;balanced compromise]
+    W[Words&lt;br/&gt;large vocabulary&lt;br/&gt;short sequence]
+    C &lt;--&gt; S &lt;--&gt; W
+
+    classDef edge fill:#f4efe4,stroke:#b48a32,color:#17364a
+    classDef middle fill:#e8f2f0,stroke:#0f6f78,color:#17364a,stroke-width:3px
+    class C,W edge
+    class S middle
+</pre>
+</div>
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-granularity-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;4: Subwords occupy the useful middle ground between character coverage and word efficiency.
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+</section>
+</section>
+<section id="sec-subwords" class="level1" data-number="4">
+<h1 data-number="4"><span class="header-section-number">4</span> The modern compromise: subwords</h1>
+<p>A <strong>subword tokenizer</strong> keeps frequent forms intact and decomposes rarer forms into reusable pieces.</p>
+<pre class="text"><code>the             → ["the"]
+tokenization    → ["token", "ization"]
+unhappiness     → ["un", "happi", "ness"]</code></pre>
+<p>These pieces are learned from frequency patterns, not guaranteed linguistic morphemes. The split <code>happi + ness</code> is useful to a model even though <code>happi</code> is not an English word.</p>
+<section id="the-intuition-behind-byte-pair-encoding" class="level2" data-number="4.1">
+<h2 data-number="4.1" class="anchored" data-anchor-id="the-intuition-behind-byte-pair-encoding"><span class="header-section-number">4.1</span> The intuition behind byte-pair encoding</h2>
+<p>Byte-pair encoding (BPE) starts with small units and repeatedly merges frequent neighboring pairs <span class="citation" data-cites="sennrich2016subword">(<a href="#ref-sennrich2016subword" role="doc-biblioref">Sennrich et al. 2016</a>)</span>.</p>
+<div class="cell" data-fig-width="7.2" data-layout-align="default">
+<div class="cell-output-display">
+<div id="fig-bpe-intuition" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-bpe-intuition-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<div>
+<pre class="mermaid mermaid-js" data-label="fig-bpe-intuition">flowchart LR
+    A["l o w e r"] --&gt;|merge l + o| B["lo w e r"]
+    B --&gt;|merge lo + w| C["low e r"]
+    C --&gt;|merge e + r| D["low er"]
+    D --&gt; E["vocabulary includes: low, er"]
+
+    classDef stage fill:#e8f2f0,stroke:#0f6f78,color:#17364a
+    classDef result fill:#eaf0f5,stroke:#315f7d,color:#17364a
+    class A,B,C,D stage
+    class E result
+</pre>
+</div>
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-bpe-intuition-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;5: A simplified BPE story: frequent adjacent units become reusable vocabulary entries.
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<p>We only need the principle today. The complete learning algorithm and its alternatives belong to a deeper treatment of model construction.</p>
+</section>
+<section id="names-you-will-encounter" class="level2" data-number="4.2">
+<h2 data-number="4.2" class="anchored" data-anchor-id="names-you-will-encounter"><span class="header-section-number">4.2</span> Names you will encounter</h2>
+<ul>
+<li><strong>BPE:</strong> merges frequent adjacent units <span class="citation" data-cites="sennrich2016subword">(<a href="#ref-sennrich2016subword" role="doc-biblioref">Sennrich et al. 2016</a>)</span>.</li>
+<li><strong>WordPiece:</strong> grows a vocabulary using a likelihood-based criterion rather than raw pair frequency <span class="citation" data-cites="schuster2012wordpiece">(<a href="#ref-schuster2012wordpiece" role="doc-biblioref">Schuster and Nakajima 2012</a>)</span>.</li>
+<li><strong>Unigram:</strong> begins with many candidate pieces and removes those whose absence least harms the segmentation likelihood <span class="citation" data-cites="kudo2018subwordregularization">(<a href="#ref-kudo2018subwordregularization" role="doc-biblioref">Kudo 2018</a>)</span>.</li>
+<li><strong>SentencePiece:</strong> trains directly from raw text and treats whitespace explicitly <span class="citation" data-cites="kudo2018sentencepiece">(<a href="#ref-kudo2018sentencepiece" role="doc-biblioref">Kudo and Richardson 2018</a>)</span>.</li>
+<li><strong>Byte-level subwords:</strong> begin from a fixed byte vocabulary, guaranteeing coverage, then merge byte sequences for greater efficiency <span class="citation" data-cites="wang2019bytelevel">(<a href="#ref-wang2019bytelevel" role="doc-biblioref">Wang et al. 2019</a>)</span>.</li>
+</ul>
+<p>Different algorithms and vocabularies split the same text differently. A tokenizer is therefore part of its model—not a detachable generic preprocessing step.</p>
+</section>
+</section>
+<section id="sec-practice" class="level1" data-number="5">
+<h1 data-number="5"><span class="header-section-number">5</span> Tokenization in practice</h1>
+<section id="a-deliberately-small-regular-expression-tokenizer" class="level2" data-number="5.1">
+<h2 data-number="5.1" class="anchored" data-anchor-id="a-deliberately-small-regular-expression-tokenizer"><span class="header-section-number">5.1</span> A deliberately small regular-expression tokenizer</h2>
+<p>Regular expressions are useful when the task has a small, explicit token definition.</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> re</span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>TOKEN_PATTERN <span class="op">=</span> <span class="vs">r"</span><span class="dv">\b\w</span><span class="op">+</span>(?:<span class="pp">['’]</span><span class="dv">\w</span><span class="op">+</span>)<span class="op">?</span><span class="dv">\b</span><span class="cf">|</span><span class="pp">[^</span><span class="dv">\w\s</span><span class="pp">]</span><span class="vs">"</span></span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a>text <span class="op">=</span> <span class="st">"NLP isn't just words—it includes punctuation!"</span></span>
+<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a>tokens <span class="op">=</span> re.findall(TOKEN_PATTERN, text)</span>
+<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(tokens)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<pre class="text"><code>['NLP', "isn't", 'just', 'words', '—', 'it', 'includes', 'punctuation', '!']</code></pre>
+<p>This is readable and testable, but it is not a universal tokenizer. URLs, abbreviations, emoji sequences, scripts without whitespace, and language-specific conventions quickly require more care.</p>
+<div class="callout callout-style-simple callout-tip callout-titled">
+<div class="callout-header d-flex align-content-center collapsed" data-bs-toggle="collapse" data-bs-target=".callout-2-contents" aria-controls="callout-2" aria-expanded="false" aria-label="Toggle callout">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Tip</span>What the expression says
+</div>
+<div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
+</div>
+<div id="callout-2" class="callout-2-contents callout-collapse collapse">
+<div class="callout-body-container callout-body">
+<ul>
+<li><code>\b\w+</code> begins with one or more word characters.</li>
+<li><code>(?:['’]\w+)?</code> optionally preserves an apostrophe followed by more word characters.</li>
+<li><code>|</code> means “or.”</li>
+<li><code>[^\w\s]</code> captures a remaining symbol that is neither a word character nor whitespace.</li>
+</ul>
+</div>
+</div>
+</div>
+</section>
+<section id="a-linguistic-tokenizer-with-spacy" class="level2" data-number="5.2">
+<h2 data-number="5.2" class="anchored" data-anchor-id="a-linguistic-tokenizer-with-spacy"><span class="header-section-number">5.2</span> A linguistic tokenizer with spaCy</h2>
+<p>spaCy combines general rules with language-specific exceptions for forms such as contractions, abbreviations, punctuation, URLs, and email addresses <span class="citation" data-cites="spacy2026tokenization">(<a href="#ref-spacy2026tokenization" role="doc-biblioref">Explosion 2026</a>)</span>.</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb9"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> spacy</span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>nlp <span class="op">=</span> spacy.blank(<span class="st">"en"</span>)</span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a>examples <span class="op">=</span> [</span>
+<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a>    <span class="st">"Apple is buying a U.K. startup for $1.2 billion."</span>,</span>
+<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a>    <span class="st">"Don't email support@example.com—visit https://example.com."</span>,</span>
+<span id="cb9-7"><a href="#cb9-7" aria-hidden="true" tabindex="-1"></a>]</span>
+<span id="cb9-8"><a href="#cb9-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-9"><a href="#cb9-9" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> text <span class="kw">in</span> examples:</span>
+<span id="cb9-10"><a href="#cb9-10" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>([token.text <span class="cf">for</span> token <span class="kw">in</span> nlp(text)])</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>The useful classroom question is not merely whether the output “looks right.” Ask which rule produced each boundary and whether those boundaries suit the downstream task.</p>
+</section>
+<section id="a-pretrained-model-tokenizer" class="level2" data-number="5.3">
+<h2 data-number="5.3" class="anchored" data-anchor-id="a-pretrained-model-tokenizer"><span class="header-section-number">5.3</span> A pretrained model tokenizer</h2>
+<p>Hugging Face’s <code>AutoTokenizer</code> loads the exact tokenizer associated with a pretrained model <span class="citation" data-cites="huggingface2026tokenizers">(<a href="#ref-huggingface2026tokenizers" role="doc-biblioref">Hugging Face 2026</a>)</span>.</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb10"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> transformers <span class="im">import</span> AutoTokenizer</span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>tokenizer <span class="op">=</span> AutoTokenizer.from_pretrained(<span class="st">"bert-base-multilingual-cased"</span>)</span>
+<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a>examples <span class="op">=</span> [</span>
+<span id="cb10-6"><a href="#cb10-6" aria-hidden="true" tabindex="-1"></a>    <span class="st">"Tokenization is surprisingly complicated."</span>,</span>
+<span id="cb10-7"><a href="#cb10-7" aria-hidden="true" tabindex="-1"></a>    <span class="st">"La tokenisation dépend du modèle."</span>,</span>
+<span id="cb10-8"><a href="#cb10-8" aria-hidden="true" tabindex="-1"></a>    <span class="st">"الترميز يعتمد على النموذج."</span>,</span>
+<span id="cb10-9"><a href="#cb10-9" aria-hidden="true" tabindex="-1"></a>]</span>
+<span id="cb10-10"><a href="#cb10-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-11"><a href="#cb10-11" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> text <span class="kw">in</span> examples:</span>
+<span id="cb10-12"><a href="#cb10-12" aria-hidden="true" tabindex="-1"></a>    pieces <span class="op">=</span> tokenizer.tokenize(text)</span>
+<span id="cb10-13"><a href="#cb10-13" aria-hidden="true" tabindex="-1"></a>    ids <span class="op">=</span> tokenizer(text, add_special_tokens<span class="op">=</span><span class="va">False</span>)[<span class="st">"input_ids"</span>]</span>
+<span id="cb10-14"><a href="#cb10-14" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(text)</span>
+<span id="cb10-15"><a href="#cb10-15" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(pieces)</span>
+<span id="cb10-16"><a href="#cb10-16" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(ids)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell" data-fig-width="7.2" data-layout-align="default">
+<div class="cell-output-display">
+<div id="fig-model-tokenizer" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-model-tokenizer-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<div>
+<pre class="mermaid mermaid-js" data-label="fig-model-tokenizer">flowchart LR
+    A[Text] --&gt; B[Normalization]
+    B --&gt; C[Pre-tokenization]
+    C --&gt; D[Subword model]
+    D --&gt; E[Special tokens]
+    E --&gt; F[Token IDs]
+    F --&gt;|decode| G[Text]
+
+    classDef input fill:#f4efe4,stroke:#b48a32,color:#17364a
+    classDef process fill:#e8f2f0,stroke:#0f6f78,color:#17364a
+    classDef output fill:#eaf0f5,stroke:#315f7d,color:#17364a
+    class A input
+    class B,C,D,E process
+    class F,G output
+</pre>
+</div>
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-model-tokenizer-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;6: A modern tokenizer performs several coordinated operations and can reverse IDs back into text.
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<div class="callout callout-style-simple callout-warning">
+<div class="callout-body d-flex">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-body-container">
+<p>Never pair a model with a different tokenizer merely because both accept text. Token IDs only have meaning relative to the vocabulary and embedding table used during that model’s training.</p>
+</div>
+</div>
+</div>
+</section>
+</section>
+<section id="sec-ids" class="level1" data-number="6">
+<h1 data-number="6"><span class="header-section-number">6</span> Token IDs are not meanings</h1>
+<p>Suppose our vocabulary assigns:</p>
+<pre class="text"><code>king  → 341
+queen → 520
+table → 1208</code></pre>
+<p>These integers are arbitrary labels. A simple numerical comparison would incorrectly suggest that <code>queen</code> lies between <code>king</code> and <code>table</code>.</p>
+<p>One solution is a <strong>one-hot vector</strong> with one coordinate per vocabulary entry:</p>
+<pre class="text"><code>king  → [1, 0, 0, 0]
+queen → [0, 1, 0, 0]
+table → [0, 0, 1, 0]</code></pre>
+<p>One-hot vectors distinguish words, but they do not express relationships. The dot product between any two different vectors is zero: <em>king</em> is no closer to <em>queen</em> than to <em>table</em>. This is the central representational limitation emphasized in the opening CS224N notes <span class="citation" data-cites="hewitt2023cs224n">(<a href="#ref-hewitt2023cs224n" role="doc-biblioref">Hewitt 2023</a>)</span>.</p>
+<div class="cell" data-fig-width="6.7" data-layout-align="default">
+<div class="cell-output-display">
+<div id="fig-one-hot-problem" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-one-hot-problem-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<div>
+<pre class="mermaid mermaid-js" data-label="fig-one-hot-problem">flowchart LR
+    K[king] --&gt;|similarity = 0| Q[queen]
+    K --&gt;|similarity = 0| T[table]
+    Q --&gt;|similarity = 0| T
+
+    classDef related fill:#e8f2f0,stroke:#0f6f78,color:#17364a
+    classDef unrelated fill:#f4efe4,stroke:#b48a32,color:#17364a
+    class K,Q related
+    class T unrelated
+</pre>
+</div>
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-one-hot-problem-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;7: In a one-hot representation, every distinct word occupies an independent axis.
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+</section>
+<section id="sec-embeddings" class="level1" data-number="7">
+<h1 data-number="7"><span class="header-section-number">7</span> Embeddings: meaning as geometry</h1>
+<p>An <strong>embedding</strong> maps each vocabulary item to a dense, low-dimensional vector.</p>
+<pre class="text"><code>king  → [ 0.21, -0.48,  0.73, ...]
+queen → [ 0.24, -0.41,  0.69, ...]
+table → [-0.62,  0.18,  0.07, ...]</code></pre>
+<p>The individual coordinates are usually not named properties. Their value comes from the geometry of the whole space: words used in similar contexts tend to occupy nearby regions.</p>
+<div class="cell" data-fig-width="6.5" data-layout-align="default">
+<div class="cell-output-display">
+<div id="fig-embedding-geometry" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-embedding-geometry-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<div>
+<pre class="mermaid mermaid-js" data-label="fig-embedding-geometry">quadrantChart
+    x-axis dimension 1 low --&gt; dimension 1 high
+    y-axis dimension 2 low --&gt; dimension 2 high
+    quadrant-1 people and royalty
+    quadrant-2 animals
+    quadrant-3 objects
+    quadrant-4 places
+    king: [0.78, 0.82]
+    queen: [0.73, 0.78]
+    prince: [0.68, 0.72]
+    cat: [0.20, 0.76]
+    dog: [0.25, 0.70]
+    table: [0.18, 0.20]
+    chair: [0.25, 0.25]
+    paris: [0.72, 0.22]
+    rabat: [0.78, 0.27]
+</pre>
+</div>
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-embedding-geometry-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;8: Dense embeddings can place related words near one another while separating unrelated concepts.
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<div class="callout callout-style-simple callout-note">
+<div class="callout-body d-flex">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-body-container">
+<p>The diagram is schematic. Real embeddings may have hundreds of dimensions; a two-dimensional projection is useful for exploration but cannot preserve every distance.</p>
+</div>
+</div>
+</div>
+<section id="measuring-similarity" class="level2" data-number="7.1">
+<h2 data-number="7.1" class="anchored" data-anchor-id="measuring-similarity"><span class="header-section-number">7.1</span> Measuring similarity</h2>
+<p><strong>Cosine similarity</strong> compares the direction of two vectors rather than their absolute length:</p>
+<p><span class="math display">\[
+\operatorname{cosine}(\mathbf{u},\mathbf{v})
+= \frac{\mathbf{u}^{\mathsf T}\mathbf{v}}
+{\lVert\mathbf{u}\rVert\,\lVert\mathbf{v}\rVert}.
+\]</span></p>
+<p>Values near <code>1</code> indicate similar directions; values near <code>0</code> indicate little directional relationship.</p>
+<pre class="text"><code>similarity(cat, dog)  &gt;  similarity(cat, democracy)</code></pre>
+</section>
+<section id="the-classical-analogy" class="level2" data-number="7.2">
+<h2 data-number="7.2" class="anchored" data-anchor-id="the-classical-analogy"><span class="header-section-number">7.2</span> The classical analogy</h2>
+<p>A famous demonstration uses vector arithmetic:</p>
+<p><span class="math display">\[
+\mathbf{king} - \mathbf{man} + \mathbf{woman} \approx \mathbf{queen}.
+\]</span></p>
+<p>The relation from <em>man</em> to <em>woman</em> is approximately repeated from <em>king</em> to <em>queen</em>. This is an illuminating regularity, not a universal algebra of meaning. Results depend on the corpus, algorithm, vocabulary, and similarity rule—and the same space can encode harmful social stereotypes.</p>
+<div class="cell" data-fig-width="6.2" data-layout-align="default">
+<div class="cell-output-display">
+<div id="fig-analogy" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-analogy-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<div>
+<pre class="mermaid mermaid-js" data-label="fig-analogy">flowchart LR
+    M[man] --&gt;|relationship| W[woman]
+    K[king] --&gt;|similar displacement| Q[queen]
+    M -. subtract .-&gt; K
+    W -. add .-&gt; Q
+
+    classDef base fill:#e8f2f0,stroke:#0f6f78,color:#17364a
+    classDef royal fill:#eaf0f5,stroke:#315f7d,color:#17364a
+    class M,W base
+    class K,Q royal
+</pre>
+</div>
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-analogy-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;9: The classical analogy asks for a similar displacement in embedding space.
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+</section>
+</section>
+<section id="sec-gensim" class="level1" data-number="8">
+<h1 data-number="8"><span class="header-section-number">8</span> Exploring pretrained embeddings with Gensim</h1>
+<p>Gensim’s <code>KeyedVectors</code> provides vector lookup, cosine similarity, nearest neighbors, and analogy queries without requiring the original training model <span class="citation" data-cites="rehurek2026keyedvectors">(<a href="#ref-rehurek2026keyedvectors" role="doc-biblioref">Řehůřek 2026</a>)</span>.</p>
+<p>Install the demonstration dependencies in a course project:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb15"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="ex">uv</span> add gensim scikit-learn matplotlib</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>The following loads 100-dimensional GloVe vectors. The first execution downloads the model; later executions use the local cache.</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb16"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> gensim.downloader <span class="im">as</span> api</span>
+<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a>vectors <span class="op">=</span> api.load(<span class="st">"glove-wiki-gigaword-100"</span>)</span>
+<span id="cb16-4"><a href="#cb16-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-5"><a href="#cb16-5" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(vectors.similarity(<span class="st">"cat"</span>, <span class="st">"dog"</span>))</span>
+<span id="cb16-6"><a href="#cb16-6" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(vectors.similarity(<span class="st">"cat"</span>, <span class="st">"democracy"</span>))</span>
+<span id="cb16-7"><a href="#cb16-7" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(vectors.most_similar(<span class="st">"language"</span>, topn<span class="op">=</span><span class="dv">5</span>))</span>
+<span id="cb16-8"><a href="#cb16-8" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(</span>
+<span id="cb16-9"><a href="#cb16-9" aria-hidden="true" tabindex="-1"></a>    vectors.most_similar(</span>
+<span id="cb16-10"><a href="#cb16-10" aria-hidden="true" tabindex="-1"></a>        positive<span class="op">=</span>[<span class="st">"king"</span>, <span class="st">"woman"</span>],</span>
+<span id="cb16-11"><a href="#cb16-11" aria-hidden="true" tabindex="-1"></a>        negative<span class="op">=</span>[<span class="st">"man"</span>],</span>
+<span id="cb16-12"><a href="#cb16-12" aria-hidden="true" tabindex="-1"></a>        topn<span class="op">=</span><span class="dv">5</span>,</span>
+<span id="cb16-13"><a href="#cb16-13" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb16-14"><a href="#cb16-14" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>The official Gensim example returns <code>queen</code> as the leading answer for the analogy, with cosine similarity around <code>0.77</code> for this pretrained model <span class="citation" data-cites="rehurek2026keyedvectors">(<a href="#ref-rehurek2026keyedvectors" role="doc-biblioref">Řehůřek 2026</a>)</span>. Treat the neighbors as evidence to inspect, not proof that the vectors understand the concepts.</p>
+<section id="plot-a-small-part-of-the-embedding-space" class="level2" data-number="8.1">
+<h2 data-number="8.1" class="anchored" data-anchor-id="plot-a-small-part-of-the-embedding-space"><span class="header-section-number">8.1</span> Plot a small part of the embedding space</h2>
+<p>We cannot directly draw 100 dimensions. Principal component analysis (PCA) projects the selected vectors into two dimensions for inspection.</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb17"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> matplotlib.pyplot <span class="im">as</span> plt</span>
+<span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> sklearn.decomposition <span class="im">import</span> PCA</span>
+<span id="cb17-3"><a href="#cb17-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-4"><a href="#cb17-4" aria-hidden="true" tabindex="-1"></a>words <span class="op">=</span> [</span>
+<span id="cb17-5"><a href="#cb17-5" aria-hidden="true" tabindex="-1"></a>    <span class="st">"king"</span>, <span class="st">"queen"</span>, <span class="st">"prince"</span>, <span class="st">"princess"</span>,</span>
+<span id="cb17-6"><a href="#cb17-6" aria-hidden="true" tabindex="-1"></a>    <span class="st">"man"</span>, <span class="st">"woman"</span>, <span class="st">"boy"</span>, <span class="st">"girl"</span>,</span>
+<span id="cb17-7"><a href="#cb17-7" aria-hidden="true" tabindex="-1"></a>    <span class="st">"cat"</span>, <span class="st">"dog"</span>, <span class="st">"paris"</span>, <span class="st">"france"</span>,</span>
+<span id="cb17-8"><a href="#cb17-8" aria-hidden="true" tabindex="-1"></a>]</span>
+<span id="cb17-9"><a href="#cb17-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-10"><a href="#cb17-10" aria-hidden="true" tabindex="-1"></a>matrix <span class="op">=</span> vectors[words]</span>
+<span id="cb17-11"><a href="#cb17-11" aria-hidden="true" tabindex="-1"></a>points <span class="op">=</span> PCA(n_components<span class="op">=</span><span class="dv">2</span>).fit_transform(matrix)</span>
+<span id="cb17-12"><a href="#cb17-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-13"><a href="#cb17-13" aria-hidden="true" tabindex="-1"></a>fig, ax <span class="op">=</span> plt.subplots(figsize<span class="op">=</span>(<span class="dv">9</span>, <span class="dv">6</span>))</span>
+<span id="cb17-14"><a href="#cb17-14" aria-hidden="true" tabindex="-1"></a>ax.scatter(points[:, <span class="dv">0</span>], points[:, <span class="dv">1</span>], color<span class="op">=</span><span class="st">"#0f6f78"</span>)</span>
+<span id="cb17-15"><a href="#cb17-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-16"><a href="#cb17-16" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> word, (x, y) <span class="kw">in</span> <span class="bu">zip</span>(words, points):</span>
+<span id="cb17-17"><a href="#cb17-17" aria-hidden="true" tabindex="-1"></a>    ax.annotate(word, (x, y), xytext<span class="op">=</span>(<span class="dv">5</span>, <span class="dv">4</span>), textcoords<span class="op">=</span><span class="st">"offset points"</span>)</span>
+<span id="cb17-18"><a href="#cb17-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-19"><a href="#cb17-19" aria-hidden="true" tabindex="-1"></a>ax.axhline(<span class="dv">0</span>, color<span class="op">=</span><span class="st">"#d9e3e1"</span>, linewidth<span class="op">=</span><span class="fl">0.8</span>)</span>
+<span id="cb17-20"><a href="#cb17-20" aria-hidden="true" tabindex="-1"></a>ax.axvline(<span class="dv">0</span>, color<span class="op">=</span><span class="st">"#d9e3e1"</span>, linewidth<span class="op">=</span><span class="fl">0.8</span>)</span>
+<span id="cb17-21"><a href="#cb17-21" aria-hidden="true" tabindex="-1"></a>ax.set_title(<span class="st">"A two-dimensional PCA projection of selected GloVe vectors"</span>)</span>
+<span id="cb17-22"><a href="#cb17-22" aria-hidden="true" tabindex="-1"></a>ax.set_xlabel(<span class="st">"Principal component 1"</span>)</span>
+<span id="cb17-23"><a href="#cb17-23" aria-hidden="true" tabindex="-1"></a>ax.set_ylabel(<span class="st">"Principal component 2"</span>)</span>
+<span id="cb17-24"><a href="#cb17-24" aria-hidden="true" tabindex="-1"></a>plt.tight_layout()</span>
+<span id="cb17-25"><a href="#cb17-25" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="callout callout-style-simple callout-warning">
+<div class="callout-body d-flex">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-body-container">
+<p>PCA preserves directions of greatest variance, not every pairwise distance. Moving the selected words can change the projection. Always verify claims with similarities in the original embedding space.</p>
+</div>
+</div>
+</div>
+</section>
+</section>
+<section id="sec-next" class="level1" data-number="9">
+<h1 data-number="9"><span class="header-section-number">9</span> What comes next?</h1>
+<p>We now know what a useful embedding should accomplish, but we have not explained where its coordinates come from.</p>
+<div class="cell" data-fig-width="7" data-layout-align="default">
+<div class="cell-output-display">
+<div id="fig-next-chapter" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-next-chapter-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<div>
+<pre class="mermaid mermaid-js" data-label="fig-next-chapter">flowchart LR
+    A[Text corpus] --&gt; B[Contexts and co-occurrence]
+    B --&gt; C[Learning objective]
+    C --&gt; D[Word2Vec]
+    C --&gt; E[GloVe]
+    C --&gt; F[FastText]
+    D --&gt; G[Learned embedding space]
+    E --&gt; G
+    F --&gt; G
+
+    classDef data fill:#f4efe4,stroke:#b48a32,color:#17364a
+    classDef learn fill:#e8f2f0,stroke:#0f6f78,color:#17364a
+    classDef result fill:#eaf0f5,stroke:#315f7d,color:#17364a
+    class A data
+    class B,C,D,E,F learn
+    class G result
+</pre>
+</div>
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-next-chapter-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;10: Chapter 3 moves from inspecting embeddings to learning them from patterns of context.
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<p>The next chapter develops the distributional hypothesis—<em>a word is known by the company it keeps</em>—then derives classical and more recent methods for learning word representations efficiently.</p>
+</section>
+<section id="sec-resources" class="level1" data-number="10">
+<h1 data-number="10"><span class="header-section-number">10</span> Further reading and tools</h1>
+<section id="good-reads" class="level2" data-number="10.1">
+<h2 data-number="10.1" class="anchored" data-anchor-id="good-reads"><span class="header-section-number">10.1</span> Good reads</h2>
+<ul>
+<li>Hewitt, <em>CS224N Lecture 1: Introduction and Word2Vec</em> <span class="citation" data-cites="hewitt2023cs224n">(<a href="#ref-hewitt2023cs224n" role="doc-biblioref">Hewitt 2023</a>)</span> — the representation problem, one-hot vectors, and the motivation for learned embeddings.</li>
+<li>Sennrich, Haddow, and Birch, <em>Neural Machine Translation of Rare Words with Subword Units</em> <span class="citation" data-cites="sennrich2016subword">(<a href="#ref-sennrich2016subword" role="doc-biblioref">Sennrich et al. 2016</a>)</span> — the influential adaptation of BPE to open-vocabulary neural NLP.</li>
+<li>Schuster and Nakajima, <em>Japanese and Korean Voice Search</em> <span class="citation" data-cites="schuster2012wordpiece">(<a href="#ref-schuster2012wordpiece" role="doc-biblioref">Schuster and Nakajima 2012</a>)</span> — the original WordPiece formulation.</li>
+<li>Kudo, <em>Subword Regularization</em> <span class="citation" data-cites="kudo2018subwordregularization">(<a href="#ref-kudo2018subwordregularization" role="doc-biblioref">Kudo 2018</a>)</span> — the unigram language-model tokenizer and sampling alternative segmentations.</li>
+<li>Kudo and Richardson, <em>SentencePiece</em> <span class="citation" data-cites="kudo2018sentencepiece">(<a href="#ref-kudo2018sentencepiece" role="doc-biblioref">Kudo and Richardson 2018</a>)</span> — language-independent subword training directly from raw text.</li>
+<li>Wang, Cho, and Gu, <em>Neural Machine Translation with Byte-Level Subwords</em> <span class="citation" data-cites="wang2019bytelevel">(<a href="#ref-wang2019bytelevel" role="doc-biblioref">Wang et al. 2019</a>)</span> — byte-level BPE for compact, open-vocabulary multilingual modeling.</li>
+<li>Mielke et al., <em>Between Words and Characters</em> <span class="citation" data-cites="mielke2021tokenization">(<a href="#ref-mielke2021tokenization" role="doc-biblioref">Mielke et al. 2021</a>)</span> — an excellent broader history of open-vocabulary modeling and tokenization.</li>
+</ul>
+</section>
+<section id="libraries-used-in-this-chapter" class="level2" data-number="10.2">
+<h2 data-number="10.2" class="anchored" data-anchor-id="libraries-used-in-this-chapter"><span class="header-section-number">10.2</span> Libraries used in this chapter</h2>
+<ul>
+<li><a href="https://docs.python.org/3/howto/regex.html">Python <code>re</code> documentation</a> — bounded rule-based text extraction.</li>
+<li><a href="https://spacy.io/usage/linguistic-features#tokenization">spaCy tokenization documentation</a> — language rules, exceptions, and token-boundary debugging.</li>
+<li><a href="https://huggingface.co/docs/transformers/main/fast_tokenizers">Hugging Face tokenizer documentation</a> — model tokenizers, IDs, special tokens, encoding, and decoding.</li>
+<li><a href="https://radimrehurek.com/gensim/models/keyedvectors.html">Gensim <code>KeyedVectors</code> documentation</a> — pretrained vectors, similarity, neighbors, and analogies.</li>
+<li><a href="https://scikit-learn.org/stable/modules/generated/sklearn.decomposition.PCA.html">scikit-learn PCA documentation</a> — dimensionality reduction for the visualization.</li>
+</ul>
+<div class="callout callout-style-simple callout-tip callout-titled">
+<div class="callout-header d-flex align-content-center collapsed" data-bs-toggle="collapse" data-bs-target=".callout-3-contents" aria-controls="callout-3" aria-expanded="false" aria-label="Toggle callout">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Tip</span>Optional technical reference
+</div>
+<div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
+</div>
+<div id="callout-3" class="callout-3-contents callout-collapse collapse">
+<div class="callout-body-container callout-body">
+<p>The former detailed chapter—including Unicode, normalization, grapheme clusters, offsets, and reproducible preprocessing design—has been preserved as an <a href="../../notes/02-text-processing/technical-reference.html">optional technical reference</a>.</p>
+</div>
+</div>
+</div>
+
+
+
+</section>
+</section>
+
+<div id="quarto-appendix" class="default"><section class="quarto-appendix-contents" role="doc-bibliography" id="quarto-bibliography"><h2 class="anchored quarto-appendix-heading">References</h2><div id="refs" class="references csl-bib-body hanging-indent" role="list">
+<div id="ref-spacy2026tokenization" class="csl-entry" role="listitem">
+Explosion. 2026. <em>Linguistic Features: Tokenization</em>. <a href="https://spacy.io/usage/linguistic-features#tokenization">https://spacy.io/usage/linguistic-features#tokenization</a>.
+</div>
+<div id="ref-hewitt2023cs224n" class="csl-entry" role="listitem">
+Hewitt, John. 2023. <em><span>CS224N</span> Lecture 1 Notes: Introduction and <span>Word2Vec</span></em>. Stanford University. <a href="https://web.stanford.edu/class/cs224n/readings/cs224n_winter2023_lecture1_notes_draft.pdf">https://web.stanford.edu/class/cs224n/readings/cs224n_winter2023_lecture1_notes_draft.pdf</a>.
+</div>
+<div id="ref-huggingface2026tokenizers" class="csl-entry" role="listitem">
+Hugging Face. 2026. <em>Tokenizers</em>. <a href="https://huggingface.co/docs/transformers/main/fast_tokenizers">https://huggingface.co/docs/transformers/main/fast_tokenizers</a>.
+</div>
+<div id="ref-kudo2018subwordregularization" class="csl-entry" role="listitem">
+Kudo, Taku. 2018. <span>“Subword Regularization: Improving Neural Network Translation Models with Multiple Subword Candidates.”</span> <em>Proceedings of the 56th Annual Meeting of the Association for Computational Linguistics</em>, 66–75. <a href="https://doi.org/10.18653/v1/P18-1007">https://doi.org/10.18653/v1/P18-1007</a>.
+</div>
+<div id="ref-kudo2018sentencepiece" class="csl-entry" role="listitem">
+Kudo, Taku, and John Richardson. 2018. <span>“<span>SentencePiece</span>: A Simple and Language Independent Subword Tokenizer and Detokenizer for Neural Text Processing.”</span> <em>Proceedings of the 2018 Conference on Empirical Methods in Natural Language Processing: System Demonstrations</em>, 66–71. <a href="https://doi.org/10.18653/v1/D18-2012">https://doi.org/10.18653/v1/D18-2012</a>.
+</div>
+<div id="ref-mielke2021tokenization" class="csl-entry" role="listitem">
+Mielke, Sabrina J., Zaid Alyafeai, Elizabeth Salesky, et al. 2021. <span>“Between Words and Characters: A Brief History of Open-Vocabulary Modeling and Tokenization in NLP.”</span> <em>Transactions of the Association for Computational Linguistics</em> 9: 1572–85. <a href="https://doi.org/10.1162/tacl_a_00429">https://doi.org/10.1162/tacl_a_00429</a>.
+</div>
+<div id="ref-rehurek2026keyedvectors" class="csl-entry" role="listitem">
+Řehůřek, Radim. 2026. <em><span>KeyedVectors</span>: Store and Query Word Vectors</em>. <a href="https://radimrehurek.com/gensim/models/keyedvectors.html">https://radimrehurek.com/gensim/models/keyedvectors.html</a>.
+</div>
+<div id="ref-schuster2012wordpiece" class="csl-entry" role="listitem">
+Schuster, Mike, and Kaisuke Nakajima. 2012. <span>“Japanese and Korean Voice Search.”</span> <em>2012 IEEE International Conference on Acoustics, Speech and Signal Processing</em>, 5149–52. <a href="https://doi.org/10.1109/ICASSP.2012.6289079">https://doi.org/10.1109/ICASSP.2012.6289079</a>.
+</div>
+<div id="ref-sennrich2016subword" class="csl-entry" role="listitem">
+Sennrich, Rico, Barry Haddow, and Alexandra Birch. 2016. <span>“Neural Machine Translation of Rare Words with Subword Units.”</span> <em>Proceedings of the 54th Annual Meeting of the Association for Computational Linguistics</em>, 1715–25. <a href="https://doi.org/10.18653/v1/P16-1162">https://doi.org/10.18653/v1/P16-1162</a>.
+</div>
+<div id="ref-wang2019bytelevel" class="csl-entry" role="listitem">
+Wang, Changhan, Kyunghyun Cho, and Jiatao Gu. 2019. <span>“Neural Machine Translation with Byte-Level Subwords.”</span> <em>arXiv Preprint arXiv:1909.03341</em>, ahead of print. <a href="https://doi.org/10.48550/arXiv.1909.03341">https://doi.org/10.48550/arXiv.1909.03341</a>.
+</div>
+</div></section></div></main> <!-- /main -->
+<script>
+(() => {
+  const padding = 24;
+
+  function cropMermaid(svg) {
+    const root = svg.querySelector(":scope > g, g.root");
+    if (!root) return;
+
+    let box;
+    try {
+      box = root.getBBox();
+    } catch (_) {
+      return;
+    }
+
+    if (!box.width || !box.height) return;
+
+    svg.setAttribute(
+      "viewBox",
+      `${box.x - padding} ${box.y - padding} ${box.width + 2 * padding} ${box.height + 2 * padding}`
+    );
+    svg.setAttribute("width", "100%");
+    svg.removeAttribute("height");
+    svg.style.width = "100%";
+    svg.style.height = "auto";
+    svg.style.maxWidth = "100%";
+    svg.style.display = "block";
+    svg.style.marginInline = "auto";
+    svg.dataset.cropped = "true";
+  }
+
+  function cropAllMermaid() {
+    document
+      .querySelectorAll("svg.mermaid-js:not([data-cropped])")
+      .forEach(cropMermaid);
+  }
+
+  const observer = new MutationObserver(cropAllMermaid);
+  observer.observe(document.documentElement, { childList: true, subtree: true });
+
+  window.addEventListener("load", () => {
+    cropAllMermaid();
+    window.setTimeout(cropAllMermaid, 250);
+    window.setTimeout(cropAllMermaid, 1000);
+  });
+})();
+</script>
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp("https:\/\/anassbelcaid\.github\.io\/nlp-course-2026\/");
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+            // target, if specified
+            link.setAttribute("target", "_blank");
+            if (link.getAttribute("rel") === null) {
+              link.setAttribute("rel", "noopener");
+            }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+</div> <!-- /content -->
+<footer class="footer">
+  <div class="nav-footer">
+    <div class="nav-footer-left">
+<p>Natural Language Processing · Université Abdelmalek Essaâdi</p>
+</div>   
+    <div class="nav-footer-center">
+      &nbsp;
+    </div>
+    <div class="nav-footer-right">
+<p>Built with Quarto</p>
+</div>
+  </div>
+</footer>
+
+
+
+
+<script src="../../site_libs/quarto-html/zenscroll-min.js"></script>
+</body></html>

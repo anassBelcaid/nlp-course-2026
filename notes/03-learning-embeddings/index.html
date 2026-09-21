@@ -1,0 +1,1920 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.10.18">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="author" content="Dr.&nbsp;A. Belcaid">
+<meta name="description" content="How co-occurrence, Word2Vec, and GloVe learn geometric representations of word meaning.">
+
+<title>Learning Word Embeddings – CS 351 · NLP</title>
+<style>
+/* Default styles provided by pandoc.
+** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+*/
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: 1.5em;}
+div.column{flex: auto;}
+@media screen {
+div.columns{gap: min(4vw, 1.5em);}
+div.column{overflow-x: auto;}
+}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+/* CSS for citations */
+div.csl-bib-body { }
+div.csl-entry {
+  clear: both;
+}
+.hanging-indent div.csl-entry {
+  margin-left:2em;
+  text-indent:-2em;
+}
+div.csl-left-margin {
+  min-width:2em;
+  float:left;
+}
+div.csl-right-inline {
+  margin-left:2em;
+  padding-left:1em;
+}
+div.csl-indent {
+  margin-left: 2em;
+}</style>
+
+
+<script src="../../site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="../../site_libs/clipboard/clipboard.min.js"></script>
+<script src="../../site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="../../site_libs/quarto-search/fuse.min.js"></script>
+<script src="../../site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="../../">
+<script src="../../site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="../../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="../../site_libs/quarto-html/popper.min.js"></script>
+<script src="../../site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="../../site_libs/quarto-html/anchor.min.js"></script>
+<link href="../../site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="../../site_libs/quarto-html/quarto-syntax-highlighting-095245003bb80bd2beb305de39928752.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="../../site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="../../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="../../site_libs/bootstrap/bootstrap-bae81809e9689276853494912f89ea28.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<script id="quarto-search-options" type="application/json">{
+  "location": "navbar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "end",
+  "type": "overlay",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script>
+<style>html{ scroll-behavior: smooth; }</style>
+<script src="../../site_libs/quarto-diagram/mermaid.min.js"></script>
+<script src="../../site_libs/quarto-diagram/mermaid-init.js"></script>
+<link href="../../site_libs/quarto-diagram/mermaid.css" rel="stylesheet">
+
+  <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
+  <script defer="" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-chtml.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN" && texText && texText.data) {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script>
+
+<link rel="stylesheet" href="../../styles.css">
+</head>
+
+<body class="floating nav-fixed quarto-light">
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+    <nav class="navbar navbar-expand-lg " data-bs-theme="dark">
+      <div class="navbar-container container-fluid">
+      <div class="navbar-brand-container mx-auto">
+    <a class="navbar-brand" href="../../index.html">
+    <span class="navbar-title">CS 351 · NLP</span>
+    </a>
+  </div>
+            <div id="quarto-search" class="" title="Search"></div>
+          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse" aria-controls="navbarCollapse" role="menu" aria-expanded="false" aria-label="Toggle navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+  <span class="navbar-toggler-icon"></span>
+</button>
+          <div class="collapse navbar-collapse" id="navbarCollapse">
+            <ul class="navbar-nav navbar-nav-scroll me-auto">
+  <li class="nav-item">
+    <a class="nav-link" href="../../index.html"> 
+<span class="menu-text">Home</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../../logistics.html"> 
+<span class="menu-text">Logistics</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../../schedule.html"> 
+<span class="menu-text">Schedule</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../../coding-projects.html"> 
+<span class="menu-text">Coding Projects</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../../student-projects.html"> 
+<span class="menu-text">Student Projects</span></a>
+  </li>  
+</ul>
+            <ul class="navbar-nav navbar-nav-scroll ms-auto">
+  <li class="nav-item compact">
+    <a class="nav-link" href="https://github.com/anassBelcaid"> <i class="bi bi-github" role="img" aria-label="Instructor GitHub profile">
+</i> 
+<span class="menu-text"></span></a>
+  </li>  
+</ul>
+          </div> <!-- /navcollapse -->
+            <div class="quarto-navbar-tools">
+</div>
+      </div> <!-- /container-fluid -->
+    </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
+<!-- sidebar -->
+  <nav id="quarto-sidebar" class="sidebar collapse collapse-horizontal quarto-sidebar-collapse-item sidebar-navigation floating overflow-auto">
+    <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">On this page</h2>
+   
+  <ul>
+  <li><a href="#sec-numbers-meaning" id="toc-sec-numbers-meaning" class="nav-link active" data-scroll-target="#sec-numbers-meaning"><span class="header-section-number">1</span> From numbers to meaning</a>
+  <ul class="collapse">
+  <li><a href="#one-hot-vectors-keep-words-separate" id="toc-one-hot-vectors-keep-words-separate" class="nav-link" data-scroll-target="#one-hot-vectors-keep-words-separate"><span class="header-section-number">1.1</span> One-hot vectors keep words separate</a></li>
+  <li><a href="#dense-vectors-can-express-graded-relationships" id="toc-dense-vectors-can-express-graded-relationships" class="nav-link" data-scroll-target="#dense-vectors-can-express-graded-relationships"><span class="header-section-number">1.2</span> Dense vectors can express graded relationships</a></li>
+  </ul></li>
+  <li><a href="#sec-similarity" id="toc-sec-similarity" class="nav-link" data-scroll-target="#sec-similarity"><span class="header-section-number">2</span> Similarity and semantic distance</a>
+  <ul class="collapse">
+  <li><a href="#euclidean-distance" id="toc-euclidean-distance" class="nav-link" data-scroll-target="#euclidean-distance"><span class="header-section-number">2.1</span> Euclidean distance</a></li>
+  <li><a href="#dot-product" id="toc-dot-product" class="nav-link" data-scroll-target="#dot-product"><span class="header-section-number">2.2</span> Dot product</a></li>
+  <li><a href="#cosine-similarity" id="toc-cosine-similarity" class="nav-link" data-scroll-target="#cosine-similarity"><span class="header-section-number">2.3</span> Cosine similarity</a></li>
+  <li><a href="#the-classical-analogy" id="toc-the-classical-analogy" class="nav-link" data-scroll-target="#the-classical-analogy"><span class="header-section-number">2.4</span> The classical analogy</a></li>
+  </ul></li>
+  <li><a href="#sec-distributional" id="toc-sec-distributional" class="nav-link" data-scroll-target="#sec-distributional"><span class="header-section-number">3</span> The distributional hypothesis</a>
+  <ul class="collapse">
+  <li><a href="#what-counts-as-context" id="toc-what-counts-as-context" class="nav-link" data-scroll-target="#what-counts-as-context"><span class="header-section-number">3.1</span> What counts as context?</a></li>
+  </ul></li>
+  <li><a href="#sec-cooccurrence" id="toc-sec-cooccurrence" class="nav-link" data-scroll-target="#sec-cooccurrence"><span class="header-section-number">4</span> Counting co-occurrence</a>
+  <ul class="collapse">
+  <li><a href="#constructing-a-matrix-in-python" id="toc-constructing-a-matrix-in-python" class="nav-link" data-scroll-target="#constructing-a-matrix-in-python"><span class="header-section-number">4.1</span> Constructing a matrix in Python</a></li>
+  <li><a href="#why-raw-counts-are-not-enough" id="toc-why-raw-counts-are-not-enough" class="nav-link" data-scroll-target="#why-raw-counts-are-not-enough"><span class="header-section-number">4.2</span> Why raw counts are not enough</a></li>
+  </ul></li>
+  <li><a href="#sec-word2vec" id="toc-sec-word2vec" class="nav-link" data-scroll-target="#sec-word2vec"><span class="header-section-number">5</span> Word2Vec: learn by predicting context</a>
+  <ul class="collapse">
+  <li><a href="#step-1-create-positive-pairs" id="toc-step-1-create-positive-pairs" class="nav-link" data-scroll-target="#step-1-create-positive-pairs"><span class="header-section-number">5.1</span> Step 1: create positive pairs</a></li>
+  <li><a href="#step-2-store-two-vectors-per-word" id="toc-step-2-store-two-vectors-per-word" class="nav-link" data-scroll-target="#step-2-store-two-vectors-per-word"><span class="header-section-number">5.2</span> Step 2: store two vectors per word</a></li>
+  <li><a href="#step-3-score-a-pair" id="toc-step-3-score-a-pair" class="nav-link" data-scroll-target="#step-3-score-a-pair"><span class="header-section-number">5.3</span> Step 3: score a pair</a></li>
+  <li><a href="#why-not-predict-every-vocabulary-word" id="toc-why-not-predict-every-vocabulary-word" class="nav-link" data-scroll-target="#why-not-predict-every-vocabulary-word"><span class="header-section-number">5.4</span> Why not predict every vocabulary word?</a></li>
+  </ul></li>
+  <li><a href="#sec-negative-sampling" id="toc-sec-negative-sampling" class="nav-link" data-scroll-target="#sec-negative-sampling"><span class="header-section-number">6</span> Negative sampling</a>
+  <ul class="collapse">
+  <li><a href="#the-learning-loop" id="toc-the-learning-loop" class="nav-link" data-scroll-target="#the-learning-loop"><span class="header-section-number">6.1</span> The learning loop</a></li>
+  <li><a href="#a-compact-pytorch-model" id="toc-a-compact-pytorch-model" class="nav-link" data-scroll-target="#a-compact-pytorch-model"><span class="header-section-number">6.2</span> A compact PyTorch model</a></li>
+  <li><a href="#cbow-in-one-picture" id="toc-cbow-in-one-picture" class="nav-link" data-scroll-target="#cbow-in-one-picture"><span class="header-section-number">6.3</span> CBOW in one picture</a></li>
+  </ul></li>
+  <li><a href="#sec-glove" id="toc-sec-glove" class="nav-link" data-scroll-target="#sec-glove"><span class="header-section-number">7</span> GloVe: learn from global counts</a>
+  <ul class="collapse">
+  <li><a href="#co-occurrence-ratios-carry-information" id="toc-co-occurrence-ratios-carry-information" class="nav-link" data-scroll-target="#co-occurrence-ratios-carry-information"><span class="header-section-number">7.1</span> Co-occurrence ratios carry information</a></li>
+  <li><a href="#the-glove-objective" id="toc-the-glove-objective" class="nav-link" data-scroll-target="#the-glove-objective"><span class="header-section-number">7.2</span> The GloVe objective</a></li>
+  <li><a href="#word2vec-and-glove-compared" id="toc-word2vec-and-glove-compared" class="nav-link" data-scroll-target="#word2vec-and-glove-compared"><span class="header-section-number">7.3</span> Word2Vec and GloVe compared</a></li>
+  </ul></li>
+  <li><a href="#sec-pretrained" id="toc-sec-pretrained" class="nav-link" data-scroll-target="#sec-pretrained"><span class="header-section-number">8</span> Using pretrained embeddings</a>
+  <ul class="collapse">
+  <li><a href="#well-known-static-embeddings" id="toc-well-known-static-embeddings" class="nav-link" data-scroll-target="#well-known-static-embeddings"><span class="header-section-number">8.1</span> Well-known static embeddings</a></li>
+  <li><a href="#query-glove-with-gensim" id="toc-query-glove-with-gensim" class="nav-link" data-scroll-target="#query-glove-with-gensim"><span class="header-section-number">8.2</span> Query GloVe with Gensim</a></li>
+  <li><a href="#use-vectors-through-spacy" id="toc-use-vectors-through-spacy" class="nav-link" data-scroll-target="#use-vectors-through-spacy"><span class="header-section-number">8.3</span> Use vectors through spaCy</a></li>
+  <li><a href="#inspect-neighborhoods-not-isolated-scores" id="toc-inspect-neighborhoods-not-isolated-scores" class="nav-link" data-scroll-target="#inspect-neighborhoods-not-isolated-scores"><span class="header-section-number">8.4</span> Inspect neighborhoods, not isolated scores</a></li>
+  <li><a href="#visualize-a-small-selection-carefully" id="toc-visualize-a-small-selection-carefully" class="nav-link" data-scroll-target="#visualize-a-small-selection-carefully"><span class="header-section-number">8.5</span> Visualize a small selection carefully</a></li>
+  </ul></li>
+  <li><a href="#sec-limitations" id="toc-sec-limitations" class="nav-link" data-scroll-target="#sec-limitations"><span class="header-section-number">9</span> What static embeddings cannot do</a>
+  <ul class="collapse">
+  <li><a href="#one-word-one-vector" id="toc-one-word-one-vector" class="nav-link" data-scroll-target="#one-word-one-vector"><span class="header-section-number">9.1</span> One word, one vector</a></li>
+  <li><a href="#corpus-boundaries-become-model-boundaries" id="toc-corpus-boundaries-become-model-boundaries" class="nav-link" data-scroll-target="#corpus-boundaries-become-model-boundaries"><span class="header-section-number">9.2</span> Corpus boundaries become model boundaries</a></li>
+  <li><a href="#frequency-and-vocabulary-remain-important" id="toc-frequency-and-vocabulary-remain-important" class="nav-link" data-scroll-target="#frequency-and-vocabulary-remain-important"><span class="header-section-number">9.3</span> Frequency and vocabulary remain important</a></li>
+  <li><a href="#bias-is-part-of-the-geometry" id="toc-bias-is-part-of-the-geometry" class="nav-link" data-scroll-target="#bias-is-part-of-the-geometry"><span class="header-section-number">9.4</span> Bias is part of the geometry</a></li>
+  <li><a href="#intrinsic-success-is-not-task-success" id="toc-intrinsic-success-is-not-task-success" class="nav-link" data-scroll-target="#intrinsic-success-is-not-task-success"><span class="header-section-number">9.5</span> Intrinsic success is not task success</a></li>
+  </ul></li>
+  <li><a href="#sec-summary" id="toc-sec-summary" class="nav-link" data-scroll-target="#sec-summary"><span class="header-section-number">10</span> Putting the ideas together</a></li>
+  <li><a href="#sec-check" id="toc-sec-check" class="nav-link" data-scroll-target="#sec-check"><span class="header-section-number">11</span> Check your understanding</a></li>
+  <li><a href="#sec-resources" id="toc-sec-resources" class="nav-link" data-scroll-target="#sec-resources"><span class="header-section-number">12</span> Further reading and tools</a>
+  <ul class="collapse">
+  <li><a href="#primary-and-explanatory-readings" id="toc-primary-and-explanatory-readings" class="nav-link" data-scroll-target="#primary-and-explanatory-readings"><span class="header-section-number">12.1</span> Primary and explanatory readings</a></li>
+  <li><a href="#practical-tools" id="toc-practical-tools" class="nav-link" data-scroll-target="#practical-tools"><span class="header-section-number">12.2</span> Practical tools</a></li>
+  <li><a href="#references" id="toc-references" class="nav-link" data-scroll-target="#references"><span class="header-section-number">12.3</span> References</a></li>
+  </ul></li>
+  </ul>
+<div class="quarto-alternate-formats"><h2>Other Formats</h2><ul><li><a href="index.pdf"><i class="bi bi-file-pdf"></i>PDF</a></li></ul></div></nav>
+</nav>
+<div id="quarto-sidebar-glass" class="quarto-sidebar-collapse-item" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item"></div>
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar zindex-bottom">
+    </div>
+<!-- main -->
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title">Learning Word Embeddings</h1>
+<p class="subtitle lead">Chapter 3 · From context to coordinates</p>
+</div>
+
+<div>
+  <div class="description">
+    How co-occurrence, Word2Vec, and GloVe learn geometric representations of word meaning.
+  </div>
+</div>
+
+
+<div class="quarto-title-meta">
+
+    <div>
+    <div class="quarto-title-meta-heading">Author</div>
+    <div class="quarto-title-meta-contents">
+             <p>Dr.&nbsp;A. Belcaid </p>
+          </div>
+  </div>
+    
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<p><img src="../../images/uae-logo.png" class="img-fluid"></p>
+<p>CS 351 · Introduction to Natural Language Processing<br>
+Chapter 3 · Learning word embeddings</p>
+<p>In Chapter 2, we used pretrained vectors as if their coordinates had simply appeared. Related words were nearby, cosine similarity measured their closeness, and vector arithmetic sometimes recovered familiar relationships. This chapter asks the missing question:</p>
+<blockquote class="blockquote">
+<p>How can a machine learn useful coordinates from ordinary text?</p>
+</blockquote>
+<p>The central answer is surprisingly economical: <strong>use context as supervision</strong>. A corpus does not explicitly say that <em>coffee</em> and <em>tea</em> are related, but both occur near words such as <em>drink</em>, <em>cup</em>, <em>hot</em>, and <em>morning</em>. Embedding algorithms turn those repeated contextual patterns into geometry.</p>
+<div class="cell" data-fig-width="7.4" data-layout-align="default">
+<div class="cell-output-display">
+<div id="fig-chapter-path" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-chapter-path-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<div>
+<pre class="mermaid mermaid-js" data-label="fig-chapter-path">flowchart LR
+    A[Text corpus] --&gt; B[Context windows]
+    B --&gt; C[Co-occurrence signal]
+    C --&gt; D[Learning objective]
+    D --&gt; E[Dense vectors]
+    E --&gt; F[Similarity and analogy]
+
+    classDef data fill:#f4efe4,stroke:#b48a32,color:#17364a
+    classDef learn fill:#e8f2f0,stroke:#0f6f78,color:#17364a
+    classDef result fill:#eaf0f5,stroke:#315f7d,color:#17364a
+    class A,B data
+    class C,D learn
+    class E,F result
+</pre>
+</div>
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-chapter-path-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;1: The chapter’s central path: context supplies the training signal from which a useful geometry emerges.
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<div class="callout callout-style-simple callout-note callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>Learning objectives
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>After this chapter, you should be able to:</p>
+<ol type="1">
+<li>distinguish token identifiers, one-hot vectors, and learned dense embeddings;</li>
+<li>use distance, dot products, and cosine similarity appropriately;</li>
+<li>explain the distributional hypothesis and construct a co-occurrence matrix;</li>
+<li>turn a corpus into Skip-gram training pairs;</li>
+<li>explain the essential ideas behind Word2Vec and negative sampling;</li>
+<li>contrast Word2Vec’s local prediction objective with GloVe’s global count objective;</li>
+<li>query pretrained Word2Vec, GloVe, fastText, and spaCy vectors; and</li>
+<li>identify important limitations of static word embeddings.</li>
+</ol>
+</div>
+</div>
+<section id="sec-numbers-meaning" class="level1" data-number="1">
+<h1 data-number="1"><span class="header-section-number">1</span> From numbers to meaning</h1>
+<p>Suppose our vocabulary is:</p>
+<pre class="text"><code>0 → apple
+1 → orange
+2 → car
+3 → bus</code></pre>
+<p>These integers are <strong>identifiers</strong>, not measurements. We must not conclude that <em>bus</em> is three times <em>orange</em>, or that <em>orange</em> is closer to <em>apple</em> than <em>bus</em> is. Changing the vocabulary order changes every identifier without changing the language.</p>
+<section id="one-hot-vectors-keep-words-separate" class="level2" data-number="1.1">
+<h2 data-number="1.1" class="anchored" data-anchor-id="one-hot-vectors-keep-words-separate"><span class="header-section-number">1.1</span> One-hot vectors keep words separate</h2>
+<p>A one-hot vector gives every vocabulary item its own coordinate:</p>
+<p><span class="math display">\[
+\begin{aligned}
+\text{apple}  &amp;\rightarrow [1,0,0,0],\\
+\text{orange} &amp;\rightarrow [0,1,0,0],\\
+\text{car}    &amp;\rightarrow [0,0,1,0],\\
+\text{bus}    &amp;\rightarrow [0,0,0,1].
+\end{aligned}
+\]</span></p>
+<p>This representation avoids pretending that vocabulary indices have numerical order. It also creates a new problem: all distinct words are equally dissimilar.</p>
+<p>For any two different one-hot vectors <span class="math inline">\(\mathbf{x}\)</span> and <span class="math inline">\(\mathbf{y}\)</span>,</p>
+<p><span class="math display">\[
+\mathbf{x}^{\mathsf T}\mathbf{y}=0
+\qquad\text{and}\qquad
+\lVert\mathbf{x}-\mathbf{y}\rVert_2=\sqrt{2}.
+\]</span></p>
+<p>The representation knows that <em>apple</em> and <em>orange</em> are different, but not that both are fruit.</p>
+<div id="tbl-representations" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-tbl figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-representations-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Table&nbsp;1: Three ways of representing vocabulary items.
+</figcaption>
+<div aria-describedby="tbl-representations-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>Representation</th>
+<th style="text-align: right;">Size</th>
+<th style="text-align: center;">Dense?</th>
+<th style="text-align: center;">Encodes similarity?</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Token ID</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: center;">—</td>
+<td style="text-align: center;">No</td>
+</tr>
+<tr class="even">
+<td>One-hot vector</td>
+<td style="text-align: right;">Vocabulary size</td>
+<td style="text-align: center;">No</td>
+<td style="text-align: center;">No</td>
+</tr>
+<tr class="odd">
+<td>Learned embedding</td>
+<td style="text-align: right;">Usually 50–300</td>
+<td style="text-align: center;">Yes</td>
+<td style="text-align: center;">Often</td>
+</tr>
+</tbody>
+</table>
+</div>
+</figure>
+</div>
+</section>
+<section id="dense-vectors-can-express-graded-relationships" class="level2" data-number="1.2">
+<h2 data-number="1.2" class="anchored" data-anchor-id="dense-vectors-can-express-graded-relationships"><span class="header-section-number">1.2</span> Dense vectors can express graded relationships</h2>
+<p>An embedding assigns a short, dense vector to each word. For illustration, imagine a learned two-dimensional space:</p>
+<pre class="text"><code>apple  → [0.82, 0.16]
+orange → [0.79, 0.22]
+car    → [0.11, 0.85]
+bus    → [0.16, 0.80]</code></pre>
+<p>The coordinate names are not usually known. What matters is their relationship: fruit vectors point in similar directions, as do vehicle vectors.</p>
+<div class="callout callout-style-simple callout-important">
+<div class="callout-body d-flex">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-body-container">
+<p>An embedding is useful because of the <strong>geometry of the collection</strong>, not because one coordinate has an obvious human-readable definition.</p>
+</div>
+</div>
+</div>
+</section>
+</section>
+<section id="sec-similarity" class="level1" data-number="2">
+<h1 data-number="2"><span class="header-section-number">2</span> Similarity and semantic distance</h1>
+<p>Once words are vectors, we need a rule for comparing them.</p>
+<section id="euclidean-distance" class="level2" data-number="2.1">
+<h2 data-number="2.1" class="anchored" data-anchor-id="euclidean-distance"><span class="header-section-number">2.1</span> Euclidean distance</h2>
+<p>Euclidean distance measures the straight-line separation between two points:</p>
+<p><span class="math display">\[
+d(\mathbf{u},\mathbf{v}) = \lVert\mathbf{u}-\mathbf{v}\rVert_2.
+\]</span></p>
+<p>Smaller values mean closer points. This is intuitive, but vector length can affect the result.</p>
+</section>
+<section id="dot-product" class="level2" data-number="2.2">
+<h2 data-number="2.2" class="anchored" data-anchor-id="dot-product"><span class="header-section-number">2.2</span> Dot product</h2>
+<p>The dot product is</p>
+<p><span class="math display">\[
+\mathbf{u}^{\mathsf T}\mathbf{v}=\sum_{i=1}^{d}u_i v_i.
+\]</span></p>
+<p>It becomes large when two vectors align and have substantial magnitude. Word2Vec uses dot products as trainable compatibility scores.</p>
+</section>
+<section id="cosine-similarity" class="level2" data-number="2.3">
+<h2 data-number="2.3" class="anchored" data-anchor-id="cosine-similarity"><span class="header-section-number">2.3</span> Cosine similarity</h2>
+<p>Cosine similarity divides the dot product by both vector lengths:</p>
+<p><span id="eq-cosine"><span class="math display">\[
+\operatorname{cos}(\mathbf{u},\mathbf{v})
+=\frac{\mathbf{u}^{\mathsf T}\mathbf{v}}
+{\lVert\mathbf{u}\rVert_2\lVert\mathbf{v}\rVert_2}.
+\tag{1}\]</span></span></p>
+<p>It asks whether the vectors point in similar directions. It is the standard first choice when querying static word embeddings.</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> cosine_similarity(u, v):</span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>    u <span class="op">=</span> np.asarray(u, dtype<span class="op">=</span><span class="bu">float</span>)</span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>    v <span class="op">=</span> np.asarray(v, dtype<span class="op">=</span><span class="bu">float</span>)</span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> np.dot(u, v) <span class="op">/</span> (np.linalg.norm(u) <span class="op">*</span> np.linalg.norm(v))</span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a>apple <span class="op">=</span> [<span class="fl">0.82</span>, <span class="fl">0.16</span>]</span>
+<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a>orange <span class="op">=</span> [<span class="fl">0.79</span>, <span class="fl">0.22</span>]</span>
+<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a>car <span class="op">=</span> [<span class="fl">0.11</span>, <span class="fl">0.85</span>]</span>
+<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-12"><a href="#cb3-12" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(cosine_similarity(apple, orange))</span>
+<span id="cb3-13"><a href="#cb3-13" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(cosine_similarity(apple, car))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="callout callout-style-simple callout-warning callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Warning</span>Similarity is not identity
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>Nearest neighbors can be synonyms, but they can also be related concepts, grammatical alternatives, or opposites. <em>Hot</em> and <em>cold</em> occur in many of the same contexts and may therefore be close.</p>
+</div>
+</div>
+</section>
+<section id="the-classical-analogy" class="level2" data-number="2.4">
+<h2 data-number="2.4" class="anchored" data-anchor-id="the-classical-analogy"><span class="header-section-number">2.4</span> The classical analogy</h2>
+<p>The most famous word-vector demonstration is</p>
+<p><span class="math display">\[
+\mathbf{king}-\mathbf{man}+\mathbf{woman}\approx\mathbf{queen}.
+\]</span></p>
+<p>It suggests that some relations correspond approximately to directions in the space. We search for the word whose vector has the greatest cosine similarity to the result.</p>
+<div class="cell" data-fig-width="6.5" data-layout-align="default">
+<div class="cell-output-display">
+<div id="fig-king-queen" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-king-queen-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<div>
+<pre class="mermaid mermaid-js" data-label="fig-king-queen">flowchart LR
+    M[man] --&gt;|gender direction| W[woman]
+    K[king] --&gt;|similar direction| Q[queen]
+    M -. royalty direction .-&gt; K
+    W -. royalty direction .-&gt; Q
+
+    classDef common fill:#e8f2f0,stroke:#0f6f78,color:#17364a
+    classDef royal fill:#eaf0f5,stroke:#315f7d,color:#17364a
+    class M,W common
+    class K,Q royal
+</pre>
+</div>
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-king-queen-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;2: A word analogy asks whether two pairs exhibit approximately parallel displacements.
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<p>This is a memorable illustration, not a law of language. Analogy results depend on the corpus, algorithm, vocabulary, and search procedure.</p>
+</section>
+</section>
+<section id="sec-distributional" class="level1" data-number="3">
+<h1 data-number="3"><span class="header-section-number">3</span> The distributional hypothesis</h1>
+<p><span class="citation" data-cites="firth1957synopsis">Firth (<a href="#ref-firth1957synopsis" role="doc-biblioref">1957</a>)</span> summarized a long-standing linguistic idea with the sentence “You shall know a word by the company it keeps.” In computational terms:</p>
+<blockquote class="blockquote">
+<p>Words that occur in similar contexts tend to have related meanings.</p>
+</blockquote>
+<p>Consider two unseen words:</p>
+<pre class="text"><code>She poured the dax into a cup.
+The dax was hot and bitter.
+
+She poured the blicket into a cup.
+The blicket was hot and sweet.</code></pre>
+<p>Even without definitions, the shared contexts suggest that both words name drinks. The corpus provides <strong>distributional evidence</strong>.</p>
+<section id="what-counts-as-context" class="level2" data-number="3.1">
+<h2 data-number="3.1" class="anchored" data-anchor-id="what-counts-as-context"><span class="header-section-number">3.1</span> What counts as context?</h2>
+<p>Context is a modeling decision. It might mean:</p>
+<ul>
+<li>neighboring words within a fixed window;</li>
+<li>all words in the same sentence or document;</li>
+<li>words connected by a grammatical dependency; or</li>
+<li>documents, users, or time periods associated with a word.</li>
+</ul>
+<p>Classical Word2Vec normally uses a short window around each word. A narrow window often emphasizes functional similarity; a wider window can emphasize topical relatedness.</p>
+<p>For the sentence</p>
+<pre class="text"><code>the curious student reads the book</code></pre>
+<p>with a window radius of two, the center word <code>student</code> has these context words:</p>
+<pre class="text"><code>the curious [student] reads the
+ ↑     ↑                 ↑    ↑
+context                 context</code></pre>
+<p>The ordered center–context pairs are:</p>
+<pre class="text"><code>(student, the)
+(student, curious)
+(student, reads)
+(student, the)</code></pre>
+<p>Repeating this operation across a large corpus creates millions or billions of weak training examples without manual labels.</p>
+<div class="callout callout-style-simple callout-tip callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Tip</span>Corpus text supervises itself
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>No annotator labels two words as semantically related. Their observed neighborhoods supply the signal. This is an early and influential form of <strong>self-supervised learning</strong>.</p>
+</div>
+</div>
+</section>
+</section>
+<section id="sec-cooccurrence" class="level1" data-number="4">
+<h1 data-number="4"><span class="header-section-number">4</span> Counting co-occurrence</h1>
+<p>The most direct distributional representation counts how frequently each word appears near each context word.</p>
+<p>Consider the tiny corpus:</p>
+<pre class="text"><code>cats chase mice
+dogs chase cats
+dogs eat food
+cats eat food</code></pre>
+<p>With a symmetric window of radius one, a simplified word–context matrix is:</p>
+<div id="tbl-cooccurrence" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-tbl figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-cooccurrence-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Table&nbsp;2: A small co-occurrence matrix. Rows represent center words and columns represent observed contexts.
+</figcaption>
+<div aria-describedby="tbl-cooccurrence-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>Center word</th>
+<th style="text-align: right;"><code>cats</code></th>
+<th style="text-align: right;"><code>dogs</code></th>
+<th style="text-align: right;"><code>chase</code></th>
+<th style="text-align: right;"><code>eat</code></th>
+<th style="text-align: right;"><code>mice</code></th>
+<th style="text-align: right;"><code>food</code></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>cats</code></td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">2</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr class="even">
+<td><code>dogs</code></td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr class="odd">
+<td><code>chase</code></td>
+<td style="text-align: right;">2</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr class="even">
+<td><code>eat</code></td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">2</td>
+</tr>
+</tbody>
+</table>
+</div>
+</figure>
+</div>
+<p>The rows for <code>cats</code> and <code>dogs</code> are similar because both appear beside <code>chase</code> and <code>eat</code>. Their distributional similarity becomes visible before we train a neural model.</p>
+<section id="constructing-a-matrix-in-python" class="level2" data-number="4.1">
+<h2 data-number="4.1" class="anchored" data-anchor-id="constructing-a-matrix-in-python"><span class="header-section-number">4.1</span> Constructing a matrix in Python</h2>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb9"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> collections <span class="im">import</span> Counter</span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a>sentences <span class="op">=</span> [</span>
+<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a>    <span class="st">"cats chase mice"</span>.split(),</span>
+<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a>    <span class="st">"dogs chase cats"</span>.split(),</span>
+<span id="cb9-7"><a href="#cb9-7" aria-hidden="true" tabindex="-1"></a>    <span class="st">"dogs eat food"</span>.split(),</span>
+<span id="cb9-8"><a href="#cb9-8" aria-hidden="true" tabindex="-1"></a>    <span class="st">"cats eat food"</span>.split(),</span>
+<span id="cb9-9"><a href="#cb9-9" aria-hidden="true" tabindex="-1"></a>]</span>
+<span id="cb9-10"><a href="#cb9-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-11"><a href="#cb9-11" aria-hidden="true" tabindex="-1"></a>vocabulary <span class="op">=</span> <span class="bu">sorted</span>({word <span class="cf">for</span> sentence <span class="kw">in</span> sentences <span class="cf">for</span> word <span class="kw">in</span> sentence})</span>
+<span id="cb9-12"><a href="#cb9-12" aria-hidden="true" tabindex="-1"></a>word_to_id <span class="op">=</span> {word: i <span class="cf">for</span> i, word <span class="kw">in</span> <span class="bu">enumerate</span>(vocabulary)}</span>
+<span id="cb9-13"><a href="#cb9-13" aria-hidden="true" tabindex="-1"></a>counts <span class="op">=</span> np.zeros((<span class="bu">len</span>(vocabulary), <span class="bu">len</span>(vocabulary)), dtype<span class="op">=</span><span class="bu">int</span>)</span>
+<span id="cb9-14"><a href="#cb9-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-15"><a href="#cb9-15" aria-hidden="true" tabindex="-1"></a>window <span class="op">=</span> <span class="dv">1</span></span>
+<span id="cb9-16"><a href="#cb9-16" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> sentence <span class="kw">in</span> sentences:</span>
+<span id="cb9-17"><a href="#cb9-17" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> center_index, center <span class="kw">in</span> <span class="bu">enumerate</span>(sentence):</span>
+<span id="cb9-18"><a href="#cb9-18" aria-hidden="true" tabindex="-1"></a>        left <span class="op">=</span> <span class="bu">max</span>(<span class="dv">0</span>, center_index <span class="op">-</span> window)</span>
+<span id="cb9-19"><a href="#cb9-19" aria-hidden="true" tabindex="-1"></a>        right <span class="op">=</span> <span class="bu">min</span>(<span class="bu">len</span>(sentence), center_index <span class="op">+</span> window <span class="op">+</span> <span class="dv">1</span>)</span>
+<span id="cb9-20"><a href="#cb9-20" aria-hidden="true" tabindex="-1"></a>        <span class="cf">for</span> context_index <span class="kw">in</span> <span class="bu">range</span>(left, right):</span>
+<span id="cb9-21"><a href="#cb9-21" aria-hidden="true" tabindex="-1"></a>            <span class="cf">if</span> context_index <span class="op">==</span> center_index:</span>
+<span id="cb9-22"><a href="#cb9-22" aria-hidden="true" tabindex="-1"></a>                <span class="cf">continue</span></span>
+<span id="cb9-23"><a href="#cb9-23" aria-hidden="true" tabindex="-1"></a>            context <span class="op">=</span> sentence[context_index]</span>
+<span id="cb9-24"><a href="#cb9-24" aria-hidden="true" tabindex="-1"></a>            counts[word_to_id[center], word_to_id[context]] <span class="op">+=</span> <span class="dv">1</span></span>
+<span id="cb9-25"><a href="#cb9-25" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-26"><a href="#cb9-26" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(vocabulary)</span>
+<span id="cb9-27"><a href="#cb9-27" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(counts)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</section>
+<section id="why-raw-counts-are-not-enough" class="level2" data-number="4.2">
+<h2 data-number="4.2" class="anchored" data-anchor-id="why-raw-counts-are-not-enough"><span class="header-section-number">4.2</span> Why raw counts are not enough</h2>
+<p>Raw co-occurrence matrices have three major limitations:</p>
+<ol type="1">
+<li><strong>They are huge and sparse.</strong> A vocabulary of 100,000 words produces <span class="math inline">\(10^{10}\)</span> possible cells.</li>
+<li><strong>Frequency dominates.</strong> Common function words occur with almost everything.</li>
+<li><strong>Counts do not distinguish expected from surprising co-occurrence.</strong> Ten observations may be informative for rare words but ordinary for frequent ones.</li>
+</ol>
+<p>Pointwise mutual information compares observed co-occurrence with what independence would predict:</p>
+<p><span id="eq-pmi"><span class="math display">\[
+\operatorname{PMI}(w,c)
+=\log\frac{P(w,c)}{P(w)P(c)}.
+\tag{2}\]</span></span></p>
+<p>A positive value means that <span class="math inline">\(w\)</span> and <span class="math inline">\(c\)</span> occur together more often than chance would suggest. Positive PMI (PPMI) replaces negative values with zero.</p>
+<div class="callout callout-style-simple callout-note callout-titled">
+<div class="callout-header d-flex align-content-center collapsed" data-bs-toggle="collapse" data-bs-target=".callout-4-contents" aria-controls="callout-4" aria-expanded="false" aria-label="Toggle callout">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>Historical route: matrix reduction
+</div>
+<div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
+</div>
+<div id="callout-4" class="callout-4-contents callout-collapse collapse">
+<div class="callout-body-container callout-body">
+<p>Classical distributional methods can weight a word–context matrix and compress it with a technique such as singular value decomposition. This is an important historical route to dense representations, but it is not our focus. We now turn to methods that learn the vectors directly from a predictive or count-based objective.</p>
+</div>
+</div>
+</div>
+</section>
+</section>
+<section id="sec-word2vec" class="level1" data-number="5">
+<h1 data-number="5"><span class="header-section-number">5</span> Word2Vec: learn by predicting context</h1>
+<p>Word2Vec is a family of shallow neural models introduced by <span class="citation" data-cites="mikolov2013efficient">Mikolov, Chen, et al. (<a href="#ref-mikolov2013efficient" role="doc-biblioref">2013</a>)</span> and refined with efficient training strategies by <span class="citation" data-cites="mikolov2013distributed">Mikolov, Sutskever, et al. (<a href="#ref-mikolov2013distributed" role="doc-biblioref">2013</a>)</span>. Its enduring contribution is not a complicated architecture. It is a clever way to transform local context prediction into useful word vectors.</p>
+<p>Word2Vec has two principal variants:</p>
+<div id="tbl-word2vec-variants" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-tbl figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-word2vec-variants-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Table&nbsp;3: The two Word2Vec training directions.
+</figcaption>
+<div aria-describedby="tbl-word2vec-variants-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>Variant</th>
+<th>Input</th>
+<th>Prediction target</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Skip-gram</td>
+<td>Center word</td>
+<td>Nearby context words</td>
+</tr>
+<tr class="even">
+<td>CBOW</td>
+<td>Nearby context words</td>
+<td>Center word</td>
+</tr>
+</tbody>
+</table>
+</div>
+</figure>
+</div>
+<p>We focus on <strong>Skip-gram with negative sampling</strong>, because its mechanics expose the essential ideas most clearly.</p>
+<section id="step-1-create-positive-pairs" class="level2" data-number="5.1">
+<h2 data-number="5.1" class="anchored" data-anchor-id="step-1-create-positive-pairs"><span class="header-section-number">5.1</span> Step 1: create positive pairs</h2>
+<p>For a token sequence <span class="math inline">\(w_1,\ldots,w_T\)</span> and window radius <span class="math inline">\(m\)</span>, Skip-gram creates <span class="math inline">\((w_t,w_{t+j})\)</span> pairs for <span class="math inline">\(-m\leq j\leq m\)</span>, excluding <span class="math inline">\(j=0\)</span> and positions outside the sentence.</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb10"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> skipgram_pairs(tokens, window_size<span class="op">=</span><span class="dv">2</span>):</span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>    pairs <span class="op">=</span> []</span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> center_index, center <span class="kw">in</span> <span class="bu">enumerate</span>(tokens):</span>
+<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a>        left <span class="op">=</span> <span class="bu">max</span>(<span class="dv">0</span>, center_index <span class="op">-</span> window_size)</span>
+<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a>        right <span class="op">=</span> <span class="bu">min</span>(<span class="bu">len</span>(tokens), center_index <span class="op">+</span> window_size <span class="op">+</span> <span class="dv">1</span>)</span>
+<span id="cb10-6"><a href="#cb10-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-7"><a href="#cb10-7" aria-hidden="true" tabindex="-1"></a>        <span class="cf">for</span> context_index <span class="kw">in</span> <span class="bu">range</span>(left, right):</span>
+<span id="cb10-8"><a href="#cb10-8" aria-hidden="true" tabindex="-1"></a>            <span class="cf">if</span> context_index <span class="op">!=</span> center_index:</span>
+<span id="cb10-9"><a href="#cb10-9" aria-hidden="true" tabindex="-1"></a>                pairs.append((center, tokens[context_index]))</span>
+<span id="cb10-10"><a href="#cb10-10" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> pairs</span>
+<span id="cb10-11"><a href="#cb10-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-12"><a href="#cb10-12" aria-hidden="true" tabindex="-1"></a>tokens <span class="op">=</span> <span class="st">"the curious student reads the book"</span>.split()</span>
+<span id="cb10-13"><a href="#cb10-13" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(skipgram_pairs(tokens, window_size<span class="op">=</span><span class="dv">2</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Every observed pair receives the label <span class="math inline">\(1\)</span>: it is a <strong>positive example</strong>.</p>
+</section>
+<section id="step-2-store-two-vectors-per-word" class="level2" data-number="5.2">
+<h2 data-number="5.2" class="anchored" data-anchor-id="step-2-store-two-vectors-per-word"><span class="header-section-number">5.2</span> Step 2: store two vectors per word</h2>
+<p>Skip-gram maintains two parameter matrices:</p>
+<p><span class="math display">\[
+W_{\text{center}}\in\mathbb{R}^{|V|\times d}
+\qquad\text{and}\qquad
+W_{\text{context}}\in\mathbb{R}^{|V|\times d}.
+\]</span></p>
+<p>Selecting word <span class="math inline">\(w\)</span> from the first matrix gives its center vector <span class="math inline">\(\mathbf{v}_w\)</span>. Selecting context <span class="math inline">\(c\)</span> from the second gives <span class="math inline">\(\mathbf{u}_c\)</span>.</p>
+<div class="cell" data-fig-width="7" data-layout-align="default">
+<div class="cell-output-display">
+<div id="fig-skipgram-lookup" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-skipgram-lookup-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<div>
+<pre class="mermaid mermaid-js" data-label="fig-skipgram-lookup">flowchart LR
+    A[center word ID] --&gt; B[center embedding table]
+    B --&gt; C[center vector v]
+    D[context word ID] --&gt; E[context embedding table]
+    E --&gt; F[context vector u]
+    C --&gt; G[dot product]
+    F --&gt; G
+    G --&gt; H[compatibility score]
+
+    classDef input fill:#f4efe4,stroke:#b48a32,color:#17364a
+    classDef param fill:#e8f2f0,stroke:#0f6f78,color:#17364a
+    classDef score fill:#eaf0f5,stroke:#315f7d,color:#17364a
+    class A,D input
+    class B,C,E,F param
+    class G,H score
+</pre>
+</div>
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-skipgram-lookup-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;3: Skip-gram looks up a center vector and scores it against a context vector.
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<p>Conceptually, a one-hot word vector multiplied by an embedding matrix selects a row. Software performs this operation efficiently as a lookup rather than a full matrix multiplication.</p>
+</section>
+<section id="step-3-score-a-pair" class="level2" data-number="5.3">
+<h2 data-number="5.3" class="anchored" data-anchor-id="step-3-score-a-pair"><span class="header-section-number">5.3</span> Step 3: score a pair</h2>
+<p>The dot product</p>
+<p><span class="math display">\[
+s(w,c)=\mathbf{u}_c^{\mathsf T}\mathbf{v}_w
+\]</span></p>
+<p>scores compatibility. A sigmoid converts the score to a number between zero and one:</p>
+<p><span class="math display">\[
+\sigma(s)=\frac{1}{1+e^{-s}}.
+\]</span></p>
+<p>For an observed pair, training should make <span class="math inline">\(\sigma(\mathbf{u}_c^{\mathsf T}\mathbf{v}_w)\)</span> large.</p>
+</section>
+<section id="why-not-predict-every-vocabulary-word" class="level2" data-number="5.4">
+<h2 data-number="5.4" class="anchored" data-anchor-id="why-not-predict-every-vocabulary-word"><span class="header-section-number">5.4</span> Why not predict every vocabulary word?</h2>
+<p>The original full prediction view assigns a probability to every possible context word:</p>
+<p><span class="math display">\[
+P(c\mid w)=
+\frac{\exp(\mathbf{u}_c^{\mathsf T}\mathbf{v}_w)}
+{\sum_{c'\in V}\exp(\mathbf{u}_{c'}^{\mathsf T}\mathbf{v}_w)}.
+\]</span></p>
+<p>The denominator examines the entire vocabulary for every training pair. With millions of pairs and a large vocabulary, that is expensive.</p>
+</section>
+</section>
+<section id="sec-negative-sampling" class="level1" data-number="6">
+<h1 data-number="6"><span class="header-section-number">6</span> Negative sampling</h1>
+<p>Negative sampling replaces the large multiclass problem with several small binary decisions:</p>
+<blockquote class="blockquote">
+<p>Is this center–context pair observed in the corpus, or was it artificially generated?</p>
+</blockquote>
+<p>For the positive pair <code>(student, reads)</code>, sampled negative pairs might be:</p>
+<pre class="text"><code>(student, reads)      label 1
+(student, pineapple)  label 0
+(student, ocean)      label 0
+(student, bicycle)    label 0</code></pre>
+<p>For one positive pair <span class="math inline">\((w,c)\)</span> and <span class="math inline">\(k\)</span> sampled negative contexts <span class="math inline">\(n_1,\ldots,n_k\)</span>, we maximize</p>
+<p><span id="eq-negative-sampling"><span class="math display">\[
+\log\sigma(\mathbf{u}_c^{\mathsf T}\mathbf{v}_w)
++\sum_{i=1}^{k}\log\sigma(-\mathbf{u}_{n_i}^{\mathsf T}\mathbf{v}_w).
+\tag{3}\]</span></span></p>
+<p>The first term rewards a high score for the observed pair. Each negative term rewards a low score for a noise pair.</p>
+<div class="callout callout-style-simple callout-tip callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Tip</span>The essential intuition
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>Training pulls observed center–context vectors into compatible directions and pushes sampled noise pairs apart. Words that repeatedly interact with similar contexts receive similar updates and gradually occupy nearby regions.</p>
+</div>
+</div>
+<p>Negatives are commonly sampled from a smoothed unigram distribution rather than uniformly. The original implementation used word frequency raised to the <span class="math inline">\(3/4\)</span> power, balancing very frequent and very rare words <span class="citation" data-cites="mikolov2013distributed">(<a href="#ref-mikolov2013distributed" role="doc-biblioref">Mikolov, Sutskever, et al. 2013</a>)</span>.</p>
+<section id="the-learning-loop" class="level2" data-number="6.1">
+<h2 data-number="6.1" class="anchored" data-anchor-id="the-learning-loop"><span class="header-section-number">6.1</span> The learning loop</h2>
+<div class="cell" data-fig-width="7.2" data-layout-align="default">
+<div class="cell-output-display">
+<div id="fig-word2vec-loop" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-word2vec-loop-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<div>
+<pre class="mermaid mermaid-js" data-label="fig-word2vec-loop">flowchart LR
+    A[Select center word] --&gt; B[Collect nearby positive contexts]
+    B --&gt; C[Sample negative contexts]
+    C --&gt; D[Look up center and context vectors]
+    D --&gt; E[Compute dot-product scores]
+    E --&gt; F[Compute binary loss]
+    F --&gt; G[Update embedding tables]
+    G -. next pair .-&gt; A
+
+    classDef data fill:#f4efe4,stroke:#b48a32,color:#17364a
+    classDef learn fill:#e8f2f0,stroke:#0f6f78,color:#17364a
+    class A,B,C data
+    class D,E,F,G learn
+</pre>
+</div>
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-word2vec-loop-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;4: The Skip-gram learning loop repeats simple local decisions across a large corpus.
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+</section>
+<section id="a-compact-pytorch-model" class="level2" data-number="6.2">
+<h2 data-number="6.2" class="anchored" data-anchor-id="a-compact-pytorch-model"><span class="header-section-number">6.2</span> A compact PyTorch model</h2>
+<p>This model shows the central computation without implementing a complete training pipeline:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb12"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> torch</span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> torch <span class="im">import</span> nn</span>
+<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a><span class="kw">class</span> SkipGramNegativeSampling(nn.Module):</span>
+<span id="cb12-5"><a href="#cb12-5" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> <span class="fu">__init__</span>(<span class="va">self</span>, vocabulary_size, embedding_dim):</span>
+<span id="cb12-6"><a href="#cb12-6" aria-hidden="true" tabindex="-1"></a>        <span class="bu">super</span>().<span class="fu">__init__</span>()</span>
+<span id="cb12-7"><a href="#cb12-7" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>.center_embeddings <span class="op">=</span> nn.Embedding(vocabulary_size, embedding_dim)</span>
+<span id="cb12-8"><a href="#cb12-8" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>.context_embeddings <span class="op">=</span> nn.Embedding(vocabulary_size, embedding_dim)</span>
+<span id="cb12-9"><a href="#cb12-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-10"><a href="#cb12-10" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> forward(<span class="va">self</span>, center_ids, context_ids):</span>
+<span id="cb12-11"><a href="#cb12-11" aria-hidden="true" tabindex="-1"></a>        center_vectors <span class="op">=</span> <span class="va">self</span>.center_embeddings(center_ids)</span>
+<span id="cb12-12"><a href="#cb12-12" aria-hidden="true" tabindex="-1"></a>        context_vectors <span class="op">=</span> <span class="va">self</span>.context_embeddings(context_ids)</span>
+<span id="cb12-13"><a href="#cb12-13" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> (center_vectors <span class="op">*</span> context_vectors).<span class="bu">sum</span>(dim<span class="op">=-</span><span class="dv">1</span>)</span>
+<span id="cb12-14"><a href="#cb12-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-15"><a href="#cb12-15" aria-hidden="true" tabindex="-1"></a>model <span class="op">=</span> SkipGramNegativeSampling(vocabulary_size<span class="op">=</span><span class="dv">10_000</span>, embedding_dim<span class="op">=</span><span class="dv">100</span>)</span>
+<span id="cb12-16"><a href="#cb12-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-17"><a href="#cb12-17" aria-hidden="true" tabindex="-1"></a><span class="co"># Each position represents one positive or sampled-negative pair.</span></span>
+<span id="cb12-18"><a href="#cb12-18" aria-hidden="true" tabindex="-1"></a>center_ids <span class="op">=</span> torch.tensor([<span class="dv">12</span>, <span class="dv">12</span>, <span class="dv">12</span>, <span class="dv">12</span>])</span>
+<span id="cb12-19"><a href="#cb12-19" aria-hidden="true" tabindex="-1"></a>context_ids <span class="op">=</span> torch.tensor([<span class="dv">98</span>, <span class="dv">401</span>, <span class="dv">57</span>, <span class="dv">806</span>])</span>
+<span id="cb12-20"><a href="#cb12-20" aria-hidden="true" tabindex="-1"></a>labels <span class="op">=</span> torch.tensor([<span class="fl">1.0</span>, <span class="fl">0.0</span>, <span class="fl">0.0</span>, <span class="fl">0.0</span>])</span>
+<span id="cb12-21"><a href="#cb12-21" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-22"><a href="#cb12-22" aria-hidden="true" tabindex="-1"></a>scores <span class="op">=</span> model(center_ids, context_ids)</span>
+<span id="cb12-23"><a href="#cb12-23" aria-hidden="true" tabindex="-1"></a>loss <span class="op">=</span> nn.functional.binary_cross_entropy_with_logits(scores, labels)</span>
+<span id="cb12-24"><a href="#cb12-24" aria-hidden="true" tabindex="-1"></a>loss.backward()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><code>binary_cross_entropy_with_logits</code> combines the sigmoid and binary loss in a numerically stable operation.</p>
+<div class="callout callout-style-simple callout-note callout-titled">
+<div class="callout-header d-flex align-content-center collapsed" data-bs-toggle="collapse" data-bs-target=".callout-6-contents" aria-controls="callout-6" aria-expanded="false" aria-label="Toggle callout">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>What happens to the two embedding tables?
+</div>
+<div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
+</div>
+<div id="callout-6" class="callout-6-contents callout-collapse collapse">
+<div class="callout-body-container callout-body">
+<p>Word2Vec trains separate center and context matrices. Implementations may publish the center vectors, the context vectors, or a combination. This choice can change evaluation results. “The Word2Vec vector” is therefore shorthand for a representation extracted from the trained parameters.</p>
+</div>
+</div>
+</div>
+</section>
+<section id="cbow-in-one-picture" class="level2" data-number="6.3">
+<h2 data-number="6.3" class="anchored" data-anchor-id="cbow-in-one-picture"><span class="header-section-number">6.3</span> CBOW in one picture</h2>
+<p>Continuous Bag of Words reverses the task:</p>
+<pre class="text"><code>Skip-gram:  student → curious, reads, the, ...
+CBOW:       the + curious + reads + the → student</code></pre>
+<p>CBOW combines nearby context vectors—often by averaging—and predicts the center word. It is usually faster; Skip-gram often represents infrequent words better. The deeper lesson is shared: <strong>prediction forces the embedding table to organize itself around distributional evidence</strong>.</p>
+</section>
+</section>
+<section id="sec-glove" class="level1" data-number="7">
+<h1 data-number="7"><span class="header-section-number">7</span> GloVe: learn from global counts</h1>
+<p>Word2Vec processes local windows as training examples. GloVe—<strong>Global Vectors</strong>—starts from the aggregated co-occurrence matrix <span class="citation" data-cites="pennington2014glove">(<a href="#ref-pennington2014glove" role="doc-biblioref">Pennington et al. 2014</a>)</span>. It asks which properties of global counts should determine meaning.</p>
+<section id="co-occurrence-ratios-carry-information" class="level2" data-number="7.1">
+<h2 data-number="7.1" class="anchored" data-anchor-id="co-occurrence-ratios-carry-information"><span class="header-section-number">7.1</span> Co-occurrence ratios carry information</h2>
+<p>Imagine comparing the contexts <em>ice</em> and <em>steam</em>:</p>
+<div id="tbl-glove-ratios" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-tbl figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-glove-ratios-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Table&nbsp;4: The ratio distinguishes contexts associated with one word from contexts shared by both or related to neither.
+</figcaption>
+<div aria-describedby="tbl-glove-ratios-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<table class="caption-top table">
+<colgroup>
+<col style="width: 20%">
+<col style="width: 26%">
+<col style="width: 26%">
+<col style="width: 26%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Probe word <span class="math inline">\(k\)</span></th>
+<th style="text-align: right;"><span class="math inline">\(P(k\mid\text{ice})\)</span></th>
+<th style="text-align: right;"><span class="math inline">\(P(k\mid\text{steam})\)</span></th>
+<th style="text-align: right;">Ratio</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>solid</code></td>
+<td style="text-align: right;">high</td>
+<td style="text-align: right;">low</td>
+<td style="text-align: right;">large</td>
+</tr>
+<tr class="even">
+<td><code>gas</code></td>
+<td style="text-align: right;">low</td>
+<td style="text-align: right;">high</td>
+<td style="text-align: right;">small</td>
+</tr>
+<tr class="odd">
+<td><code>water</code></td>
+<td style="text-align: right;">high</td>
+<td style="text-align: right;">high</td>
+<td style="text-align: right;">near 1</td>
+</tr>
+<tr class="even">
+<td><code>fashion</code></td>
+<td style="text-align: right;">low</td>
+<td style="text-align: right;">low</td>
+<td style="text-align: right;">near 1</td>
+</tr>
+</tbody>
+</table>
+</div>
+</figure>
+</div>
+<p>The contrast between two co-occurrence profiles can reveal semantic relationships more clearly than either raw count alone.</p>
+</section>
+<section id="the-glove-objective" class="level2" data-number="7.2">
+<h2 data-number="7.2" class="anchored" data-anchor-id="the-glove-objective"><span class="header-section-number">7.2</span> The GloVe objective</h2>
+<p>Let <span class="math inline">\(X_{ij}\)</span> be the number of times word <span class="math inline">\(j\)</span> occurs in the context of word <span class="math inline">\(i\)</span>. GloVe learns word vectors <span class="math inline">\(\mathbf{w}_i\)</span>, context vectors <span class="math inline">\(\widetilde{\mathbf{w}}_j\)</span>, and biases by minimizing</p>
+<p><span id="eq-glove"><span class="math display">\[
+J=\sum_{i,j}f(X_{ij})
+\left(
+\mathbf{w}_i^{\mathsf T}\widetilde{\mathbf{w}}_j
++b_i+\widetilde{b}_j-\log X_{ij}
+\right)^2.
+\tag{4}\]</span></span></p>
+<p>Read the equation in pieces:</p>
+<ol type="1">
+<li><span class="math inline">\(X_{ij}\)</span> records global co-occurrence.</li>
+<li>The vector dot product plus biases predicts <span class="math inline">\(\log X_{ij}\)</span>.</li>
+<li>The squared error penalizes poor predictions.</li>
+<li>The weighting function <span class="math inline">\(f\)</span> prevents extremely rare and extremely frequent pairs from dominating.</li>
+</ol>
+<p>The logarithm compresses the enormous range of corpus counts. The weighting function trusts informative counts while limiting the influence of very frequent pairs.</p>
+</section>
+<section id="word2vec-and-glove-compared" class="level2" data-number="7.3">
+<h2 data-number="7.3" class="anchored" data-anchor-id="word2vec-and-glove-compared"><span class="header-section-number">7.3</span> Word2Vec and GloVe compared</h2>
+<div id="tbl-word2vec-glove" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-tbl figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-word2vec-glove-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Table&nbsp;5: Word2Vec and GloVe use different objectives but exploit the same distributional evidence.
+</figcaption>
+<div aria-describedby="tbl-word2vec-glove-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<table class="caption-top table">
+<colgroup>
+<col style="width: 33%">
+<col style="width: 33%">
+<col style="width: 33%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Property</th>
+<th>Word2Vec Skip-gram</th>
+<th>GloVe</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Immediate training signal</td>
+<td>Local center–context pairs</td>
+<td>Aggregated co-occurrence counts</td>
+</tr>
+<tr class="even">
+<td>Typical objective</td>
+<td>Distinguish observed from sampled pairs</td>
+<td>Reconstruct log co-occurrence</td>
+</tr>
+<tr class="odd">
+<td>Uses global corpus statistics</td>
+<td>Indirectly, through repeated sampling</td>
+<td>Explicitly</td>
+</tr>
+<tr class="even">
+<td>Produces</td>
+<td>Static dense word vectors</td>
+<td>Static dense word vectors</td>
+</tr>
+<tr class="odd">
+<td>Main intuition</td>
+<td>Predict the company a word keeps</td>
+<td>Compress global patterns of company</td>
+</tr>
+</tbody>
+</table>
+</div>
+</figure>
+</div>
+<div class="callout callout-style-simple callout-important">
+<div class="callout-body d-flex">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-body-container">
+<p>Do not reduce the comparison to “neural versus count-based.” Both methods learn parameters with optimization, and both are closely connected to transformed co-occurrence statistics. Their difference lies mainly in how the corpus evidence enters the objective.</p>
+</div>
+</div>
+</div>
+</section>
+</section>
+<section id="sec-pretrained" class="level1" data-number="8">
+<h1 data-number="8"><span class="header-section-number">8</span> Using pretrained embeddings</h1>
+<p>Training high-quality embeddings requires a large, representative corpus and substantial computation. In practice, we often begin with published vectors.</p>
+<section id="well-known-static-embeddings" class="level2" data-number="8.1">
+<h2 data-number="8.1" class="anchored" data-anchor-id="well-known-static-embeddings"><span class="header-section-number">8.1</span> Well-known static embeddings</h2>
+<div id="tbl-pretrained" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-tbl figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-pretrained-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Table&nbsp;6: Three influential families of pretrained static word embeddings.
+</figcaption>
+<div aria-describedby="tbl-pretrained-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<table class="caption-top table">
+<colgroup>
+<col style="width: 25%">
+<col style="width: 25%">
+<col style="width: 25%">
+<col style="width: 25%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Family</th>
+<th>Original idea</th>
+<th>Common published example</th>
+<th>Useful property</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Word2Vec</td>
+<td>Predict local contexts</td>
+<td>Google News, 300 dimensions</td>
+<td>Influential predictive embeddings</td>
+</tr>
+<tr class="even">
+<td>GloVe</td>
+<td>Fit global co-occurrence counts</td>
+<td>Wikipedia + Gigaword, 50–300 dimensions</td>
+<td>Several convenient model sizes</td>
+</tr>
+<tr class="odd">
+<td>fastText</td>
+<td>Represent words through character <span class="math inline">\(n\)</span>-grams</td>
+<td>Common Crawl, 300 dimensions</td>
+<td>Better handling of morphology and unseen forms</td>
+</tr>
+</tbody>
+</table>
+</div>
+</figure>
+</div>
+<p>fastText extends the basic static-word idea by composing a word representation from character <span class="math inline">\(n\)</span>-gram vectors <span class="citation" data-cites="bojanowski2017fasttext">(<a href="#ref-bojanowski2017fasttext" role="doc-biblioref">Bojanowski et al. 2017</a>)</span>. Words such as <em>teach</em>, <em>teacher</em>, and <em>teaching</em> share subword pieces. This is especially valuable in morphologically rich languages and for unfamiliar forms.</p>
+</section>
+<section id="query-glove-with-gensim" class="level2" data-number="8.2">
+<h2 data-number="8.2" class="anchored" data-anchor-id="query-glove-with-gensim"><span class="header-section-number">8.2</span> Query GloVe with Gensim</h2>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb14"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> gensim.downloader <span class="im">as</span> api</span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a>vectors <span class="op">=</span> api.load(<span class="st">"glove-wiki-gigaword-100"</span>)</span>
+<span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-5"><a href="#cb14-5" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(vectors.similarity(<span class="st">"coffee"</span>, <span class="st">"tea"</span>))</span>
+<span id="cb14-6"><a href="#cb14-6" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(vectors.similarity(<span class="st">"coffee"</span>, <span class="st">"airplane"</span>))</span>
+<span id="cb14-7"><a href="#cb14-7" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(vectors.most_similar(<span class="st">"language"</span>, topn<span class="op">=</span><span class="dv">5</span>))</span>
+<span id="cb14-8"><a href="#cb14-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-9"><a href="#cb14-9" aria-hidden="true" tabindex="-1"></a>analogy <span class="op">=</span> vectors.most_similar(</span>
+<span id="cb14-10"><a href="#cb14-10" aria-hidden="true" tabindex="-1"></a>    positive<span class="op">=</span>[<span class="st">"king"</span>, <span class="st">"woman"</span>],</span>
+<span id="cb14-11"><a href="#cb14-11" aria-hidden="true" tabindex="-1"></a>    negative<span class="op">=</span>[<span class="st">"man"</span>],</span>
+<span id="cb14-12"><a href="#cb14-12" aria-hidden="true" tabindex="-1"></a>    topn<span class="op">=</span><span class="dv">5</span>,</span>
+<span id="cb14-13"><a href="#cb14-13" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb14-14"><a href="#cb14-14" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(analogy)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>The first download can take time; later calls use Gensim’s local cache. Exact neighbors vary across models.</p>
+</section>
+<section id="use-vectors-through-spacy" class="level2" data-number="8.3">
+<h2 data-number="8.3" class="anchored" data-anchor-id="use-vectors-through-spacy"><span class="header-section-number">8.3</span> Use vectors through spaCy</h2>
+<p>spaCy is not an embedding algorithm. It is an NLP library whose medium and large pipelines include pretrained static vectors. This makes it useful for applied exploration.</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb15"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="ex">python</span> <span class="at">-m</span> spacy download en_core_web_md</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb16"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> spacy</span>
+<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a>nlp <span class="op">=</span> spacy.load(<span class="st">"en_core_web_md"</span>)</span>
+<span id="cb16-4"><a href="#cb16-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-5"><a href="#cb16-5" aria-hidden="true" tabindex="-1"></a>coffee <span class="op">=</span> nlp.vocab[<span class="st">"coffee"</span>]</span>
+<span id="cb16-6"><a href="#cb16-6" aria-hidden="true" tabindex="-1"></a>tea <span class="op">=</span> nlp.vocab[<span class="st">"tea"</span>]</span>
+<span id="cb16-7"><a href="#cb16-7" aria-hidden="true" tabindex="-1"></a>airplane <span class="op">=</span> nlp.vocab[<span class="st">"airplane"</span>]</span>
+<span id="cb16-8"><a href="#cb16-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-9"><a href="#cb16-9" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(coffee.has_vector, coffee.vector.shape)</span>
+<span id="cb16-10"><a href="#cb16-10" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(coffee.similarity(tea))</span>
+<span id="cb16-11"><a href="#cb16-11" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(coffee.similarity(airplane))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="callout callout-style-simple callout-warning">
+<div class="callout-body d-flex">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-body-container">
+<p>The small English pipeline, <code>en_core_web_sm</code>, does not include a full table of static word vectors. Use <code>en_core_web_md</code> or <code>en_core_web_lg</code> for this exercise.</p>
+</div>
+</div>
+</div>
+</section>
+<section id="inspect-neighborhoods-not-isolated-scores" class="level2" data-number="8.4">
+<h2 data-number="8.4" class="anchored" data-anchor-id="inspect-neighborhoods-not-isolated-scores"><span class="header-section-number">8.4</span> Inspect neighborhoods, not isolated scores</h2>
+<p>A similarity value becomes meaningful only through comparison. Ask several questions:</p>
+<ul>
+<li>Are obvious related words near one another?</li>
+<li>Are the neighbors synonyms, topical associates, or grammatical alternatives?</li>
+<li>Does the behavior change for rare words or names?</li>
+<li>Does the model work equally well for the languages and domains you need?</li>
+</ul>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb17"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> query <span class="kw">in</span> [<span class="st">"doctor"</span>, <span class="st">"computer"</span>, <span class="st">"beautiful"</span>, <span class="st">"running"</span>]:</span>
+<span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(query, vectors.most_similar(query, topn<span class="op">=</span><span class="dv">5</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</section>
+<section id="visualize-a-small-selection-carefully" class="level2" data-number="8.5">
+<h2 data-number="8.5" class="anchored" data-anchor-id="visualize-a-small-selection-carefully"><span class="header-section-number">8.5</span> Visualize a small selection carefully</h2>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb18"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> matplotlib.pyplot <span class="im">as</span> plt</span>
+<span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> sklearn.decomposition <span class="im">import</span> PCA</span>
+<span id="cb18-3"><a href="#cb18-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-4"><a href="#cb18-4" aria-hidden="true" tabindex="-1"></a>words <span class="op">=</span> [</span>
+<span id="cb18-5"><a href="#cb18-5" aria-hidden="true" tabindex="-1"></a>    <span class="st">"king"</span>, <span class="st">"queen"</span>, <span class="st">"prince"</span>, <span class="st">"princess"</span>,</span>
+<span id="cb18-6"><a href="#cb18-6" aria-hidden="true" tabindex="-1"></a>    <span class="st">"coffee"</span>, <span class="st">"tea"</span>, <span class="st">"juice"</span>, <span class="st">"water"</span>,</span>
+<span id="cb18-7"><a href="#cb18-7" aria-hidden="true" tabindex="-1"></a>    <span class="st">"car"</span>, <span class="st">"bus"</span>, <span class="st">"train"</span>, <span class="st">"bicycle"</span>,</span>
+<span id="cb18-8"><a href="#cb18-8" aria-hidden="true" tabindex="-1"></a>]</span>
+<span id="cb18-9"><a href="#cb18-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-10"><a href="#cb18-10" aria-hidden="true" tabindex="-1"></a>points <span class="op">=</span> PCA(n_components<span class="op">=</span><span class="dv">2</span>).fit_transform(vectors[words])</span>
+<span id="cb18-11"><a href="#cb18-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-12"><a href="#cb18-12" aria-hidden="true" tabindex="-1"></a>fig, ax <span class="op">=</span> plt.subplots(figsize<span class="op">=</span>(<span class="dv">9</span>, <span class="dv">6</span>))</span>
+<span id="cb18-13"><a href="#cb18-13" aria-hidden="true" tabindex="-1"></a>ax.scatter(points[:, <span class="dv">0</span>], points[:, <span class="dv">1</span>], color<span class="op">=</span><span class="st">"#0f6f78"</span>)</span>
+<span id="cb18-14"><a href="#cb18-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-15"><a href="#cb18-15" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> word, (x, y) <span class="kw">in</span> <span class="bu">zip</span>(words, points):</span>
+<span id="cb18-16"><a href="#cb18-16" aria-hidden="true" tabindex="-1"></a>    ax.annotate(word, (x, y), xytext<span class="op">=</span>(<span class="dv">5</span>, <span class="dv">4</span>), textcoords<span class="op">=</span><span class="st">"offset points"</span>)</span>
+<span id="cb18-17"><a href="#cb18-17" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-18"><a href="#cb18-18" aria-hidden="true" tabindex="-1"></a>ax.set_title(<span class="st">"PCA projection of selected GloVe vectors"</span>)</span>
+<span id="cb18-19"><a href="#cb18-19" aria-hidden="true" tabindex="-1"></a>ax.set_xlabel(<span class="st">"Principal component 1"</span>)</span>
+<span id="cb18-20"><a href="#cb18-20" aria-hidden="true" tabindex="-1"></a>ax.set_ylabel(<span class="st">"Principal component 2"</span>)</span>
+<span id="cb18-21"><a href="#cb18-21" aria-hidden="true" tabindex="-1"></a>plt.tight_layout()</span>
+<span id="cb18-22"><a href="#cb18-22" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>PCA creates a lossy two-dimensional projection. Similarities should be calculated in the original 100-dimensional space, not inferred only from the picture.</p>
+</section>
+</section>
+<section id="sec-limitations" class="level1" data-number="9">
+<h1 data-number="9"><span class="header-section-number">9</span> What static embeddings cannot do</h1>
+<p>The success of static embeddings should not hide their constraints.</p>
+<section id="one-word-one-vector" class="level2" data-number="9.1">
+<h2 data-number="9.1" class="anchored" data-anchor-id="one-word-one-vector"><span class="header-section-number">9.1</span> One word, one vector</h2>
+<p>A static vocabulary stores one vector for <code>bank</code>, whether the sentence refers to money or a river:</p>
+<pre class="text"><code>She deposited money at the bank.
+They sat on the river bank.</code></pre>
+<p>The learned vector blends evidence from both senses. A contextual model instead produces a representation conditioned on the surrounding sentence.</p>
+</section>
+<section id="corpus-boundaries-become-model-boundaries" class="level2" data-number="9.2">
+<h2 data-number="9.2" class="anchored" data-anchor-id="corpus-boundaries-become-model-boundaries"><span class="header-section-number">9.2</span> Corpus boundaries become model boundaries</h2>
+<p>An embedding can only reflect evidence available in its training data. Specialized terminology, recent events, dialects, and underrepresented languages may be poorly represented. Similarity is learned from a corpus, not discovered as an objective fact.</p>
+</section>
+<section id="frequency-and-vocabulary-remain-important" class="level2" data-number="9.3">
+<h2 data-number="9.3" class="anchored" data-anchor-id="frequency-and-vocabulary-remain-important"><span class="header-section-number">9.3</span> Frequency and vocabulary remain important</h2>
+<p>Rare words receive fewer reliable updates. Word-level models cannot construct a vector for an unseen spelling. fastText reduces this problem with character <span class="math inline">\(n\)</span>-grams, but it does not eliminate missing knowledge.</p>
+</section>
+<section id="bias-is-part-of-the-geometry" class="level2" data-number="9.4">
+<h2 data-number="9.4" class="anchored" data-anchor-id="bias-is-part-of-the-geometry"><span class="header-section-number">9.4</span> Bias is part of the geometry</h2>
+<p>Corpora contain historical and social stereotypes. Distributional learning can encode those associations and reproduce them in nearest neighbors and analogies <span class="citation" data-cites="bolukbasi2016debiasing">(<a href="#ref-bolukbasi2016debiasing" role="doc-biblioref">Bolukbasi et al. 2016</a>)</span>. The same geometric regularities that make embeddings useful can make them harmful.</p>
+<div class="callout callout-style-simple callout-important">
+<div class="callout-body d-flex">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-body-container">
+<p>An embedding measures patterns of usage in a corpus. It does not provide a neutral dictionary of human meaning.</p>
+</div>
+</div>
+</div>
+</section>
+<section id="intrinsic-success-is-not-task-success" class="level2" data-number="9.5">
+<h2 data-number="9.5" class="anchored" data-anchor-id="intrinsic-success-is-not-task-success"><span class="header-section-number">9.5</span> Intrinsic success is not task success</h2>
+<p>Word similarities and analogies are <strong>intrinsic evaluations</strong>: they test the representation directly. The more important question is often <strong>extrinsic</strong>: does the representation improve a real classifier, search system, or other downstream task?</p>
+</section>
+</section>
+<section id="sec-summary" class="level1" data-number="10">
+<h1 data-number="10"><span class="header-section-number">10</span> Putting the ideas together</h1>
+<div class="cell" data-fig-width="7.7" data-layout-align="default">
+<div class="cell-output-display">
+<div id="fig-summary" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-summary-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<div>
+<pre class="mermaid mermaid-js" data-label="fig-summary">flowchart LR
+    A[Corpus] --&gt; B[Sliding context windows]
+    B --&gt; C[Local center-context pairs]
+    B --&gt; D[Global co-occurrence matrix]
+    C --&gt; E[Word2Vec&lt;br/&gt;predict observed pairs]
+    D --&gt; F[GloVe&lt;br/&gt;fit log co-occurrence]
+    E --&gt; G[Static embedding space]
+    F --&gt; G
+    G --&gt; H[Similarity]
+    G --&gt; I[Nearest neighbors]
+    G --&gt; J[Analogies]
+    G --&gt; K[Downstream features]
+
+    classDef data fill:#f4efe4,stroke:#b48a32,color:#17364a
+    classDef learn fill:#e8f2f0,stroke:#0f6f78,color:#17364a
+    classDef result fill:#eaf0f5,stroke:#315f7d,color:#17364a
+    class A,B,C,D data
+    class E,F learn
+    class G,H,I,J,K result
+</pre>
+</div>
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-summary-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;5: Two influential objectives turn the same distributional evidence into dense static vectors.
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<p>The conceptual chain is:</p>
+<ol type="1">
+<li>Token IDs identify vocabulary entries but have no semantic geometry.</li>
+<li>One-hot vectors keep entries distinct but make every pair equally dissimilar.</li>
+<li>Nearby contexts provide a scalable signal about word usage.</li>
+<li>A co-occurrence matrix makes that signal explicit.</li>
+<li>Word2Vec learns by predicting local context relationships.</li>
+<li>GloVe learns by fitting global co-occurrence statistics.</li>
+<li>Both produce static vectors that support similarity and analogy queries.</li>
+<li>Static vectors remain corpus-dependent, biased, and unable to change with sentence context.</li>
+</ol>
+</section>
+<section id="sec-check" class="level1" data-number="11">
+<h1 data-number="11"><span class="header-section-number">11</span> Check your understanding</h1>
+<ol type="1">
+<li>Why is subtracting token IDs meaningless?</li>
+<li>Why is the cosine similarity between two different one-hot vectors always zero?</li>
+<li>With window radius two, which pairs are created around the center word in <code>students learn useful representations</code>?</li>
+<li>What distinguishes a positive pair from a negative pair in Skip-gram training?</li>
+<li>Why is negative sampling cheaper than computing a full softmax?</li>
+<li>Why do words with similar contexts receive similar vectors even if they never occur beside each other?</li>
+<li>In one sentence, contrast the training signals used by Word2Vec and GloVe.</li>
+<li>Why might fastText handle an unfamiliar inflected word better than ordinary Word2Vec?</li>
+<li>Why can <code>hot</code> and <code>cold</code> have high similarity despite being opposites?</li>
+<li>Why should an analogy result not be treated as proof of semantic understanding?</li>
+</ol>
+<div class="callout callout-style-simple callout-tip callout-titled">
+<div class="callout-header d-flex align-content-center collapsed" data-bs-toggle="collapse" data-bs-target=".callout-7-contents" aria-controls="callout-7" aria-expanded="false" aria-label="Toggle callout">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Tip</span>Short answers
+</div>
+<div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
+</div>
+<div id="callout-7" class="callout-7-contents callout-collapse collapse">
+<div class="callout-body-container callout-body">
+<ol type="1">
+<li>IDs are arbitrary vocabulary addresses; their arithmetic depends only on the chosen ordering.</li>
+<li>Different one-hot vectors have no coordinate containing a nonzero value in common.</li>
+<li>Generate all valid center–context pairs within two positions; edge words have fewer contexts.</li>
+<li>A positive pair was observed in a corpus window; a negative pair was sampled as noise.</li>
+<li>It scores only the positive context and a small number of negatives instead of every vocabulary item.</li>
+<li>They repeatedly receive updates involving many of the same context vectors.</li>
+<li>Word2Vec learns from local prediction pairs; GloVe explicitly fits aggregated co-occurrence counts.</li>
+<li>fastText constructs words from character <span class="math inline">\(n\)</span>-gram vectors, which unfamiliar forms may share with known words.</li>
+<li>Antonyms frequently appear in similar syntactic and topical environments.</li>
+<li>The result is a corpus- and model-dependent geometric regularity, not evidence of human-like comprehension.</li>
+</ol>
+</div>
+</div>
+</div>
+</section>
+<section id="sec-resources" class="level1" data-number="12">
+<h1 data-number="12"><span class="header-section-number">12</span> Further reading and tools</h1>
+<section id="primary-and-explanatory-readings" class="level2" data-number="12.1">
+<h2 data-number="12.1" class="anchored" data-anchor-id="primary-and-explanatory-readings"><span class="header-section-number">12.1</span> Primary and explanatory readings</h2>
+<ul>
+<li>Mikolov et al., <em>Efficient Estimation of Word Representations in Vector Space</em> <span class="citation" data-cites="mikolov2013efficient">(<a href="#ref-mikolov2013efficient" role="doc-biblioref">Mikolov, Chen, et al. 2013</a>)</span>.</li>
+<li>Mikolov et al., <em>Distributed Representations of Words and Phrases and their Compositionality</em> <span class="citation" data-cites="mikolov2013distributed">(<a href="#ref-mikolov2013distributed" role="doc-biblioref">Mikolov, Sutskever, et al. 2013</a>)</span>.</li>
+<li>Pennington, Socher, and Manning, <em>GloVe: Global Vectors for Word Representation</em> <span class="citation" data-cites="pennington2014glove">(<a href="#ref-pennington2014glove" role="doc-biblioref">Pennington et al. 2014</a>)</span>.</li>
+<li>Bojanowski et al., <em>Enriching Word Vectors with Subword Information</em> <span class="citation" data-cites="bojanowski2017fasttext">(<a href="#ref-bojanowski2017fasttext" role="doc-biblioref">Bojanowski et al. 2017</a>)</span>.</li>
+<li>Jurafsky and Martin, <em>Speech and Language Processing</em> <span class="citation" data-cites="jurafsky2026slp">(<a href="#ref-jurafsky2026slp" role="doc-biblioref">Jurafsky and Martin 2026</a>)</span>.</li>
+<li>Hewitt, <em>CS224N Lecture 1 Notes</em> <span class="citation" data-cites="hewitt2023cs224n">(<a href="#ref-hewitt2023cs224n" role="doc-biblioref">Hewitt 2023</a>)</span>.</li>
+</ul>
+</section>
+<section id="practical-tools" class="level2" data-number="12.2">
+<h2 data-number="12.2" class="anchored" data-anchor-id="practical-tools"><span class="header-section-number">12.2</span> Practical tools</h2>
+<ul>
+<li><a href="https://radimrehurek.com/gensim/downloader.html">Gensim downloader</a> — discover and load published embedding models.</li>
+<li><a href="https://radimrehurek.com/gensim/models/keyedvectors.html">Gensim <code>KeyedVectors</code></a> — similarities, neighbors, and analogies.</li>
+<li><a href="https://nlp.stanford.edu/projects/glove/">GloVe project</a> — original code and pretrained vectors.</li>
+<li><a href="https://fasttext.cc/docs/en/crawl-vectors.html">fastText pretrained vectors</a> — vectors for many languages.</li>
+<li><a href="https://spacy.io/models">spaCy models</a> — practical NLP pipelines, including packages with static vectors.</li>
+</ul>
+</section>
+<section id="references" class="level2" data-number="12.3">
+<h2 data-number="12.3" class="anchored" data-anchor-id="references"><span class="header-section-number">12.3</span> References</h2>
+<div id="refs" class="references csl-bib-body hanging-indent" role="list">
+<div id="ref-bojanowski2017fasttext" class="csl-entry" role="listitem">
+Bojanowski, Piotr, Edouard Grave, Armand Joulin, and Tomas Mikolov. 2017. <span>“Enriching Word Vectors with Subword Information.”</span> <em>Transactions of the Association for Computational Linguistics</em> 5: 135–46. <a href="https://doi.org/10.1162/tacl_a_00051">https://doi.org/10.1162/tacl_a_00051</a>.
+</div>
+<div id="ref-bolukbasi2016debiasing" class="csl-entry" role="listitem">
+Bolukbasi, Tolga, Kai-Wei Chang, James Zou, Venkatesh Saligrama, and Adam Kalai. 2016. <span>“Man Is to Computer Programmer as Woman Is to Homemaker? Debiasing Word Embeddings.”</span> <em>Advances in Neural Information Processing Systems</em> 29. <a href="https://papers.nips.cc/paper/6228-man-is-to-computer-programmer-as-woman-is-to-homemaker-debiasing-word-embeddings">https://papers.nips.cc/paper/6228-man-is-to-computer-programmer-as-woman-is-to-homemaker-debiasing-word-embeddings</a>.
+</div>
+<div id="ref-firth1957synopsis" class="csl-entry" role="listitem">
+Firth, John Rupert. 1957. <span>“A Synopsis of Linguistic Theory, 1930–1955.”</span> In <em>Studies in Linguistic Analysis</em>. Blackwell.
+</div>
+<div id="ref-hewitt2023cs224n" class="csl-entry" role="listitem">
+Hewitt, John. 2023. <em><span>CS224N</span> Lecture 1 Notes: Introduction and <span>Word2Vec</span></em>. Stanford University. <a href="https://web.stanford.edu/class/cs224n/readings/cs224n_winter2023_lecture1_notes_draft.pdf">https://web.stanford.edu/class/cs224n/readings/cs224n_winter2023_lecture1_notes_draft.pdf</a>.
+</div>
+<div id="ref-jurafsky2026slp" class="csl-entry" role="listitem">
+Jurafsky, Daniel, and James H. Martin. 2026. <em>Speech and Language Processing: An Introduction to Natural Language Processing, Computational Linguistics, and Speech Recognition with Language Models</em>. 3rd ed. <a href="https://web.stanford.edu/~jurafsky/slp3/">https://web.stanford.edu/~jurafsky/slp3/</a>.
+</div>
+<div id="ref-mikolov2013efficient" class="csl-entry" role="listitem">
+Mikolov, Tomas, Kai Chen, Greg Corrado, and Jeffrey Dean. 2013. <span>“Efficient Estimation of Word Representations in Vector Space.”</span> <em>arXiv Preprint arXiv:1301.3781</em>, ahead of print. <a href="https://doi.org/10.48550/arXiv.1301.3781">https://doi.org/10.48550/arXiv.1301.3781</a>.
+</div>
+<div id="ref-mikolov2013distributed" class="csl-entry" role="listitem">
+Mikolov, Tomas, Ilya Sutskever, Kai Chen, Greg S. Corrado, and Jeffrey Dean. 2013. <span>“Distributed Representations of Words and Phrases and Their Compositionality.”</span> <em>Advances in Neural Information Processing Systems</em> 26. <a href="https://papers.nips.cc/paper/5021-distributed-representations-of-words-and-phrases-and-their-compositionality">https://papers.nips.cc/paper/5021-distributed-representations-of-words-and-phrases-and-their-compositionality</a>.
+</div>
+<div id="ref-pennington2014glove" class="csl-entry" role="listitem">
+Pennington, Jeffrey, Richard Socher, and Christopher D. Manning. 2014. <span>“<span>GloVe</span>: Global Vectors for Word Representation.”</span> <em>Proceedings of the 2014 Conference on Empirical Methods in Natural Language Processing</em>, 1532–43. <a href="https://doi.org/10.3115/v1/D14-1162">https://doi.org/10.3115/v1/D14-1162</a>.
+</div>
+</div>
+
+
+</section>
+</section>
+
+</main> <!-- /main -->
+<script>
+(() => {
+  const padding = 24;
+
+  function cropMermaid(svg) {
+    const root = svg.querySelector(":scope > g, g.root");
+    if (!root) return;
+
+    let box;
+    try {
+      box = root.getBBox();
+    } catch (_) {
+      return;
+    }
+
+    if (!box.width || !box.height) return;
+
+    svg.setAttribute(
+      "viewBox",
+      `${box.x - padding} ${box.y - padding} ${box.width + 2 * padding} ${box.height + 2 * padding}`
+    );
+    svg.setAttribute("width", "100%");
+    svg.removeAttribute("height");
+    svg.style.width = "100%";
+    svg.style.height = "auto";
+    svg.style.maxWidth = "100%";
+    svg.style.display = "block";
+    svg.style.marginInline = "auto";
+    svg.dataset.cropped = "true";
+  }
+
+  function cropAllMermaid() {
+    document
+      .querySelectorAll("svg.mermaid-js:not([data-cropped])")
+      .forEach(cropMermaid);
+  }
+
+  const observer = new MutationObserver(cropAllMermaid);
+  observer.observe(document.documentElement, { childList: true, subtree: true });
+
+  window.addEventListener("load", () => {
+    cropAllMermaid();
+    window.setTimeout(cropAllMermaid, 250);
+    window.setTimeout(cropAllMermaid, 1000);
+  });
+})();
+</script>
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp("https:\/\/anassbelcaid\.github\.io\/nlp-course-2026\/");
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+            // target, if specified
+            link.setAttribute("target", "_blank");
+            if (link.getAttribute("rel") === null) {
+              link.setAttribute("rel", "noopener");
+            }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+</div> <!-- /content -->
+<footer class="footer">
+  <div class="nav-footer">
+    <div class="nav-footer-left">
+<p>Natural Language Processing · Université Abdelmalek Essaâdi</p>
+</div>   
+    <div class="nav-footer-center">
+      &nbsp;
+    </div>
+    <div class="nav-footer-right">
+<p>Built with Quarto</p>
+</div>
+  </div>
+</footer>
+
+
+
+
+<script src="../../site_libs/quarto-html/zenscroll-min.js"></script>
+</body></html>

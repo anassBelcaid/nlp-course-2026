@@ -1,0 +1,2232 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.10.18">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="author" content="Dr.&nbsp;A. Belcaid">
+<meta name="description" content="Why fixed-context language models fail, how recurrent networks learn sequence state, and how encoder–decoder models turn one sequence into another.">
+
+<title>Neural Networks for Sequences – CS 351 · NLP</title>
+<style>
+/* Default styles provided by pandoc.
+** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+*/
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: 1.5em;}
+div.column{flex: auto;}
+@media screen {
+div.columns{gap: min(4vw, 1.5em);}
+div.column{overflow-x: auto;}
+}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+/* CSS for citations */
+div.csl-bib-body { }
+div.csl-entry {
+  clear: both;
+}
+.hanging-indent div.csl-entry {
+  margin-left:2em;
+  text-indent:-2em;
+}
+div.csl-left-margin {
+  min-width:2em;
+  float:left;
+}
+div.csl-right-inline {
+  margin-left:2em;
+  padding-left:1em;
+}
+div.csl-indent {
+  margin-left: 2em;
+}</style>
+
+
+<script src="../../site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="../../site_libs/clipboard/clipboard.min.js"></script>
+<script src="../../site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="../../site_libs/quarto-search/fuse.min.js"></script>
+<script src="../../site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="../../">
+<script src="../../site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="../../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="../../site_libs/quarto-html/popper.min.js"></script>
+<script src="../../site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="../../site_libs/quarto-html/anchor.min.js"></script>
+<link href="../../site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="../../site_libs/quarto-html/quarto-syntax-highlighting-095245003bb80bd2beb305de39928752.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="../../site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="../../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="../../site_libs/bootstrap/bootstrap-bae81809e9689276853494912f89ea28.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<script id="quarto-search-options" type="application/json">{
+  "location": "navbar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "end",
+  "type": "overlay",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script>
+<style>html{ scroll-behavior: smooth; }</style>
+<script src="../../site_libs/quarto-diagram/mermaid.min.js"></script>
+<script src="../../site_libs/quarto-diagram/mermaid-init.js"></script>
+<link href="../../site_libs/quarto-diagram/mermaid.css" rel="stylesheet">
+
+  <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
+  <script defer="" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-chtml.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN" && texText && texText.data) {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script>
+
+<link rel="stylesheet" href="../../styles.css">
+</head>
+
+<body class="floating nav-fixed quarto-light">
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+    <nav class="navbar navbar-expand-lg " data-bs-theme="dark">
+      <div class="navbar-container container-fluid">
+      <div class="navbar-brand-container mx-auto">
+    <a class="navbar-brand" href="../../index.html">
+    <span class="navbar-title">CS 351 · NLP</span>
+    </a>
+  </div>
+            <div id="quarto-search" class="" title="Search"></div>
+          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse" aria-controls="navbarCollapse" role="menu" aria-expanded="false" aria-label="Toggle navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+  <span class="navbar-toggler-icon"></span>
+</button>
+          <div class="collapse navbar-collapse" id="navbarCollapse">
+            <ul class="navbar-nav navbar-nav-scroll me-auto">
+  <li class="nav-item">
+    <a class="nav-link" href="../../index.html"> 
+<span class="menu-text">Home</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../../logistics.html"> 
+<span class="menu-text">Logistics</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../../schedule.html"> 
+<span class="menu-text">Schedule</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../../coding-projects.html"> 
+<span class="menu-text">Coding Projects</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../../student-projects.html"> 
+<span class="menu-text">Student Projects</span></a>
+  </li>  
+</ul>
+            <ul class="navbar-nav navbar-nav-scroll ms-auto">
+  <li class="nav-item compact">
+    <a class="nav-link" href="https://github.com/anassBelcaid"> <i class="bi bi-github" role="img" aria-label="Instructor GitHub profile">
+</i> 
+<span class="menu-text"></span></a>
+  </li>  
+</ul>
+          </div> <!-- /navcollapse -->
+            <div class="quarto-navbar-tools">
+</div>
+      </div> <!-- /container-fluid -->
+    </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
+<!-- sidebar -->
+  <nav id="quarto-sidebar" class="sidebar collapse collapse-horizontal quarto-sidebar-collapse-item sidebar-navigation floating overflow-auto">
+    <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">On this page</h2>
+   
+  <ul>
+  <li><a href="#sec-fixed-memory" id="toc-sec-fixed-memory" class="nav-link active" data-scroll-target="#sec-fixed-memory"><span class="header-section-number">1</span> The memory problem left by n-grams</a>
+  <ul class="collapse">
+  <li><a href="#sec-agreement-example" id="toc-sec-agreement-example" class="nav-link" data-scroll-target="#sec-agreement-example"><span class="header-section-number">1.1</span> A dependency that does not fit the window</a>
+  <ul class="collapse">
+  <li><a href="#worked-solution" id="toc-worked-solution" class="nav-link" data-scroll-target="#worked-solution"><span class="header-section-number">1.1.1</span> Worked solution</a></li>
+  </ul></li>
+  <li><a href="#sec-increasing-order" id="toc-sec-increasing-order" class="nav-link" data-scroll-target="#sec-increasing-order"><span class="header-section-number">1.2</span> Why increasing the order is not learned memory</a></li>
+  <li><a href="#sec-two-limitations" id="toc-sec-two-limitations" class="nav-link" data-scroll-target="#sec-two-limitations"><span class="header-section-number">1.3</span> Two limitations that should not be confused</a>
+  <ul class="collapse">
+  <li><a href="#failure-1-sparse-evidence" id="toc-failure-1-sparse-evidence" class="nav-link" data-scroll-target="#failure-1-sparse-evidence"><span class="header-section-number">1.3.1</span> Failure 1: sparse evidence</a></li>
+  <li><a href="#failure-2-discarded-evidence" id="toc-failure-2-discarded-evidence" class="nav-link" data-scroll-target="#failure-2-discarded-evidence"><span class="header-section-number">1.3.2</span> Failure 2: discarded evidence</a></li>
+  </ul></li>
+  <li><a href="#sec-fixed-memory-synthesis" id="toc-sec-fixed-memory-synthesis" class="nav-link" data-scroll-target="#sec-fixed-memory-synthesis"><span class="header-section-number">1.4</span> Section synthesis</a></li>
+  </ul></li>
+  <li><a href="#sec-fixed-window-neural-lm" id="toc-sec-fixed-window-neural-lm" class="nav-link" data-scroll-target="#sec-fixed-window-neural-lm"><span class="header-section-number">2</span> Fixed-window neural language models</a>
+  <ul class="collapse">
+  <li><a href="#sec-bengio-wager" id="toc-sec-bengio-wager" class="nav-link" data-scroll-target="#sec-bengio-wager"><span class="header-section-number">2.1</span> Bengio’s distributed-representation argument</a></li>
+  <li><a href="#sec-build-fixed-window" id="toc-sec-build-fixed-window" class="nav-link" data-scroll-target="#sec-build-fixed-window"><span class="header-section-number">2.2</span> Building the model from inspectable objects</a>
+  <ul class="collapse">
+  <li><a href="#look-up-one-vector-per-context-word" id="toc-look-up-one-vector-per-context-word" class="nav-link" data-scroll-target="#look-up-one-vector-per-context-word"><span class="header-section-number">2.2.1</span> 1. Look up one vector per context word</a></li>
+  <li><a href="#concatenate-the-window" id="toc-concatenate-the-window" class="nav-link" data-scroll-target="#concatenate-the-window"><span class="header-section-number">2.2.2</span> 2. Concatenate the window</a></li>
+  <li><a href="#compute-a-hidden-representation" id="toc-compute-a-hidden-representation" class="nav-link" data-scroll-target="#compute-a-hidden-representation"><span class="header-section-number">2.2.3</span> 3. Compute a hidden representation</a></li>
+  <li><a href="#produce-a-vocabulary-distribution" id="toc-produce-a-vocabulary-distribution" class="nav-link" data-scroll-target="#produce-a-vocabulary-distribution"><span class="header-section-number">2.2.4</span> 4. Produce a vocabulary distribution</a></li>
+  </ul></li>
+  <li><a href="#sec-neural-window-limit" id="toc-sec-neural-window-limit" class="nav-link" data-scroll-target="#sec-neural-window-limit"><span class="header-section-number">2.3</span> What the neural window fixes—and what it does not</a></li>
+  </ul></li>
+  <li><a href="#sec-rnn" id="toc-sec-rnn" class="nav-link" data-scroll-target="#sec-rnn"><span class="header-section-number">3</span> Recurrent neural networks</a>
+  <ul class="collapse">
+  <li><a href="#sec-rnn-cell" id="toc-sec-rnn-cell" class="nav-link" data-scroll-target="#sec-rnn-cell"><span class="header-section-number">3.1</span> One recurrent cell</a></li>
+  <li><a href="#sec-rnn-scalar-example" id="toc-sec-rnn-scalar-example" class="nav-link" data-scroll-target="#sec-rnn-scalar-example"><span class="header-section-number">3.2</span> A complete scalar forward pass</a></li>
+  </ul></li>
+  <li><a href="#sec-bptt" id="toc-sec-bptt" class="nav-link" data-scroll-target="#sec-bptt"><span class="header-section-number">4</span> Learning through time</a>
+  <ul class="collapse">
+  <li><a href="#sec-one-cell-backprop" id="toc-sec-one-cell-backprop" class="nav-link" data-scroll-target="#sec-one-cell-backprop"><span class="header-section-number">4.1</span> Backpropagation through one cell</a></li>
+  <li><a href="#sec-token-loss-example" id="toc-sec-token-loss-example" class="nav-link" data-scroll-target="#sec-token-loss-example"><span class="header-section-number">4.2</span> One concrete token loss</a></li>
+  <li><a href="#sec-gradient-merge" id="toc-sec-gradient-merge" class="nav-link" data-scroll-target="#sec-gradient-merge"><span class="header-section-number">4.3</span> Multiple gradient paths add</a></li>
+  <li><a href="#sec-full-bptt" id="toc-sec-full-bptt" class="nav-link" data-scroll-target="#sec-full-bptt"><span class="header-section-number">4.4</span> Backpropagation through time</a></li>
+  </ul></li>
+  <li><a href="#sec-rnn-generation" id="toc-sec-rnn-generation" class="nav-link" data-scroll-target="#sec-rnn-generation"><span class="header-section-number">5</span> Generating structured text with an RNN</a></li>
+  <li><a href="#sec-gradient-instability" id="toc-sec-gradient-instability" class="nav-link" data-scroll-target="#sec-gradient-instability"><span class="header-section-number">6</span> Why gradients vanish or explode</a>
+  <ul class="collapse">
+  <li><a href="#sec-jacobian-product" id="toc-sec-jacobian-product" class="nav-link" data-scroll-target="#sec-jacobian-product"><span class="header-section-number">6.1</span> The repeated Jacobian product</a></li>
+  <li><a href="#sec-gradient-scalar" id="toc-sec-gradient-scalar" class="nav-link" data-scroll-target="#sec-gradient-scalar"><span class="header-section-number">6.2</span> A scalar calculation</a></li>
+  <li><a href="#sec-gradient-clipping" id="toc-sec-gradient-clipping" class="nav-link" data-scroll-target="#sec-gradient-clipping"><span class="header-section-number">6.3</span> Gradient clipping: a practical guardrail</a></li>
+  </ul></li>
+  <li><a href="#sec-gated-cells" id="toc-sec-gated-cells" class="nav-link" data-scroll-target="#sec-gated-cells"><span class="header-section-number">7</span> Gated recurrent cells</a>
+  <ul class="collapse">
+  <li><a href="#sec-lstm" id="toc-sec-lstm" class="nav-link" data-scroll-target="#sec-lstm"><span class="header-section-number">7.1</span> LSTM: retain, write, expose</a>
+  <ul class="collapse">
+  <li><a href="#retain-or-forget" id="toc-retain-or-forget" class="nav-link" data-scroll-target="#retain-or-forget"><span class="header-section-number">7.1.1</span> Retain or forget</a></li>
+  <li><a href="#prepare-a-write" id="toc-prepare-a-write" class="nav-link" data-scroll-target="#prepare-a-write"><span class="header-section-number">7.1.2</span> Prepare a write</a></li>
+  <li><a href="#update-memory-additively" id="toc-update-memory-additively" class="nav-link" data-scroll-target="#update-memory-additively"><span class="header-section-number">7.1.3</span> Update memory additively</a></li>
+  <li><a href="#expose-part-of-memory" id="toc-expose-part-of-memory" class="nav-link" data-scroll-target="#expose-part-of-memory"><span class="header-section-number">7.1.4</span> Expose part of memory</a></li>
+  </ul></li>
+  <li><a href="#sec-gru" id="toc-sec-gru" class="nav-link" data-scroll-target="#sec-gru"><span class="header-section-number">7.2</span> GRU: reset, propose, interpolate</a>
+  <ul class="collapse">
+  <li><a href="#reset-the-old-state-before-proposing-a-candidate" id="toc-reset-the-old-state-before-proposing-a-candidate" class="nav-link" data-scroll-target="#reset-the-old-state-before-proposing-a-candidate"><span class="header-section-number">7.2.1</span> Reset the old state before proposing a candidate</a></li>
+  <li><a href="#interpolate-between-old-and-proposed-state" id="toc-interpolate-between-old-and-proposed-state" class="nav-link" data-scroll-target="#interpolate-between-old-and-proposed-state"><span class="header-section-number">7.2.2</span> Interpolate between old and proposed state</a></li>
+  </ul></li>
+  </ul></li>
+  <li><a href="#sec-nmt" id="toc-sec-nmt" class="nav-link" data-scroll-target="#sec-nmt"><span class="header-section-number">8</span> Neural machine translation</a>
+  <ul class="collapse">
+  <li><a href="#sec-encoder-decoder" id="toc-sec-encoder-decoder" class="nav-link" data-scroll-target="#sec-encoder-decoder"><span class="header-section-number">8.1</span> Encoder–decoder recurrence</a></li>
+  </ul></li>
+  <li><a href="#sec-conditional-lm" id="toc-sec-conditional-lm" class="nav-link" data-scroll-target="#sec-conditional-lm"><span class="header-section-number">9</span> Conditional language models</a>
+  <ul class="collapse">
+  <li><a href="#sec-seq2seq-training" id="toc-sec-seq2seq-training" class="nav-link" data-scroll-target="#sec-seq2seq-training"><span class="header-section-number">9.1</span> Training seq2seq end to end</a></li>
+  </ul></li>
+  <li><a href="#sec-context-bottleneck" id="toc-sec-context-bottleneck" class="nav-link" data-scroll-target="#sec-context-bottleneck"><span class="header-section-number">10</span> The fixed-context bottleneck</a>
+  <ul class="collapse">
+  <li><a href="#sec-chapter-synthesis" id="toc-sec-chapter-synthesis" class="nav-link" data-scroll-target="#sec-chapter-synthesis"><span class="header-section-number">10.1</span> Chapter synthesis</a></li>
+  <li><a href="#references" id="toc-references" class="nav-link" data-scroll-target="#references"><span class="header-section-number">10.2</span> References</a></li>
+  </ul></li>
+  </ul>
+<div class="quarto-alternate-formats"><h2>Other Formats</h2><ul><li><a href="index.pdf"><i class="bi bi-file-pdf"></i>PDF</a></li></ul></div></nav>
+</nav>
+<div id="quarto-sidebar-glass" class="quarto-sidebar-collapse-item" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item"></div>
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar zindex-bottom">
+    </div>
+<!-- main -->
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title">Neural Networks for Sequences</h1>
+<p class="subtitle lead">Chapter 5 · From fixed context to learned memory</p>
+</div>
+
+<div>
+  <div class="description">
+    Why fixed-context language models fail, how recurrent networks learn sequence state, and how encoder–decoder models turn one sequence into another.
+  </div>
+</div>
+
+
+<div class="quarto-title-meta">
+
+    <div>
+    <div class="quarto-title-meta-heading">Author</div>
+    <div class="quarto-title-meta-contents">
+             <p>Dr.&nbsp;A. Belcaid </p>
+          </div>
+  </div>
+    
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<p><img src="../../images/uae-logo.png" class="img-fluid"></p>
+<p>CS 351 · Introduction to Natural Language Processing<br>
+Chapter 5 · Neural networks for sequences</p>
+<p>A fixed-window language model can use several recent words, but it cannot decide to remember an important word for an unknown amount of time. This chapter develops the machinery needed to replace that rigid window with a learned state. We will move from neural language models to recurrent computation, backpropagation through time, gated memory, and finally sequence-to-sequence learning.</p>
+<div id="fig-neural-sequences-overview" class="chapter-overview-image quarto-float quarto-figure quarto-figure-center anchored" data-fig-align="center">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-neural-sequences-overview-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="../../lectures/05-neural-sequences/images/neural-sequences-overview.png" class="chapter-overview-image img-fluid quarto-figure quarto-figure-center figure-img" style="width:92.0%">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-neural-sequences-overview-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;1: The chapter journey from a fixed context window through recurrent state, temporal credit assignment, gated memory, and the fixed-context bottleneck that motivates attention.
+</figcaption>
+</figure>
+</div>
+<div class="cell" data-fig-width="7.2" data-layout-align="default">
+<div class="cell-output-display">
+<div id="fig-neural-sequences-route" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-neural-sequences-route-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<div>
+<pre class="mermaid mermaid-js" data-label="fig-neural-sequences-route">flowchart LR
+    A[Fixed context] --&gt; B[Neural LM]
+    B --&gt; C[Recurrent state]
+    C --&gt; D[BPTT]
+    D --&gt; E[Gated memory]
+    E --&gt; F[Encoder–decoder]
+    F --&gt; G[Attention?]
+
+    classDef base fill:#e8f2f0,stroke:#0f6f78,color:#17364a
+    classDef learning fill:#fff3d6,stroke:#b98a1d,color:#17364a
+    classDef bridge fill:#f2e9f7,stroke:#8b5bb5,color:#17364a
+    class A,B,C base
+    class D,E learning
+    class F,G bridge
+</pre>
+</div>
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-neural-sequences-route-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;2: Each part repairs a limitation exposed by the preceding part.
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<div class="callout callout-style-simple callout-note callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>Learning objectives
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>After this chapter, you should be able to:</p>
+<ol type="1">
+<li>distinguish the sparsity problem from the fixed-memory problem of n-gram models;</li>
+<li>construct a fixed-window neural language model from embeddings and shared parameters;</li>
+<li>compute the forward equations of an RNN and interpret its hidden state;</li>
+<li>explain how backpropagation through time accumulates parameter gradients;</li>
+<li>diagnose vanishing and exploding gradients and apply gradient clipping;</li>
+<li>compare the information paths in LSTM and GRU cells;</li>
+<li>explain encoder–decoder and conditional language-model training; and</li>
+<li>identify the fixed-context bottleneck that motivates attention.</li>
+</ol>
+</div>
+</div>
+<section id="sec-fixed-memory" class="level1" data-number="1">
+<h1 data-number="1"><span class="header-section-number">1</span> The memory problem left by n-grams</h1>
+<p>The previous chapter constructed language models from counts. An n-gram model estimates a next-token distribution from a fixed suffix of the available history:</p>
+<p><span id="eq-fixed-history"><span class="math display">\[
+P(w_t\mid w_{1:t-1})
+\approx
+P(w_t\mid w_{t-n+1:t-1}).
+\tag{1}\]</span></span></p>
+<p>This approximation is computationally useful, but it imposes a strict memory policy: <strong>retain the most recent <span class="math inline">\(n-1\)</span> tokens and discard everything earlier</strong>. The policy depends only on position. It cannot retain a distant word because that word is important.</p>
+<section id="sec-agreement-example" class="level2" data-number="1.1">
+<h2 data-number="1.1" class="anchored" data-anchor-id="sec-agreement-example"><span class="header-section-number">1.1</span> A dependency that does not fit the window</h2>
+<p>Keep the following sentence visible throughout the example:</p>
+<blockquote class="blockquote">
+<p>The <strong>keys</strong> to the cabinet ___ on the table.</p>
+</blockquote>
+<p>The exact task is to predict the missing verb. The plural noun <em>keys</em> determines that the correct continuation is <em>are</em>. The singular noun <em>cabinet</em> is closer to the blank, but it is not the subject.</p>
+<p>The token sequence available before the prediction is:</p>
+<div id="tbl-agreement-tokens" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-tbl figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-agreement-tokens-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Table&nbsp;1: The important grammatical feature occurs at position 2, while the nearest noun occurs at position 5.
+</figcaption>
+<div aria-describedby="tbl-agreement-tokens-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<table class="caption-top table">
+<colgroup>
+<col style="width: 21%">
+<col style="width: 15%">
+<col style="width: 15%">
+<col style="width: 15%">
+<col style="width: 15%">
+<col style="width: 15%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: right;">Position</th>
+<th>1</th>
+<th>2</th>
+<th>3</th>
+<th>4</th>
+<th>5</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: right;">Token</td>
+<td>the</td>
+<td><strong>keys</strong></td>
+<td>to</td>
+<td>the</td>
+<td>cabinet</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">Role</td>
+<td>determiner</td>
+<td>plural subject</td>
+<td>connector</td>
+<td>determiner</td>
+<td>intervening noun</td>
+</tr>
+</tbody>
+</table>
+</div>
+</figure>
+</div>
+<p>A bigram model retains only the final token:</p>
+<p><span class="math display">\[
+P(w_6\mid w_{1:5})
+\approx
+P(w_6\mid \text{cabinet}).
+\]</span></p>
+<p>The model therefore asks, “Which word often follows <em>cabinet</em>?” It cannot ask, “Which verb agrees with the subject of this clause?” The plural feature was present in the sentence, but it was discarded before prediction.</p>
+<div class="cell" data-fig-width="6.8" data-layout-align="default">
+<div class="cell-output-display">
+<div id="fig-bigram-information-loss" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-bigram-information-loss-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<div>
+<pre class="mermaid mermaid-js" data-label="fig-bigram-information-loss">flowchart LR
+    K[keys&lt;br/&gt;subject = plural] --&gt; T1[to]
+    T1 --&gt; T2[the]
+    T2 --&gt; C[cabinet]
+    C --&gt; Q[?]
+    K -. needed agreement .-&gt; Q
+
+    classDef cue fill:#e8f2f0,stroke:#0f6f78,color:#17364a
+    classDef local fill:#f8e5df,stroke:#d95f43,color:#17364a
+    classDef neutral fill:#ffffff,stroke:#718387,color:#17364a
+    class K cue
+    class C,Q local
+    class T1,T2 neutral
+</pre>
+</div>
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-bigram-information-loss-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;3: The sentence contains the needed feature, but the bigram representation exposes only the final token to the predictor.
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<div class="callout callout-style-simple callout-important callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Important</span>Try it before reading the solution
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>Suppose the model is a trigram. Its retained history contains two tokens.</p>
+<ol type="1">
+<li>What exact history does it see before predicting the verb?</li>
+<li>Does that history contain the number of the subject?</li>
+<li>What minimum n-gram order would include <em>keys</em> in this particular sentence?</li>
+</ol>
+</div>
+</div>
+<section id="worked-solution" class="level3" data-number="1.1.1">
+<h3 data-number="1.1.1" class="anchored" data-anchor-id="worked-solution"><span class="header-section-number">1.1.1</span> Worked solution</h3>
+<p>The two-token trigram history is:</p>
+<pre class="text"><code>the cabinet</code></pre>
+<p>It still does not contain <em>keys</em>, so it does not expose the subject’s plural number. The distance from <em>keys</em> to the missing verb is four token transitions:</p>
+<pre class="text"><code>keys → to → the → cabinet → ___</code></pre>
+<p>To include <em>keys</em> when predicting the blank, the retained history must contain four tokens. That requires a <strong>5-gram</strong> model:</p>
+<p><span class="math display">\[
+P(w_6\mid w_{1:5})
+\approx
+P(w_6\mid w_2,w_3,w_4,w_5).
+\]</span></p>
+<p>For this one sentence, increasing the order repairs the missing-input problem. It does not provide a general solution: another sentence can insert five, ten, or fifty tokens between the subject and its verb.</p>
+</section>
+</section>
+<section id="sec-increasing-order" class="level2" data-number="1.2">
+<h2 data-number="1.2" class="anchored" data-anchor-id="sec-increasing-order"><span class="header-section-number">1.2</span> Why increasing the order is not learned memory</h2>
+<p>Increasing <span class="math inline">\(n\)</span> changes the length of the window, not the rule used to select information. The model still retains a fixed suffix and discards the rest.</p>
+<p>If the vocabulary contains <span class="math inline">\(|V|\)</span> tokens, an order-<span class="math inline">\(n\)</span> model may need to distinguish as many as <span class="math inline">\(|V|^{n-1}\)</span> histories and <span class="math inline">\(|V|^n\)</span> complete n-grams. For <span class="math inline">\(|V|=50{,}000\)</span>,</p>
+<p><span class="math display">\[
+(50{,}000)^5
+= 3.125\times 10^{23}
+\]</span></p>
+<p>possible 5-grams exist.</p>
+<p>The number is not a claim that a system will store a dense table of that size. It exposes the combinatorial space in which observations become sparse: longer histories are more informative when repeated, but exact repetitions become less likely <span class="citation" data-cites="jurafsky2026slp">(<a href="#ref-jurafsky2026slp" role="doc-biblioref">Jurafsky and Martin 2026</a>, ch.&nbsp;3)</span>.</p>
+<div id="tbl-window-orders" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-tbl figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-window-orders-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Table&nbsp;2: A longer window can capture this dependency but cannot adapt to dependencies of unknown length.
+</figcaption>
+<div aria-describedby="tbl-window-orders-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<table class="caption-top table">
+<colgroup>
+<col style="width: 18%">
+<col style="width: 18%">
+<col style="width: 31%">
+<col style="width: 31%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Order</th>
+<th>Retained history before the blank</th>
+<th style="text-align: center;">Contains <em>keys</em>?</th>
+<th style="text-align: center;">General solution?</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Bigram</td>
+<td><code>cabinet</code></td>
+<td style="text-align: center;">No</td>
+<td style="text-align: center;">No</td>
+</tr>
+<tr class="even">
+<td>Trigram</td>
+<td><code>the cabinet</code></td>
+<td style="text-align: center;">No</td>
+<td style="text-align: center;">No</td>
+</tr>
+<tr class="odd">
+<td>5-gram</td>
+<td><code>keys to the cabinet</code></td>
+<td style="text-align: center;">Yes</td>
+<td style="text-align: center;">No</td>
+</tr>
+<tr class="even">
+<td>Larger fixed n</td>
+<td>a longer suffix</td>
+<td style="text-align: center;">Sometimes</td>
+<td style="text-align: center;">No</td>
+</tr>
+</tbody>
+</table>
+</div>
+</figure>
+</div>
+</section>
+<section id="sec-two-limitations" class="level2" data-number="1.3">
+<h2 data-number="1.3" class="anchored" data-anchor-id="sec-two-limitations"><span class="header-section-number">1.3</span> Two limitations that should not be confused</h2>
+<p>N-gram models exhibit two related but distinct failures.</p>
+<section id="failure-1-sparse-evidence" class="level3" data-number="1.3.1">
+<h3 data-number="1.3.1" class="anchored" data-anchor-id="failure-1-sparse-evidence"><span class="header-section-number">1.3.1</span> Failure 1: sparse evidence</h3>
+<p>Suppose the training corpus contains:</p>
+<blockquote class="blockquote">
+<p>the cat rested</p>
+</blockquote>
+<p>but never contains:</p>
+<blockquote class="blockquote">
+<p>the dog rested</p>
+</blockquote>
+<p>A count model may assign the second phrase zero probability even though <em>cat</em> and <em>dog</em> occur in similar linguistic environments. This is a <strong>generalization problem</strong>: the model treats different word identities as unrelated table entries.</p>
+<p>Smoothing redistributes probability mass and prevents unseen events from receiving probability zero. However, ordinary smoothing still does not give <em>cat</em> and <em>dog</em> a learned geometric relationship.</p>
+</section>
+<section id="failure-2-discarded-evidence" class="level3" data-number="1.3.2">
+<h3 data-number="1.3.2" class="anchored" data-anchor-id="failure-2-discarded-evidence"><span class="header-section-number">1.3.2</span> Failure 2: discarded evidence</h3>
+<p>In the agreement sentence, the relevant word <em>keys</em> occurred, but it fell outside the active window. This is a <strong>memory problem</strong>: information needed at prediction time is absent from the model input.</p>
+<p>Smoothing cannot reconstruct a feature that the representation has already removed. The difference can be summarized as follows:</p>
+<div id="tbl-two-ngram-failures" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-tbl figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-two-ngram-failures-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Table&nbsp;3: Generalization and memory require different repairs.
+</figcaption>
+<div aria-describedby="tbl-two-ngram-failures-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<table class="caption-top table">
+<colgroup>
+<col style="width: 33%">
+<col style="width: 33%">
+<col style="width: 33%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Question</th>
+<th>Sparse evidence</th>
+<th>Discarded evidence</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Was the useful information in the active representation?</td>
+<td>Yes, but the event was rare or unseen</td>
+<td>No</td>
+</tr>
+<tr class="even">
+<td>Typical symptom</td>
+<td>zero or unreliable count</td>
+<td>prediction based on the wrong local cue</td>
+</tr>
+<tr class="odd">
+<td>Can smoothing help?</td>
+<td>Yes</td>
+<td>No</td>
+</tr>
+<tr class="even">
+<td>Needed architectural change</td>
+<td>share evidence across similar words</td>
+<td>carry selected information across time</td>
+</tr>
+</tbody>
+</table>
+</div>
+</figure>
+</div>
+<div class="callout callout-style-simple callout-warning callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Warning</span>Common misconception
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>“Use a larger n” is not a mechanism for long-term memory. It is a decision to preserve a longer <strong>fixed</strong> suffix, with a rapidly growing and increasingly sparse context space.</p>
+</div>
+</div>
+</section>
+</section>
+<section id="sec-fixed-memory-synthesis" class="level2" data-number="1.4">
+<h2 data-number="1.4" class="anchored" data-anchor-id="sec-fixed-memory-synthesis"><span class="header-section-number">1.4</span> Section synthesis</h2>
+<p>An n-gram model forgets by position: once a token leaves the window, its information is unavailable. A useful sequence model should instead learn a compact representation that:</p>
+<ul>
+<li>shares statistical evidence across related words;</li>
+<li>is updated as each new token arrives;</li>
+<li>preserves information when it remains useful; and</li>
+<li>discards information when it no longer matters.</li>
+</ul>
+<p>The first neural step will address the generalization problem by replacing symbolic word identities with learned vectors and shared parameters. It will also make the remaining memory limitation easier to see.</p>
+<div class="callout callout-style-simple callout-important callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Important</span>Question leading to the next section
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>Can a neural language model learn that <em>cat</em> and <em>dog</em> are similar while keeping the exact inputs, vectors, and scores inspectable?</p>
+</div>
+</div>
+</section>
+</section>
+<section id="sec-fixed-window-neural-lm" class="level1" data-number="2">
+<h1 data-number="2"><span class="header-section-number">2</span> Fixed-window neural language models</h1>
+<p>The first repair is to stop treating every word as an unrelated symbol. A neural language model learns a vector for each word and reuses a shared prediction network across every context. Words that support similar predictions can acquire similar vectors, allowing evidence to be shared across related contexts <span class="citation" data-cites="bengio2003neural">(<a href="#ref-bengio2003neural" role="doc-biblioref">Bengio et al. 2003</a>)</span>.</p>
+<section id="sec-bengio-wager" class="level2" data-number="2.1">
+<h2 data-number="2.1" class="anchored" data-anchor-id="sec-bengio-wager"><span class="header-section-number">2.1</span> Bengio’s distributed-representation argument</h2>
+<p>Consider two contexts:</p>
+<pre class="text"><code>the cat rested
+the dog rested</code></pre>
+<p>A count table stores separate entries for <em>cat</em> and <em>dog</em>. A neural model instead looks up learned embeddings</p>
+<p><span class="math display">\[
+\mathbf e_{\text{cat}}=C\mathbf 1_{\text{cat}},
+\qquad
+\mathbf e_{\text{dog}}=C\mathbf 1_{\text{dog}},
+\]</span></p>
+<p>where <span class="math inline">\(C\in\mathbb R^{d_e\times |V|}\)</span> is an embedding matrix and each one-hot vector selects one column. If training makes the two embeddings nearby, then a shared downstream network reacts similarly to both words.</p>
+<div class="callout callout-style-simple callout-tip callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Tip</span>What is being shared?
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>The model does not copy a probability from one sentence to another. It learns reusable features. A hidden unit that responds to “animate subject” or “plural noun” can fire for many words instead of requiring a separate count for every surface form.</p>
+</div>
+</div>
+<p>The original neural probabilistic language model jointly learned word vectors and the probability function that used them. Its architecture is reproduced in <a href="#fig-bengio-original" class="quarto-xref">Figure&nbsp;4</a> for historical reference.</p>
+<div id="fig-bengio-original" class="quarto-float quarto-figure quarto-figure-center anchored" data-fig-align="center">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-bengio-original-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="../../lectures/05-neural-sequences/images/bengio-figure-1.png" class="img-fluid quarto-figure quarto-figure-center figure-img" style="width:76.0%">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-bengio-original-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;4: The neural probabilistic language-model architecture. Reproduced from <span class="citation" data-cites="bengio2003neural">Bengio et al. (<a href="#ref-bengio2003neural" role="doc-biblioref">2003</a>)</span>, Fig. 1.
+</figcaption>
+</figure>
+</div>
+</section>
+<section id="sec-build-fixed-window" class="level2" data-number="2.2">
+<h2 data-number="2.2" class="anchored" data-anchor-id="sec-build-fixed-window"><span class="header-section-number">2.2</span> Building the model from inspectable objects</h2>
+<p>Use a four-word context to predict the next word:</p>
+<pre class="text"><code>the students opened their  →  ?</code></pre>
+<p>Let every embedding have dimension <span class="math inline">\(d_e\)</span>. The model constructs four visible objects.</p>
+<section id="look-up-one-vector-per-context-word" class="level3" data-number="2.2.1">
+<h3 data-number="2.2.1" class="anchored" data-anchor-id="look-up-one-vector-per-context-word"><span class="header-section-number">2.2.1</span> 1. Look up one vector per context word</h3>
+<p><span class="math display">\[
+\mathbf e^{(1)}=C\mathbf 1_{\text{the}},\quad
+\mathbf e^{(2)}=C\mathbf 1_{\text{students}},\quad
+\mathbf e^{(3)}=C\mathbf 1_{\text{opened}},\quad
+\mathbf e^{(4)}=C\mathbf 1_{\text{their}}.
+\]</span></p>
+<p>The same matrix <span class="math inline">\(C\)</span> performs every lookup. Word identity chooses a column; position does not create a new embedding table.</p>
+</section>
+<section id="concatenate-the-window" class="level3" data-number="2.2.2">
+<h3 data-number="2.2.2" class="anchored" data-anchor-id="concatenate-the-window"><span class="header-section-number">2.2.2</span> 2. Concatenate the window</h3>
+<p><span id="eq-window-concatenation"><span class="math display">\[
+\mathbf x=
+\begin{bmatrix}
+\mathbf e^{(1)}\\
+\mathbf e^{(2)}\\
+\mathbf e^{(3)}\\
+\mathbf e^{(4)}
+\end{bmatrix}
+\in\mathbb R^{4d_e}.
+\tag{2}\]</span></span></p>
+<p>Concatenation preserves word order because each position occupies a different block of <span class="math inline">\(mathbf x\)</span>.</p>
+</section>
+<section id="compute-a-hidden-representation" class="level3" data-number="2.2.3">
+<h3 data-number="2.2.3" class="anchored" data-anchor-id="compute-a-hidden-representation"><span class="header-section-number">2.2.3</span> 3. Compute a hidden representation</h3>
+<p><span id="eq-window-hidden"><span class="math display">\[
+\mathbf a=W\mathbf x+\mathbf b_h,
+\qquad
+\mathbf h=\tanh(\mathbf a),
+\tag{3}\]</span></span></p>
+<p>with <span class="math inline">\(W\in\mathbb R^{d_h\times 4d_e}\)</span> and <span class="math inline">\(mathbf b_h\in\mathbb R^{d_h}\)</span>.</p>
+</section>
+<section id="produce-a-vocabulary-distribution" class="level3" data-number="2.2.4">
+<h3 data-number="2.2.4" class="anchored" data-anchor-id="produce-a-vocabulary-distribution"><span class="header-section-number">2.2.4</span> 4. Produce a vocabulary distribution</h3>
+<p><span id="eq-window-output"><span class="math display">\[
+\mathbf z=U\mathbf h+\mathbf b_o,
+\qquad
+\hat{\mathbf y}=\operatorname{softmax}(\mathbf z),
+\tag{4}\]</span></span></p>
+<p>where <span class="math inline">\(U\in\mathbb R^{|V|\times d_h}\)</span>. The output contains one probability per vocabulary item. Plausible continuations might include <em>books</em> and <em>laptops</em>; implausible continuations remain present with low probability.</p>
+<div id="tbl-fixed-window-shapes" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-tbl figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-fixed-window-shapes-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Table&nbsp;4: The dimensions make the fixed-window assumption visible in the parameters.
+</figcaption>
+<div aria-describedby="tbl-fixed-window-shapes-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>Object</th>
+<th style="text-align: right;">Shape</th>
+<th>Interpretation</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><span class="math inline">\(C\)</span></td>
+<td style="text-align: right;"><span class="math inline">\(d_e\times |V|\)</span></td>
+<td>shared word-embedding table</td>
+</tr>
+<tr class="even">
+<td><span class="math inline">\(mathbf x\)</span></td>
+<td style="text-align: right;"><span class="math inline">\(4d_e\)</span></td>
+<td>ordered four-word context</td>
+</tr>
+<tr class="odd">
+<td><span class="math inline">\(W\)</span></td>
+<td style="text-align: right;"><span class="math inline">\(d_h\times4d_e\)</span></td>
+<td>context-to-hidden transformation</td>
+</tr>
+<tr class="even">
+<td><span class="math inline">\(U\)</span></td>
+<td style="text-align: right;"><span class="math inline">\(|V|\times d_h\)</span></td>
+<td>hidden-to-vocabulary transformation</td>
+</tr>
+<tr class="odd">
+<td><span class="math inline">\(\hat{\mathbf y}\)</span></td>
+<td style="text-align: right;"><span class="math inline">\(|V|\)</span></td>
+<td>next-word distribution</td>
+</tr>
+</tbody>
+</table>
+</div>
+</figure>
+</div>
+</section>
+</section>
+<section id="sec-neural-window-limit" class="level2" data-number="2.3">
+<h2 data-number="2.3" class="anchored" data-anchor-id="sec-neural-window-limit"><span class="header-section-number">2.3</span> What the neural window fixes—and what it does not</h2>
+<p>The neural model improves generalization in two ways:</p>
+<ol type="1">
+<li>embeddings allow related words to share evidence; and</li>
+<li>shared matrices replace a table containing one independent parameter set per observed n-gram.</li>
+</ol>
+<p>The memory policy, however, remains fixed. If the window contains <span class="math inline">\(k\)</span> embeddings,</p>
+<p><span class="math display">\[
+\mathbf x\in\mathbb R^{kd_e},
+\qquad
+W\in\mathbb R^{d_h\times kd_e}.
+\]</span></p>
+<p>Adding one more position adds <span class="math inline">\(d_hd_e\)</span> parameters to <span class="math inline">\(W\)</span>. More importantly, concatenation assigns a distinct block of <span class="math inline">\(W\)</span> to every position. The model does not apply one position-independent rule repeatedly through time.</p>
+<div class="callout callout-style-simple callout-warning callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Warning</span>The boundary moved; it did not disappear
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>A four-word neural window forgets the fifth-most-recent word just as completely as a 5-gram model. Distributed representations repair exact-match generalization, not unbounded memory.</p>
+</div>
+</div>
+<p>The required architecture should accept an arbitrary number of inputs while keeping its parameter shapes fixed. That requirement leads to recurrence.</p>
+</section>
+</section>
+<section id="sec-rnn" class="level1" data-number="3">
+<h1 data-number="3"><span class="header-section-number">3</span> Recurrent neural networks</h1>
+<p>A recurrent neural network (RNN) maintains a <strong>hidden state</strong> that is updated after every input. Instead of concatenating a separate block for every position, it applies the same transformation at each time step.</p>
+<div class="cell" data-fig-width="7.1" data-layout-align="default">
+<div class="cell-output-display">
+<div id="fig-rnn-unfolded" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-rnn-unfolded-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<div>
+<pre class="mermaid mermaid-js" data-label="fig-rnn-unfolded">flowchart LR
+    X1[x1] --&gt; H1[h1]
+    H0[h0] --&gt; H1
+    H1 --&gt; H2[h2]
+    X2[x2] --&gt; H2
+    H2 --&gt; H3[h3]
+    X3[x3] --&gt; H3
+    H3 --&gt; H4[h4]
+    X4[x4] --&gt; H4
+    H4 --&gt; Y4[y4]
+
+    classDef input fill:#f2e9f7,stroke:#8b5bb5,color:#17364a
+    classDef state fill:#f8e5df,stroke:#d95f43,color:#17364a
+    classDef output fill:#e8f2f0,stroke:#0f6f78,color:#17364a
+    class X1,X2,X3,X4 input
+    class H0,H1,H2,H3,H4 state
+    class Y4 output
+</pre>
+</div>
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-rnn-unfolded-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;5: Unfolding reveals repeated applications of one state-update rule. The graph grows with the sequence, but the parameter set does not.
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<section id="sec-rnn-cell" class="level2" data-number="3.1">
+<h2 data-number="3.1" class="anchored" data-anchor-id="sec-rnn-cell"><span class="header-section-number">3.1</span> One recurrent cell</h2>
+<p>For input <span class="math inline">\(mathbf x_t\in\mathbb R^{d_x}\)</span> and previous state <span class="math inline">\(mathbf h_{t-1}\in\mathbb R^{d_h}\)</span>, a simple tanh RNN computes</p>
+<p><span id="eq-rnn-forward"><span class="math display">\[
+\begin{aligned}
+\mathbf a_t &amp;= W_x\mathbf x_t+W_h\mathbf h_{t-1}+\mathbf b_h,\\
+\mathbf h_t &amp;= \tanh(\mathbf a_t),\\
+\mathbf z_t &amp;= U\mathbf h_t+\mathbf b_o,\\
+\hat{\mathbf y}_t &amp;= \operatorname{softmax}(\mathbf z_t).
+\end{aligned}
+\tag{5}\]</span></span></p>
+<p>The matrices have fixed shapes:</p>
+<p><span class="math display">\[
+W_x\in\mathbb R^{d_h\times d_x},\quad
+W_h\in\mathbb R^{d_h\times d_h},\quad
+U\in\mathbb R^{|V|\times d_h}.
+\]</span></p>
+<p>The subscript <span class="math inline">\(t\)</span> appears on activations, not parameters. Every time step reuses <span class="math inline">\(W_x\)</span>, <span class="math inline">\(W_h\)</span>, <span class="math inline">\(U\)</span>, and the biases.</p>
+<div class="callout callout-style-simple callout-note callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>State is not a stored sentence
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p><span class="math inline">\(\mathbf h_t\)</span> is a learned summary produced by repeated transformations. It is not a list of previous words, and no coordinate is guaranteed to have a human-readable meaning. Training determines which aspects of the history become useful features.</p>
+</div>
+</div>
+</section>
+<section id="sec-rnn-scalar-example" class="level2" data-number="3.2">
+<h2 data-number="3.2" class="anchored" data-anchor-id="sec-rnn-scalar-example"><span class="header-section-number">3.2</span> A complete scalar forward pass</h2>
+<p>Before working with vectors, inspect a one-dimensional RNN. Let</p>
+<p><span class="math display">\[
+h_t=\tanh(w_xx_t+w_hh_{t-1}+b),
+\]</span></p>
+<p>with</p>
+<p><span class="math display">\[
+w_x=0.8,\qquad w_h=0.5,\qquad b=0,\qquad h_0=0.
+\]</span></p>
+<p>Suppose two scalar inputs are <span class="math inline">\(x_1=1\)</span> and <span class="math inline">\(x_2=-0.5\)</span>.</p>
+<div class="callout callout-style-simple callout-important callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Important</span>Try it first
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>Compute <span class="math inline">\(a_1,h_1,a_2,h_2\)</span>. Keep at least three decimal places.</p>
+</div>
+</div>
+<p>At the first step,</p>
+<p><span class="math display">\[
+a_1=0.8(1)+0.5(0)=0.8,
+\qquad
+h_1=\tanh(0.8)\approx0.664.
+\]</span></p>
+<p>At the second step, the new input and previous state meet:</p>
+<p><span class="math display">\[
+a_2=0.8(-0.5)+0.5(0.664)
+=-0.400+0.332=-0.068,
+\]</span></p>
+<p><span class="math display">\[
+h_2=\tanh(-0.068)\approx-0.068.
+\]</span></p>
+<div id="tbl-scalar-rnn-forward" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-tbl figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-scalar-rnn-forward-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Table&nbsp;5: The state combines new evidence with a transformed summary of earlier evidence.
+</figcaption>
+<div aria-describedby="tbl-scalar-rnn-forward-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<table class="caption-top table">
+<colgroup>
+<col style="width: 16%">
+<col style="width: 16%">
+<col style="width: 16%">
+<col style="width: 16%">
+<col style="width: 16%">
+<col style="width: 16%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: right;">Step</th>
+<th style="text-align: right;"><span class="math inline">\(x_t\)</span></th>
+<th style="text-align: right;">recurrent contribution <span class="math inline">\(w_hh_{t-1}\)</span></th>
+<th style="text-align: right;">input contribution <span class="math inline">\(w_xx_t\)</span></th>
+<th style="text-align: right;"><span class="math inline">\(a_t\)</span></th>
+<th style="text-align: right;"><span class="math inline">\(h_t\)</span></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">1.0</td>
+<td style="text-align: right;">0.000</td>
+<td style="text-align: right;">0.800</td>
+<td style="text-align: right;">0.800</td>
+<td style="text-align: right;">0.664</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">2</td>
+<td style="text-align: right;">−0.5</td>
+<td style="text-align: right;">0.332</td>
+<td style="text-align: right;">−0.400</td>
+<td style="text-align: right;">−0.068</td>
+<td style="text-align: right;">−0.068</td>
+</tr>
+</tbody>
+</table>
+</div>
+</figure>
+</div>
+<p>The state can continue for five or five hundred inputs without changing the number or shapes of the parameters. The price is sequential computation: <span class="math inline">\(h_t\)</span> cannot be computed until <span class="math inline">\(h_{t-1}\)</span> exists.</p>
+</section>
+</section>
+<section id="sec-bptt" class="level1" data-number="4">
+<h1 data-number="4"><span class="header-section-number">4</span> Learning through time</h1>
+<p>Training an RNN requires derivatives through the reused recurrent computation. We first derive one local backward step, then connect those steps across the unfolded sequence.</p>
+<section id="sec-one-cell-backprop" class="level2" data-number="4.1">
+<h2 data-number="4.1" class="anchored" data-anchor-id="sec-one-cell-backprop"><span class="header-section-number">4.1</span> Backpropagation through one cell</h2>
+<p>For a one-hot target <span class="math inline">\(\mathbf y_t\)</span>, the cross-entropy loss is</p>
+<p><span id="eq-token-cross-entropy"><span class="math display">\[
+J^{(t)}=-\sum_{v\in V}y_{t,v}\log\hat y_{t,v}.
+\tag{6}\]</span></span></p>
+<p>Softmax and cross-entropy simplify the derivative with respect to logits:</p>
+<p><span id="eq-softmax-error"><span class="math display">\[
+\boldsymbol\delta_{z,t}
+=\frac{\partial J^{(t)}}{\partial\mathbf z_t}
+=\hat{\mathbf y}_t-\mathbf y_t.
+\tag{7}\]</span></span></p>
+<p>The output matrix sends that error into hidden-state space:</p>
+<p><span class="math display">\[
+\mathbf g_{h,t}^{\text{local}}
+=U^\top\boldsymbol\delta_{z,t}.
+\]</span></p>
+<p>For <span class="math inline">\(\mathbf h_t=\tanh(\mathbf a_t)\)</span>,</p>
+<p><span id="eq-tanh-backward"><span class="math display">\[
+\boldsymbol\delta_{a,t}
+=\mathbf g_{h,t}\odot(1-\mathbf h_t\odot\mathbf h_t).
+\tag{8}\]</span></span></p>
+<p>The same pre-activation error produces every parameter gradient entering the cell:</p>
+<p><span id="eq-rnn-local-gradients"><span class="math display">\[
+\begin{aligned}
+\frac{\partial J}{\partial W_x}&amp;=\boldsymbol\delta_{a,t}\mathbf x_t^\top,\\
+\frac{\partial J}{\partial W_h}&amp;=\boldsymbol\delta_{a,t}\mathbf h_{t-1}^\top,\\
+\frac{\partial J}{\partial\mathbf b_h}&amp;=\boldsymbol\delta_{a,t},\\
+\frac{\partial J}{\partial\mathbf h_{t-1}}&amp;=W_h^\top\boldsymbol\delta_{a,t}.
+\end{aligned}
+\tag{9}\]</span></span></p>
+<p>The final line is what makes temporal credit assignment possible: error at time <span class="math inline">\(t\)</span> becomes an error signal for the preceding state.</p>
+</section>
+<section id="sec-token-loss-example" class="level2" data-number="4.2">
+<h2 data-number="4.2" class="anchored" data-anchor-id="sec-token-loss-example"><span class="header-section-number">4.2</span> One concrete token loss</h2>
+<p>After the context</p>
+<pre class="text"><code>the students opened their</code></pre>
+<p>suppose the observed target is <em>books</em> and the model assigns</p>
+<p><span class="math display">\[
+\hat y_{t,\text{books}}=0.62.
+\]</span></p>
+<p>Because the target is one-hot, all terms in <a href="#eq-token-cross-entropy" class="quarto-xref">Equation&nbsp;6</a> except the target entry vanish:</p>
+<p><span class="math display">\[
+J^{(t)}=-\log(0.62)\approx0.478.
+\]</span></p>
+<p>A larger probability on the correct word produces a smaller loss. The loss is attached to this output, but its gradient reaches the state, the current input path, and the preceding state.</p>
+</section>
+<section id="sec-gradient-merge" class="level2" data-number="4.3">
+<h2 data-number="4.3" class="anchored" data-anchor-id="sec-gradient-merge"><span class="header-section-number">4.3</span> Multiple gradient paths add</h2>
+<p>An intermediate state <span class="math inline">\(\mathbf h_t\)</span> has at least two downstream uses:</p>
+<ol type="1">
+<li>it produces the current output and loss <span class="math inline">\(J^{(t)}\)</span>; and</li>
+<li>it influences <span class="math inline">\(\mathbf h_{t+1}\)</span> and therefore all later losses.</li>
+</ol>
+<p>Backpropagation sums both contributions:</p>
+<p><span id="eq-hidden-gradient-sum"><span class="math display">\[
+\frac{\partial J}{\partial\mathbf h_t}
+=
+\underbrace{U^\top\boldsymbol\delta_{z,t}}_{\text{current output}}
++
+\underbrace{W_h^\top\boldsymbol\delta_{a,t+1}}_{\text{future recurrence}}.
+\tag{10}\]</span></span></p>
+<p>This is an application of the multivariable chain rule. Backpropagation does not choose one route through a graph; every downstream route contributes to the gradient of a shared node.</p>
+</section>
+<section id="sec-full-bptt" class="level2" data-number="4.4">
+<h2 data-number="4.4" class="anchored" data-anchor-id="sec-full-bptt"><span class="header-section-number">4.4</span> Backpropagation through time</h2>
+<p>For a sequence with <span class="math inline">\(T\)</span> supervised outputs, the total objective is often a sum or mean of token losses:</p>
+<p><span id="eq-sequence-loss"><span class="math display">\[
+J=\sum_{t=1}^{T}J^{(t)}.
+\tag{11}\]</span></span></p>
+<p>Backpropagation through time (BPTT) means:</p>
+<ol type="1">
+<li>unfold the recurrent computation over the observed sequence;</li>
+<li>compute all token losses;</li>
+<li>propagate gradients backward from later states to earlier states; and</li>
+<li>sum every time-step contribution to the shared parameters.</li>
+</ol>
+<div class="cell" data-fig-width="7" data-layout-align="default">
+<div class="cell-output-display">
+<div id="fig-bptt-contributions" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-bptt-contributions-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<div>
+<pre class="mermaid mermaid-js" data-label="fig-bptt-contributions">flowchart LR
+    L1[J1] --&gt; H1[h1]
+    L2[J2] --&gt; H2[h2]
+    L3[J3] --&gt; H3[h3]
+    H3 -. gradient .-&gt; H2
+    H2 -. gradient .-&gt; H1
+    H1 --&gt; P[shared gradients]
+    H2 --&gt; P
+    H3 --&gt; P
+
+    classDef loss fill:#f8e5df,stroke:#d95f43,color:#17364a
+    classDef state fill:#ffffff,stroke:#356fa8,color:#17364a
+    classDef params fill:#e8f2f0,stroke:#0f6f78,color:#17364a
+    class L1,L2,L3 loss
+    class H1,H2,H3 state
+    class P params
+</pre>
+</div>
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-bptt-contributions-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;6: Each time step uses the same parameters, so its local contribution is added to one shared parameter gradient.
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<p>For example,</p>
+<p><span id="eq-shared-recurrent-gradient"><span class="math display">\[
+\frac{\partial J}{\partial W_h}
+=\sum_{t=1}^{T}\boldsymbol\delta_{a,t}\mathbf h_{t-1}^{\top}.
+\tag{12}\]</span></span></p>
+<p>The sum reflects weight sharing: there are many uses of <span class="math inline">\(W_h\)</span>, but only one parameter tensor to update.</p>
+<div class="callout callout-style-simple callout-tip callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Tip</span>Implementation view
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>Modern automatic-differentiation systems construct this unfolded computation graph dynamically or symbolically. “Run BPTT” usually means computing the forward sequence loss and calling the framework’s backward operation—not manually writing every derivative.</p>
+</div>
+</div>
+</section>
+</section>
+<section id="sec-rnn-generation" class="level1" data-number="5">
+<h1 data-number="5"><span class="header-section-number">5</span> Generating structured text with an RNN</h1>
+<p>The same recurrent mechanism can be trained at the character level. At each step, the model predicts a distribution over the next character; a sampled character is fed back as the next input. Repeating this loop generates text of arbitrary length.</p>
+<div id="fig-rnn-recipe" class="quarto-float quarto-figure quarto-figure-center anchored" data-fig-align="center">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-rnn-recipe-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="../../lectures/05-neural-sequences/images/rnn-recipe-preview.png" class="img-fluid quarto-figure quarto-figure-center figure-img" style="width:62.0%">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-rnn-recipe-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;7: An original visual interpretation of an absurd recipe generated in the style learned by a character-level RNN.
+</figcaption>
+</figure>
+</div>
+<p>A recipe corpus contains highly visible regularities: titles, quantities, ingredient lists, numbered actions, punctuation, and recurring verbs. An RNN can learn these surface patterns even when its generated content is incoherent.</p>
+<pre class="text"><code>PINEAPPLE COCOA PASTA
+
+1 cup pasta
+2 tbsp cocoa powder
+1 cup pineapple chunks
+...
+
+Mix until the sauce remembers the oven.</code></pre>
+<p>The sample looks recipe-like because the model has learned local and medium-range form. That appearance does not imply physical consistency, factuality, or safety. The historical recipe-generation example provides a useful seed for the coding project: inspect generated structure, then trace how temperature and sampling decisions affect output <a href="https://gist.github.com/nylki/1efbaa36635956d35bcc">the original demonstration is available here</a>.</p>
+</section>
+<section id="sec-gradient-instability" class="level1" data-number="6">
+<h1 data-number="6"><span class="header-section-number">6</span> Why gradients vanish or explode</h1>
+<p>Long-range learning requires a gradient to cross many recurrent transitions. Repeated multiplication is the central difficulty.</p>
+<section id="sec-jacobian-product" class="level2" data-number="6.1">
+<h2 data-number="6.1" class="anchored" data-anchor-id="sec-jacobian-product"><span class="header-section-number">6.1</span> The repeated Jacobian product</h2>
+<p>For the simple RNN,</p>
+<p><span class="math display">\[
+\frac{\partial\mathbf h_t}{\partial\mathbf h_{t-1}}
+=D_tW_h,
+\]</span></p>
+<p>where</p>
+<p><span class="math display">\[
+D_t=\operatorname{diag}(1-\mathbf h_t\odot\mathbf h_t)
+\]</span></p>
+<p>contains derivatives of tanh. A gradient traveling from time <span class="math inline">\(T\)</span> to time <span class="math inline">\(0\)</span> contains</p>
+<p><span id="eq-rnn-jacobian-product"><span class="math display">\[
+\frac{\partial\mathbf h_T}{\partial\mathbf h_0}
+=\prod_{t=1}^{T}D_tW_h.
+\tag{13}\]</span></span></p>
+<p>If these local transformations repeatedly contract the signal, the gradient vanishes. If they repeatedly expand it, the gradient explodes <span class="citation" data-cites="bengio1994learning pascanu2013difficulty">(<a href="#ref-bengio1994learning" role="doc-biblioref">Bengio et al. 1994</a>; <a href="#ref-pascanu2013difficulty" role="doc-biblioref">Pascanu et al. 2013</a>)</span>.</p>
+</section>
+<section id="sec-gradient-scalar" class="level2" data-number="6.2">
+<h2 data-number="6.2" class="anchored" data-anchor-id="sec-gradient-scalar"><span class="header-section-number">6.2</span> A scalar calculation</h2>
+<p>The matrix case changes different directions by different amounts, but a scalar chain exposes the basic behavior.</p>
+<div class="callout callout-style-simple callout-important callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Important</span>Try it first
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>A loss gradient has magnitude <span class="math inline">\(1\)</span> at the final state and crosses four identical local derivatives.</p>
+<ol type="1">
+<li>What reaches the first state if every derivative is <span class="math inline">\(0.6\)</span>?</li>
+<li>What reaches it if every derivative is <span class="math inline">\(1.5\)</span>?</li>
+</ol>
+</div>
+</div>
+<p>For the contracting case,</p>
+<p><span class="math display">\[
+1\times0.6^4=0.1296.
+\]</span></p>
+<p>The successive magnitudes are</p>
+<pre class="text"><code>1.000 → 0.600 → 0.360 → 0.216 → 0.1296</code></pre>
+<p>For the expanding case,</p>
+<p><span class="math display">\[
+1\times1.5^4=5.0625,
+\]</span></p>
+<p>with</p>
+<pre class="text"><code>1.000 → 1.500 → 2.250 → 3.375 → 5.0625</code></pre>
+<div id="tbl-gradient-consequences" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-tbl figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-gradient-consequences-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Table&nbsp;6: Both behaviors arise from repeated local transformations, not from sequence length alone.
+</figcaption>
+<div aria-describedby="tbl-gradient-consequences-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<table class="caption-top table">
+<colgroup>
+<col style="width: 50%">
+<col style="width: 50%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Behavior</th>
+<th>Training consequence</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Vanishing gradient</td>
+<td>early states receive almost no learning signal from distant losses</td>
+</tr>
+<tr class="even">
+<td>Exploding gradient</td>
+<td>updates become unstable and may overflow numerically</td>
+</tr>
+</tbody>
+</table>
+</div>
+</figure>
+</div>
+</section>
+<section id="sec-gradient-clipping" class="level2" data-number="6.3">
+<h2 data-number="6.3" class="anchored" data-anchor-id="sec-gradient-clipping"><span class="header-section-number">6.3</span> Gradient clipping: a practical guardrail</h2>
+<p>Clipping by global norm caps an excessively large gradient while preserving its direction. Given gradient vector <span class="math inline">\(mathbf g\)</span> and threshold <span class="math inline">\(\tau\)</span>,</p>
+<p><span id="eq-gradient-clipping"><span class="math display">\[
+\widetilde{\mathbf g}
+=\min\left(1,\frac{\tau}{\lVert\mathbf g\rVert_2}\right)\mathbf g.
+\tag{14}\]</span></span></p>
+<p>If <span class="math inline">\(\lVert\mathbf g\rVert_2=18\)</span> and <span class="math inline">\(\tau=5\)</span>,</p>
+<p><span class="math display">\[
+\widetilde{\mathbf g}=\frac{5}{18}\mathbf g,
+\qquad
+\lVert\widetilde{\mathbf g}\rVert_2=5.
+\]</span></p>
+<p>Every component is multiplied by the same positive scalar, so the direction is unchanged.</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb9"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> clip_by_global_norm(gradient, threshold):</span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>    norm <span class="op">=</span> gradient.norm(p<span class="op">=</span><span class="dv">2</span>)</span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> norm <span class="op">&gt;</span> threshold:</span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a>        gradient <span class="op">=</span> (threshold <span class="op">/</span> norm) <span class="op">*</span> gradient</span>
+<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> gradient</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="callout callout-style-simple callout-warning callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Warning</span>What clipping does not solve
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>Clipping controls explosions. It cannot restore a long-range gradient that has already faded toward zero. A more structural solution must provide a less distorted route for information and credit.</p>
+</div>
+</div>
+</section>
+</section>
+<section id="sec-gated-cells" class="level1" data-number="7">
+<h1 data-number="7"><span class="header-section-number">7</span> Gated recurrent cells</h1>
+<p>LSTM and GRU cells add learned gates that control how much old information is retained and how much new information is written. LSTM was introduced in 1997, GRU in 2014, and gated RNNs became especially prominent during roughly 2012–2018 <span class="citation" data-cites="hochreiter1997lstm cho2014gru">(<a href="#ref-hochreiter1997lstm" role="doc-biblioref">Hochreiter and Schmidhuber 1997</a>; <a href="#ref-cho2014gru" role="doc-biblioref">Cho et al. 2014</a>)</span>. The Transformer appeared in 2017; replacement of recurrent models was gradual and task-dependent <span class="citation" data-cites="vaswani2017attention">(<a href="#ref-vaswani2017attention" role="doc-biblioref">Vaswani et al. 2017</a>)</span>.</p>
+<p>Gates use the logistic sigmoid</p>
+<p><span class="math display">\[
+\sigma(a)=\frac{1}{1+e^{-a}},
+\]</span></p>
+<p>whose output lies between <span class="math inline">\(0\)</span> and <span class="math inline">\(1\)</span>. Elementwise multiplication by a gate therefore behaves like a learned soft control: values near <span class="math inline">\(0\)</span> suppress a component, while values near <span class="math inline">\(1\)</span> preserve it.</p>
+<section id="sec-lstm" class="level2" data-number="7.1">
+<h2 data-number="7.1" class="anchored" data-anchor-id="sec-lstm"><span class="header-section-number">7.1</span> LSTM: retain, write, expose</h2>
+<p>An LSTM separates the cell state <span class="math inline">\(\mathbf c_t\)</span> from the visible hidden state <span class="math inline">\(\mathbf h_t\)</span>.</p>
+<section id="retain-or-forget" class="level3" data-number="7.1.1">
+<h3 data-number="7.1.1" class="anchored" data-anchor-id="retain-or-forget"><span class="header-section-number">7.1.1</span> Retain or forget</h3>
+<p><span class="math display">\[
+\mathbf f_t
+=\sigma\!\left(W_f[\mathbf h_{t-1};\mathbf x_t]+\mathbf b_f\right).
+\]</span></p>
+<p><span class="math inline">\(\mathbf f_t\odot\mathbf c_{t-1}\)</span> selects how much previous memory survives.</p>
+</section>
+<section id="prepare-a-write" class="level3" data-number="7.1.2">
+<h3 data-number="7.1.2" class="anchored" data-anchor-id="prepare-a-write"><span class="header-section-number">7.1.2</span> Prepare a write</h3>
+<p><span class="math display">\[
+\begin{aligned}
+\mathbf i_t&amp;=\sigma\!\left(W_i[\mathbf h_{t-1};\mathbf x_t]+\mathbf b_i\right),\\
+\mathbf g_t&amp;=\tanh\!\left(W_g[\mathbf h_{t-1};\mathbf x_t]+\mathbf b_g\right).
+\end{aligned}
+\]</span></p>
+<p><span class="math inline">\(\mathbf i_t\)</span> controls write strength; <span class="math inline">\(\mathbf g_t\)</span> proposes candidate content.</p>
+</section>
+<section id="update-memory-additively" class="level3" data-number="7.1.3">
+<h3 data-number="7.1.3" class="anchored" data-anchor-id="update-memory-additively"><span class="header-section-number">7.1.3</span> Update memory additively</h3>
+<p><span id="eq-lstm-cell-update"><span class="math display">\[
+\mathbf c_t
+=\mathbf f_t\odot\mathbf c_{t-1}
++\mathbf i_t\odot\mathbf g_t.
+\tag{15}\]</span></span></p>
+<p>The additive path is the key structural change. When <span class="math inline">\(\mathbf f_t\)</span> remains near <span class="math inline">\(1\)</span> and the write term remains small, information and gradient can travel through the cell state with less repeated distortion.</p>
+</section>
+<section id="expose-part-of-memory" class="level3" data-number="7.1.4">
+<h3 data-number="7.1.4" class="anchored" data-anchor-id="expose-part-of-memory"><span class="header-section-number">7.1.4</span> Expose part of memory</h3>
+<p><span class="math display">\[
+\begin{aligned}
+\mathbf o_t&amp;=\sigma\!\left(W_o[\mathbf h_{t-1};\mathbf x_t]+\mathbf b_o\right),\\
+\mathbf h_t&amp;=\mathbf o_t\odot\tanh(\mathbf c_t).
+\end{aligned}
+\]</span></p>
+<p>The output gate controls which parts of memory become visible to predictions and the next recurrent step.</p>
+</section>
+</section>
+<section id="sec-gru" class="level2" data-number="7.2">
+<h2 data-number="7.2" class="anchored" data-anchor-id="sec-gru"><span class="header-section-number">7.2</span> GRU: reset, propose, interpolate</h2>
+<p>A GRU combines memory and visible state into one vector. It uses two main gates.</p>
+<section id="reset-the-old-state-before-proposing-a-candidate" class="level3" data-number="7.2.1">
+<h3 data-number="7.2.1" class="anchored" data-anchor-id="reset-the-old-state-before-proposing-a-candidate"><span class="header-section-number">7.2.1</span> Reset the old state before proposing a candidate</h3>
+<p><span class="math display">\[
+\mathbf r_t
+=\sigma\!\left(W_r[\mathbf h_{t-1};\mathbf x_t]+\mathbf b_r\right),
+\]</span></p>
+<p><span class="math display">\[
+\widetilde{\mathbf h}_t
+=\tanh\!\left(W_h[\mathbf r_t\odot\mathbf h_{t-1};\mathbf x_t]+\mathbf b_h\right).
+\]</span></p>
+</section>
+<section id="interpolate-between-old-and-proposed-state" class="level3" data-number="7.2.2">
+<h3 data-number="7.2.2" class="anchored" data-anchor-id="interpolate-between-old-and-proposed-state"><span class="header-section-number">7.2.2</span> Interpolate between old and proposed state</h3>
+<p><span class="math display">\[
+\mathbf z_t
+=\sigma\!\left(W_z[\mathbf h_{t-1};\mathbf x_t]+\mathbf b_z\right),
+\]</span></p>
+<p><span id="eq-gru-update"><span class="math display">\[
+\mathbf h_t
+=(1-\mathbf z_t)\odot\mathbf h_{t-1}
++\mathbf z_t\odot\widetilde{\mathbf h}_t.
+\tag{16}\]</span></span></p>
+<p>The update is a learned elementwise mixture. A small component of <span class="math inline">\(\mathbf z_t\)</span> keeps the corresponding old-state component; a large value replaces it with the candidate.</p>
+<div id="tbl-lstm-gru" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-tbl figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-lstm-gru-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Table&nbsp;7: Both architectures create learned paths that can preserve information; neither guarantees that every long dependency will be learned.
+</figcaption>
+<div aria-describedby="tbl-lstm-gru-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<table class="caption-top table">
+<colgroup>
+<col style="width: 33%">
+<col style="width: 33%">
+<col style="width: 33%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Property</th>
+<th>LSTM</th>
+<th>GRU</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Persistent representation</td>
+<td>cell state <span class="math inline">\(\mathbf c_t\)</span> plus hidden state <span class="math inline">\(\mathbf h_t\)</span></td>
+<td>hidden state <span class="math inline">\(\mathbf h_t\)</span> only</td>
+</tr>
+<tr class="even">
+<td>Main controls</td>
+<td>forget, input, output</td>
+<td>reset, update</td>
+</tr>
+<tr class="odd">
+<td>State update</td>
+<td>additive retain + write</td>
+<td>interpolation between old and candidate</td>
+</tr>
+<tr class="even">
+<td>Typical advantage</td>
+<td>explicit memory highway</td>
+<td>simpler gated computation</td>
+</tr>
+</tbody>
+</table>
+</div>
+</figure>
+</div>
+<div class="callout callout-style-simple callout-tip callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Tip</span>Coding perspective
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>Libraries expose LSTM and GRU modules because the internal equations are reused at every time step. In implementation, inspect tensor shapes, initial states, returned sequences, and padding masks rather than reimplementing every gate unless the exercise explicitly asks for it.</p>
+</div>
+</div>
+</section>
+</section>
+</section>
+<section id="sec-nmt" class="level1" data-number="8">
+<h1 data-number="8"><span class="header-section-number">8</span> Neural machine translation</h1>
+<p><strong>Machine translation (MT)</strong> generates a sentence in a target language that preserves the meaning of a source sentence. For example,</p>
+<pre class="text"><code>SOURCE · French   Le colis arrivera demain.
+TARGET · English  The package will arrive tomorrow.</code></pre>
+<p>The task is not word substitution. The output must express the source meaning while obeying the grammar and word order of the target language.</p>
+<p>Google’s 2016 Neural Machine Translation system was a major production-scale turning point: an end-to-end neural system replaced the previous phrase-based pipeline for deployed translation <span class="citation" data-cites="wu2016gnmt">(<a href="#ref-wu2016gnmt" role="doc-biblioref">Wu et al. 2016</a>)</span>. This was not the invention of neural MT, but it made the transition visible at global scale. Translation is now embedded in messaging, web access, search, meetings, captions, travel, and support systems.</p>
+<section id="sec-encoder-decoder" class="level2" data-number="8.1">
+<h2 data-number="8.1" class="anchored" data-anchor-id="sec-encoder-decoder"><span class="header-section-number">8.1</span> Encoder–decoder recurrence</h2>
+<p>An encoder reads the source sequence and updates a state:</p>
+<p><span class="math display">\[
+\mathbf h_t^{\text{enc}}
+=f_{\text{enc}}(\mathbf x_t,\mathbf h_{t-1}^{\text{enc}}).
+\]</span></p>
+<p>After the final source token, the last encoder state becomes a context vector:</p>
+<p><span id="eq-fixed-context"><span class="math display">\[
+\mathbf c=\mathbf h_{T_x}^{\text{enc}}.
+\tag{17}\]</span></span></p>
+<p>The decoder starts from that context and generates the target sequence:</p>
+<p><span class="math display">\[
+\mathbf s_t
+=f_{\text{dec}}(\mathbf e(y_{t-1}),\mathbf s_{t-1},\mathbf c),
+\]</span></p>
+<p><span class="math display">\[
+P(y_t\mid y_{&lt;t},\mathbf x)
+=\operatorname{softmax}(U\mathbf s_t+\mathbf b).
+\]</span></p>
+<div class="cell" data-fig-width="7.2" data-layout-align="default">
+<div class="cell-output-display">
+<div id="fig-encoder-decoder" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-encoder-decoder-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<div>
+<pre class="mermaid mermaid-js" data-label="fig-encoder-decoder">flowchart LR
+    F1[Le] --&gt; E1[h1]
+    E1 --&gt; E2[h2]
+    F2[colis] --&gt; E2
+    E2 --&gt; E3[h3]
+    F3[arrivera] --&gt; E3
+    E3 --&gt; E4[h4]
+    F4[demain] --&gt; E4
+    E4 --&gt; C[context c]
+    C --&gt; D1[s1]
+    D1 --&gt; D2[s2]
+    D2 --&gt; D3[s3]
+    D3 --&gt; D4[s4]
+    D1 --&gt; Y1[The]
+    D2 --&gt; Y2[package]
+    D3 --&gt; Y3[will arrive]
+    D4 --&gt; Y4[tomorrow]
+
+    classDef source fill:#e8f2f0,stroke:#356fa8,color:#17364a
+    classDef context fill:#f2e9f7,stroke:#8b5bb5,color:#17364a
+    classDef target fill:#f8e5df,stroke:#d95f43,color:#17364a
+    class F1,F2,F3,F4,E1,E2,E3,E4 source
+    class C context
+    class D1,D2,D3,D4,Y1,Y2,Y3,Y4 target
+</pre>
+</div>
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-encoder-decoder-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;8: The final encoder state initializes a decoder that generates a new sequence. Encoder and decoder may have separate parameters.
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<p>The source and target may have different lengths. The architecture defines two roles—reading and writing—not a requirement that one parameter matrix perform both roles <span class="citation" data-cites="sutskever2014sequence cho2014gru">(<a href="#ref-sutskever2014sequence" role="doc-biblioref">Sutskever et al. 2014</a>; <a href="#ref-cho2014gru" role="doc-biblioref">Cho et al. 2014</a>)</span>.</p>
+</section>
+</section>
+<section id="sec-conditional-lm" class="level1" data-number="9">
+<h1 data-number="9"><span class="header-section-number">9</span> Conditional language models</h1>
+<p>Translation is one instance of a broader encoder–decoder pattern:</p>
+<p><span class="math display">\[
+\text{encode input }x
+\quad\longrightarrow\quad
+\text{generate output }y.
+\]</span></p>
+<p>The interpretation of <span class="math inline">\(x\)</span> and <span class="math inline">\(y\)</span> defines the task.</p>
+<div id="tbl-conditional-tasks" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-tbl figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-conditional-tasks-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Table&nbsp;8: The same conditional-generation abstraction supports different input and output spaces.
+</figcaption>
+<div aria-describedby="tbl-conditional-tasks-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<table class="caption-top table">
+<colgroup>
+<col style="width: 25%">
+<col style="width: 25%">
+<col style="width: 25%">
+<col style="width: 25%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Task</th>
+<th>Input <span class="math inline">\(x\)</span></th>
+<th>Generated output <span class="math inline">\(y\)</span></th>
+<th>Representative work</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Summarization</td>
+<td>document</td>
+<td>shorter meaning-preserving summary</td>
+<td><span class="citation" data-cites="rush2015summarization">Rush et al. (<a href="#ref-rush2015summarization" role="doc-biblioref">2015</a>)</span></td>
+</tr>
+<tr class="even">
+<td>Dialogue</td>
+<td>conversation history</td>
+<td>next response</td>
+<td><span class="citation" data-cites="vinyals2015conversation">Vinyals and Le (<a href="#ref-vinyals2015conversation" role="doc-biblioref">2015</a>)</span></td>
+</tr>
+<tr class="odd">
+<td>Parsing as generation</td>
+<td>sentence</td>
+<td>linearized syntax tree</td>
+<td><span class="citation" data-cites="vinyals2015grammar">Vinyals et al. (<a href="#ref-vinyals2015grammar" role="doc-biblioref">2015</a>)</span></td>
+</tr>
+<tr class="even">
+<td>Code generation</td>
+<td>natural-language specification</td>
+<td>program</td>
+<td><span class="citation" data-cites="yin2017code">Yin and Neubig (<a href="#ref-yin2017code" role="doc-biblioref">2017</a>)</span></td>
+</tr>
+</tbody>
+</table>
+</div>
+</figure>
+</div>
+<p>For parsing, the qualification matters: a parser becomes a conditional language model when its structure is represented as a sequence of output tokens. Not every parsing architecture is autoregressive.</p>
+<p>These systems are called <strong>conditional language models</strong> because they factorize an output sequence autoregressively while conditioning every prediction on <span class="math inline">\(x\)</span>:</p>
+<p><span id="eq-conditional-lm"><span class="math display">\[
+P(\mathbf y\mid\mathbf x)
+=\prod_{t=1}^{T_y}
+P(y_t\mid y_{&lt;t},\mathbf x).
+\tag{18}\]</span></span></p>
+<p>It is a <strong>language model</strong> because it predicts <span class="math inline">\(y\)</span> token by token. It is <strong>conditional</strong> because the input <span class="math inline">\(\mathbf x\)</span> remains part of every next-token distribution.</p>
+<section id="sec-seq2seq-training" class="level2" data-number="9.1">
+<h2 data-number="9.1" class="anchored" data-anchor-id="sec-seq2seq-training"><span class="header-section-number">9.1</span> Training seq2seq end to end</h2>
+<p>During supervised training, each target token provides a decoder-side cross-entropy loss:</p>
+<p><span class="math display">\[
+J^{(t)}
+=-\log P(y_t\mid y_{&lt;t},\mathbf x).
+\]</span></p>
+<p>The sequence loss is</p>
+<p><span id="eq-seq2seq-loss"><span class="math display">\[
+J=\sum_{t=1}^{T_y}J^{(t)}.
+\tag{19}\]</span></span></p>
+<p>No token-level translation loss is attached directly to encoder states. Nevertheless, backpropagation follows the full computation graph:</p>
+<p><span class="math display">\[
+J
+\longrightarrow
+\text{decoder states}
+\longrightarrow
+\mathbf c
+\longrightarrow
+\text{encoder states and parameters}.
+\]</span></p>
+<p>Thus, <strong>loss location</strong> and <strong>update reach</strong> are different questions:</p>
+<ul>
+<li>losses are computed where target tokens are predicted;</li>
+<li>decoder parameters receive direct downstream credit;</li>
+<li>the context path receives gradient from the decoder; and</li>
+<li>encoder parameters are updated because they produced the context on which every decoder prediction depends.</li>
+</ul>
+<div class="callout callout-style-simple callout-note callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>Teacher forcing
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>During basic training, the decoder commonly receives the observed previous target token <span class="math inline">\(y_{t-1}\)</span> rather than its own sampled prediction. This makes all target-side losses computable in parallel across the unrolled training graph, although recurrent states themselves remain sequential. At inference time, the true next tokens are unavailable, so generated tokens must be fed back.</p>
+</div>
+</div>
+</section>
+</section>
+<section id="sec-context-bottleneck" class="level1" data-number="10">
+<h1 data-number="10"><span class="header-section-number">10</span> The fixed-context bottleneck</h1>
+<p>The early encoder–decoder design forces the entire source through one fixed-size vector:</p>
+<p><span class="math display">\[
+\mathbf x_{1:T_x}
+\longrightarrow
+\boxed{\mathbf c}
+\longrightarrow
+\mathbf y_{1:T_y}.
+\]</span></p>
+<p>For a short sentence, this may work well. As the source becomes longer or information-rich, <span class="math inline">\(\mathbf c\)</span> must preserve every detail that any later decoder step might require. The decoder cannot return to a particular source state; it can consult only the compressed summary.</p>
+<div class="callout callout-style-simple callout-important callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Important</span>The limitation
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>The decoder may need one specific source detail, but the architecture requires all details to compete for representation inside the same fixed-size context vector.</p>
+</div>
+</div>
+<p>This bottleneck motivates the next chapter. Attention was introduced in neural machine translation to let generation depend on source information more selectively <span class="citation" data-cites="bahdanau2015align">(<a href="#ref-bahdanau2015align" role="doc-biblioref">Bahdanau et al. 2015</a>)</span>. We stop before its mechanism.</p>
+<section id="sec-chapter-synthesis" class="level2" data-number="10.1">
+<h2 data-number="10.1" class="anchored" data-anchor-id="sec-chapter-synthesis"><span class="header-section-number">10.1</span> Chapter synthesis</h2>
+<p>The chapter followed a sequence of architectural repairs:</p>
+<div id="tbl-chapter-repairs" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-tbl figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-chapter-repairs-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Table&nbsp;9: Each repair solves one problem while exposing the next.
+</figcaption>
+<div aria-describedby="tbl-chapter-repairs-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<table class="caption-top table">
+<colgroup>
+<col style="width: 33%">
+<col style="width: 33%">
+<col style="width: 33%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Limitation</th>
+<th>Repair</th>
+<th>Remaining question</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>exact n-gram counts do not share evidence</td>
+<td>embeddings and shared neural parameters</td>
+<td>how can context length vary?</td>
+</tr>
+<tr class="even">
+<td>fixed neural window grows with position count</td>
+<td>recurrent state and weight sharing</td>
+<td>how does distant credit survive?</td>
+</tr>
+<tr class="odd">
+<td>repeated recurrent Jacobians vanish or explode</td>
+<td>clipping and gated cells</td>
+<td>how should one sequence condition another?</td>
+</tr>
+<tr class="even">
+<td>one fixed context summarizes the source</td>
+<td>encoder–decoder conditional LM</td>
+<td>how can the decoder retrieve specific source information?</td>
+</tr>
+</tbody>
+</table>
+</div>
+</figure>
+</div>
+<p>An RNN replaces a fixed input window with a learned state. BPTT trains that state across time, but repeated transformations make long-range credit fragile. LSTM and GRU cells create gated, partly additive routes for information. Encoder–decoder models then turn recurrence into a general conditional-generation framework. Their fixed-context bottleneck leaves one question for the next chapter.</p>
+<div class="callout callout-style-simple callout-important callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Important</span>Carry this question forward
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>Can a decoder retrieve the relevant source information at each output step instead of demanding that one vector remember everything?</p>
+</div>
+</div>
+</section>
+<section id="references" class="level2" data-number="10.2">
+<h2 data-number="10.2" class="anchored" data-anchor-id="references"><span class="header-section-number">10.2</span> References</h2>
+<div id="refs" class="references csl-bib-body hanging-indent" role="list">
+<div id="ref-bahdanau2015align" class="csl-entry" role="listitem">
+Bahdanau, Dzmitry, Kyunghyun Cho, and Yoshua Bengio. 2015. <span>“Neural Machine Translation by Jointly Learning to Align and Translate.”</span> <em>International Conference on Learning Representations</em>. <a href="https://arxiv.org/abs/1409.0473">https://arxiv.org/abs/1409.0473</a>.
+</div>
+<div id="ref-bengio2003neural" class="csl-entry" role="listitem">
+Bengio, Yoshua, Réjean Ducharme, Pascal Vincent, and Christian Jauvin. 2003. <span>“A Neural Probabilistic Language Model.”</span> <em>Journal of Machine Learning Research</em> 3: 1137–55. <a href="https://jmlr.org/papers/v3/bengio03a.html">https://jmlr.org/papers/v3/bengio03a.html</a>.
+</div>
+<div id="ref-bengio1994learning" class="csl-entry" role="listitem">
+Bengio, Yoshua, Patrice Simard, and Paolo Frasconi. 1994. <span>“Learning Long-Term Dependencies with Gradient Descent Is Difficult.”</span> <em>IEEE Transactions on Neural Networks</em> 5 (2): 157–66. <a href="https://doi.org/10.1109/72.279181">https://doi.org/10.1109/72.279181</a>.
+</div>
+<div id="ref-cho2014gru" class="csl-entry" role="listitem">
+Cho, Kyunghyun, Bart van Merriënboer, Caglar Gulcehre, et al. 2014. <span>“Learning Phrase Representations Using <span>RNN</span> Encoder–Decoder for Statistical Machine Translation.”</span> <em>Proceedings of the 2014 Conference on Empirical Methods in Natural Language Processing</em>, 1724–34. <a href="https://doi.org/10.3115/v1/D14-1179">https://doi.org/10.3115/v1/D14-1179</a>.
+</div>
+<div id="ref-hochreiter1997lstm" class="csl-entry" role="listitem">
+Hochreiter, Sepp, and Jürgen Schmidhuber. 1997. <span>“Long Short-Term Memory.”</span> <em>Neural Computation</em> 9 (8): 1735–80. <a href="https://doi.org/10.1162/neco.1997.9.8.1735">https://doi.org/10.1162/neco.1997.9.8.1735</a>.
+</div>
+<div id="ref-jurafsky2026slp" class="csl-entry" role="listitem">
+Jurafsky, Daniel, and James H. Martin. 2026. <em>Speech and Language Processing: An Introduction to Natural Language Processing, Computational Linguistics, and Speech Recognition with Language Models</em>. 3rd ed. <a href="https://web.stanford.edu/~jurafsky/slp3/">https://web.stanford.edu/~jurafsky/slp3/</a>.
+</div>
+<div id="ref-pascanu2013difficulty" class="csl-entry" role="listitem">
+Pascanu, Razvan, Tomas Mikolov, and Yoshua Bengio. 2013. <span>“On the Difficulty of Training Recurrent Neural Networks.”</span> <em>Proceedings of the 30th International Conference on Machine Learning</em>, Proceedings of machine learning research, vol. 28: 1310–18. <a href="https://proceedings.mlr.press/v28/pascanu13.html">https://proceedings.mlr.press/v28/pascanu13.html</a>.
+</div>
+<div id="ref-rush2015summarization" class="csl-entry" role="listitem">
+Rush, Alexander M., Sumit Chopra, and Jason Weston. 2015. <span>“A Neural Attention Model for Abstractive Sentence Summarization.”</span> <em>Proceedings of EMNLP</em>, 379–89. <a href="https://aclanthology.org/D15-1044/">https://aclanthology.org/D15-1044/</a>.
+</div>
+<div id="ref-sutskever2014sequence" class="csl-entry" role="listitem">
+Sutskever, Ilya, Oriol Vinyals, and Quoc V. Le. 2014. <span>“Sequence to Sequence Learning with Neural Networks.”</span> <em>Advances in Neural Information Processing Systems</em> 27. <a href="https://papers.nips.cc/paper/5346-sequence-to-sequence-learning-with-neural-networks">https://papers.nips.cc/paper/5346-sequence-to-sequence-learning-with-neural-networks</a>.
+</div>
+<div id="ref-vaswani2017attention" class="csl-entry" role="listitem">
+Vaswani, Ashish, Noam Shazeer, Niki Parmar, et al. 2017. <span>“Attention Is All You Need.”</span> <em>Advances in Neural Information Processing Systems</em> 30. <a href="https://arxiv.org/abs/1706.03762">https://arxiv.org/abs/1706.03762</a>.
+</div>
+<div id="ref-vinyals2015grammar" class="csl-entry" role="listitem">
+Vinyals, Oriol, Łukasz Kaiser, Terry Koo, Slav Petrov, Ilya Sutskever, and Geoffrey Hinton. 2015. <span>“Grammar as a Foreign Language.”</span> <em>Advances in Neural Information Processing Systems</em> 28. <a href="https://papers.nips.cc/paper/5635-grammar-as-a-foreign-language">https://papers.nips.cc/paper/5635-grammar-as-a-foreign-language</a>.
+</div>
+<div id="ref-vinyals2015conversation" class="csl-entry" role="listitem">
+Vinyals, Oriol, and Quoc V. Le. 2015. <span>“A Neural Conversational Model.”</span> <em>arXiv Preprint arXiv:1506.05869</em>. <a href="https://arxiv.org/abs/1506.05869">https://arxiv.org/abs/1506.05869</a>.
+</div>
+<div id="ref-wu2016gnmt" class="csl-entry" role="listitem">
+Wu, Yonghui, Mike Schuster, Zhifeng Chen, et al. 2016. <span>“Google’s Neural Machine Translation System: Bridging the Gap Between Human and Machine Translation.”</span> <em>arXiv Preprint arXiv:1609.08144</em>. <a href="https://arxiv.org/abs/1609.08144">https://arxiv.org/abs/1609.08144</a>.
+</div>
+<div id="ref-yin2017code" class="csl-entry" role="listitem">
+Yin, Pengcheng, and Graham Neubig. 2017. <span>“A Syntactic Neural Model for General-Purpose Code Generation.”</span> <em>Proceedings of ACL</em>, 440–50. <a href="https://aclanthology.org/P17-1041/">https://aclanthology.org/P17-1041/</a>.
+</div>
+</div>
+
+
+</section>
+</section>
+
+</main> <!-- /main -->
+<script>
+(() => {
+  const padding = 24;
+
+  function cropMermaid(svg) {
+    const root = svg.querySelector(":scope > g, g.root");
+    if (!root) return;
+
+    let box;
+    try {
+      box = root.getBBox();
+    } catch (_) {
+      return;
+    }
+
+    if (!box.width || !box.height) return;
+
+    svg.setAttribute(
+      "viewBox",
+      `${box.x - padding} ${box.y - padding} ${box.width + 2 * padding} ${box.height + 2 * padding}`
+    );
+    svg.setAttribute("width", "100%");
+    svg.removeAttribute("height");
+    svg.style.width = "100%";
+    svg.style.height = "auto";
+    svg.style.maxWidth = "100%";
+    svg.style.display = "block";
+    svg.style.marginInline = "auto";
+    svg.dataset.cropped = "true";
+  }
+
+  function cropAllMermaid() {
+    document
+      .querySelectorAll("svg.mermaid-js:not([data-cropped])")
+      .forEach(cropMermaid);
+  }
+
+  const observer = new MutationObserver(cropAllMermaid);
+  observer.observe(document.documentElement, { childList: true, subtree: true });
+
+  window.addEventListener("load", () => {
+    cropAllMermaid();
+    window.setTimeout(cropAllMermaid, 250);
+    window.setTimeout(cropAllMermaid, 1000);
+  });
+})();
+</script>
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp("https:\/\/anassbelcaid\.github\.io\/nlp-course-2026\/");
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+            // target, if specified
+            link.setAttribute("target", "_blank");
+            if (link.getAttribute("rel") === null) {
+              link.setAttribute("rel", "noopener");
+            }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+</div> <!-- /content -->
+<footer class="footer">
+  <div class="nav-footer">
+    <div class="nav-footer-left">
+<p>Natural Language Processing · Université Abdelmalek Essaâdi</p>
+</div>   
+    <div class="nav-footer-center">
+      &nbsp;
+    </div>
+    <div class="nav-footer-right">
+<p>Built with Quarto</p>
+</div>
+  </div>
+</footer>
+
+
+
+
+<script src="../../site_libs/quarto-html/zenscroll-min.js"></script>
+</body></html>
