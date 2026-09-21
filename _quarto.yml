@@ -8,6 +8,8 @@ project:
 
 website:
   title: "CS 351 · NLP"
+  site-url: "https://anassbelcaid.github.io/nlp-course-2026/"
+  repo-url: "https://github.com/anassBelcaid/nlp-course-2026"
   navbar:
     pinned: true
     left:
