@@ -1,7 +1,13 @@
 project:
   type: website
+  render:
+    - "*.qmd"
+    - "lectures/**/*.qmd"
+    - "notes/**/*.qmd"
+    - "projects/**/index.qmd"
   resources:
     - "projects/**/*.py"
+    - "projects/**/*.ipynb"
     - "projects/**/pyproject.toml"
     - "projects/**/uv.lock"
     - "projects/**/*.zip"
