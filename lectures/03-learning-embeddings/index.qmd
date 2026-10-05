@@ -8,6 +8,7 @@ format:
   revealjs:
     theme: [default, ../02-tokenization-embeddings/slides.scss]
     css: slides.css
+    include-after-body: simulation-include.html
     slide-number: c/t
     progress: true
     controls: true
@@ -23,6 +24,21 @@ execute:
   enabled: false
 ---
 
+## From company to coordinates {.overview-slide}
+
+<img class="learning-overview" src="images/learning-journey.svg" alt="A corpus supplies local pairs and global counts; learning turns them into coordinates for similarity queries.">
+
+<div class="overview-labels">
+<div><b>1 · Observe</b><span>Tokens in a corpus</span></div>
+<div><b>2 · Collect</b><span>Window pairs and counts</span></div>
+<div><b>3 · Learn</b><span>Word2Vec and GloVe</span></div>
+<div><b>4 · Inspect</b><span>Neighbors, uses, and limits</span></div>
+</div>
+
+::: {.takeaway}
+Today's question: how can context generate the coordinates of meaning?
+:::
+
 ## Before we begin {.question-slide}
 
 ::: {.big-question}
@@ -33,48 +49,6 @@ How could a machine discover that **coffee** and **tea** are related?
 
 ::: {.fragment .answer}
 Look at the company they keep.
-:::
-
-::: {.notes}
-Let students propose signals before revealing the answer. Accept shared neighbors, sentences, documents, or grammatical roles. 3 minutes.
-:::
-
-## Our journey today
-
-:::: {.journey}
-::: {.stage .active}
-**NUMBERS**
-
-What should distance mean?
-:::
-::: {.arrow}
-→
-:::
-::: {.stage}
-**CONTEXT**
-
-Where is meaning visible?
-:::
-::: {.arrow}
-→
-:::
-::: {.stage}
-**LEARNING**
-
-Word2Vec · GloVe
-:::
-::: {.arrow}
-→
-:::
-::: {.stage}
-**USE**
-
-Query real vectors
-:::
-::::
-
-::: {.timeline}
-**Part I · 20 min** meaning as distance &nbsp; · &nbsp; **Part II · 45 min** learn from context &nbsp; · &nbsp; **Part III · 20 min** use and critique
 :::
 
 ## The question Chapter 2 left open
@@ -686,20 +660,28 @@ lower the scores ↓
 Pull compatible directions together; push sampled noise apart.
 :::
 
-## Meaning emerges from shared updates
+## Word2Vec training pairs {#word2vec-data .lab-slide .visual-only}
 
-::: {.update-space}
-<span class="context-cloud c1">drink</span>
-<span class="context-cloud c2">cup</span>
-<span class="context-cloud c3">hot</span>
-<span class="context-cloud c4">morning</span>
-<span class="moving-word coffee">coffee</span>
-<span class="moving-word tea">tea</span>
-<span class="moving-word airplane">airplane</span>
-:::
+<table id="w2v-counts" aria-label="Observed context counts for eight target words"><thead><tr><th>Target</th><th>Context 1</th><th>Context 2</th></tr></thead><tbody><tr><td colspan="3">Generating data…</td></tr></tbody></table>
 
-::: {.fragment .takeaway}
-`coffee` and `tea` receive updates involving many of the same contexts.
+## Watch actual Word2Vec training {#word2vec-training .lab-slide .visual-only}
+
+<div id="w2v-demo">
+<div class="sim-toolbar">
+<button id="w2v-play" type="button">Play training</button>
+<button id="w2v-step" type="button">+1 epoch</button>
+<button id="w2v-reset" type="button">Reset</button>
+<button id="w2v-final" type="button">Final result</button>
+<div class="sim-scrubber"><label for="w2v-slider" id="w2v-epoch">Epoch 0 / 30</label><input id="w2v-slider" type="range" min="0" max="30" value="0" aria-label="Training epoch"></div>
+</div>
+<div class="simulation-only">
+<div id="w2v-scatter"></div>
+<div class="simulation-loss"><span>Loss <b id="w2v-loss"></b></span><div id="w2v-loss-plot"></div></div>
+</div>
+</div>
+
+::: {.notes}
+The browser trains eight-dimensional embeddings for 30 epochs. The eight target words are shown in a fixed PCA projection fitted to the final vectors. Colors identify corpus groups; group labels are not used for training. The curve measures mean binary loss on a fixed diagnostic sample. Play, pause, step, reset, or scrub to inspect the computed checkpoints.
 :::
 
 ## The whole learning loop
@@ -813,70 +795,76 @@ This is the central checkpoint. Ask one student to explain, then ask another to 
 
 # GloVe {.section-slide}
 
-## Local prediction vs global counts
+## Local prediction vs global counts {.glove-simple}
 
-:::: {.two-col .method-contrast}
-::: {}
-**Word2Vec**
+| Toy sentence | Copies | Toy sentence | Copies |
+|---|---:|---|---:|
+| `ice solid` | 8 | `steam solid` | 2 |
+| `ice gas` | 2 | `steam gas` | 8 |
+| `ice water` | 10 | `steam water` | 10 |
 
-Reads local pairs repeatedly
+::: {.count-prompt}
+**PAUSE · build three cells**
 
-`(student, reads)`
+Window ±1; count both directions; never cross sentences.
 
-`(student, book)`
-:::
-::: {}
-**GloVe**
-
-Starts from aggregated counts
-
-$X_{student,reads}=417$
-
-$X_{student,book}=286$
-:::
-::::
-
-::: {.fragment .takeaway}
-Same evidence. Different route into the objective.
+Find $X_{ice,solid}$, $X_{solid,ice}$, and $X_{ice,steam}$.
 :::
 
-<div class="citation">GloVe: Global Vectors [@pennington2014glove].</div>
+::: {.notes}
+These are invented teaching data. Word2Vec processes the individual pairs; GloVe aggregates them into counts across the corpus. There are forty two-token sentences. Each neighboring token contributes one. The next slide contains the complete matrix, with no worked-answer side panel.
+:::
 
-## Ratios reveal relationships
+## Global co-occurrence counts {.glove-simple .matrix-only}
 
-| probe word | near `ice` | near `steam` | ratio |
+| center ↓ / context → | ice | steam | solid | gas | water |
+|---|---:|---:|---:|---:|---:|
+| **ice** | 0 | 0 | **8** | 2 | 10 |
+| **steam** | 0 | 0 | 2 | **8** | 10 |
+| **solid** | **8** | 2 | 0 | 0 | 0 |
+| **gas** | 2 | **8** | 0 | 0 | 0 |
+| **water** | 10 | 10 | 0 | 0 | 0 |
+
+::: {.notes}
+The answers are visible in the matrix: 8, 8, 0. Ice and steam each have row total twenty. Use these totals on the next slide to compare conditional context probabilities. “Global” means aggregation over all local windows, not an unlimited context window.
+:::
+
+## Ratios reveal relationships {.glove-simple}
+
+| probe | $P(c\mid ice)$ | $P(c\mid steam)$ | ratio |
 |---|---:|---:|---:|
-| **solid** | high | low | large |
-| **gas** | low | high | small |
-| **water** | high | high | near 1 |
-| **fashion** | low | low | near 1 |
+| **solid** | 8 / 20 | 2 / 20 | **4** |
+| **gas** | 2 / 20 | 8 / 20 | **¼** |
+| **water** | 10 / 20 | 10 / 20 | **1** |
 
 ::: {.fragment .takeaway}
-A useful contrast separates what belongs to one word from what both share.
+**solid** favors ice · **gas** favors steam · **water** is shared.
 :::
 
-## The GloVe objective—read it in pieces
+{{< include _glove-example.md >}}
+
+## The GloVe objective—read it in pieces {.glove-simple}
 
 ::: {.glove-equation}
-$$J=\sum_{i,j}f(X_{ij})
+$$J=\sum_{X_{ij}>0}f(X_{ij})
 \left(\mathbf{w}_i^T\widetilde{\mathbf{w}}_j+b_i+\widetilde b_j-\log X_{ij}\right)^2$$
 :::
 
 :::: {.fragment .equation-legend}
 <span><b>$X_{ij}$</b> global count</span>
-<span><b>dot product</b> prediction</span>
-<span><b>$\log$</b> compress scale</span>
+<span><b>dot product + biases</b> predicted log count</span>
+<span><b>$\log X_{ij}$</b> target</span>
 <span><b>$f$</b> weight evidence</span>
 ::::
 
-## What is GloVe trying to do?
+## What is GloVe trying to do? {.glove-simple}
 
 :::: {.pipeline-strip .glove-route}
-<div><strong>Observe</strong><span>$X_{ij}$</span></div>
+<div><strong>Observe</strong><span>$X_{ice,solid}=8$<br>$\log 8 \approx 2.08$</span></div>
 <b>→</b>
-<div><strong>Predict</strong><span>$\log X_{ij}$</span></div>
+<div><strong>Predict</strong><span>dot product<br>+ two biases</span></div>
 <b>→</b>
-<div><strong>Compare</strong><span>squared error</span></div>
+<div><strong>Compare</strong><span>weighted<br>squared error</span></div>
 <b>→</b>
 <div><strong>Update</strong><span>vectors + biases</span></div>
 ::::
@@ -885,7 +873,7 @@ $$J=\sum_{i,j}f(X_{ij})
 Make vector compatibility reconstruct global co-occurrence structure.
 :::
 
-## Word2Vec and GloVe
+## Word2Vec and GloVe {.glove-simple}
 
 | | **Word2Vec Skip-gram** | **GloVe** |
 |---|---|---|
@@ -894,11 +882,11 @@ Make vector compatibility reconstruct global co-occurrence structure.
 | Corpus statistics | indirect | explicit |
 | Output | static vectors | static vectors |
 
-::: {.fragment .big-summary}
-Predict the company—or compress the record of that company.
+::: {.fragment .takeaway}
+Predict contexts—or reconstruct their counts.
 :::
 
-## A false contrast to avoid
+## A false contrast to avoid {.glove-simple}
 
 ::: {.wrong-contrast}
 <span>Word2Vec = neural</span>
@@ -1190,4 +1178,20 @@ Answer in one sentence each:
 ## References {.smaller}
 
 ::: {#refs}
+:::
+
+## A vector is a representation. What makes a prediction? {.bridge-slide}
+
+<div class="prediction-bridge" role="img" aria-label="A review becomes word vectors, which flow into an unknown decision mechanism. Two possible class outputs lead to a held-out evaluation question.">
+<div class="bridge-review"><b>A new review</b><span>“the movie was moving”</span></div>
+<div class="bridge-transfer"><i></i><i></i><i></i></div>
+<div class="bridge-vectors"><span>the ▰ ▱ ▰</span><span>movie ▱ ▰ ▰</span><span>was ▰ ▰ ▱</span><span>moving ▱ ▰ ▱</span></div>
+<div class="bridge-transfer"><i></i><i></i><i></i></div>
+<div class="bridge-unknown"><strong>?</strong><span>learn a decision</span></div>
+<div class="bridge-transfer"><i></i><i></i><i></i></div>
+<div class="bridge-outcomes"><span>positive?</span><span>negative?</span><b>Test on unseen reviews</b></div>
+</div>
+
+::: {.big-summary}
+What extra evidence would let us turn these vectors into a prediction we can trust?
 :::

@@ -96,3 +96,174 @@
   .mystery-corpus,.profile-compare,.objective-split,.bank-example { grid-template-columns:1fr; }
   .learning-loop { grid-template-columns:1fr 1fr; }
 }
+
+/* Lecture additions: a consistent type scale and a generous footer reserve.
+   Content is laid out within ~760 of the 900 logical pixels; never clipped. */
+.reveal :is(.lab-slide,.glove-slide,.overview-slide,.bridge-slide) { font-size:30px; line-height:1.25; box-sizing:border-box; }
+.reveal :is(.lab-slide,.glove-slide,.overview-slide,.bridge-slide) h2 { font-size:44px; line-height:1.13; margin:0 0 20px; }
+.reveal :is(.lab-slide,.glove-slide,.overview-slide,.bridge-slide) p { margin:12px 0; }
+.lab-intro { font-size:25px; line-height:1.35; color:#47606c; margin:0 0 18px; }
+.lab-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:22px; margin:22px 0; }
+.lab-card { background:#fff; border:1px solid #d6e1e3; border-top:5px solid var(--teal); border-radius:12px; padding:20px 22px; min-width:0; box-sizing:border-box; }
+.reveal .lab-card h3 { font-size:27px; line-height:1.2; margin:0 0 16px; color:var(--teal); }
+.reveal .lab-card p { font-size:26px; line-height:1.4; margin:16px 0; }
+.reveal .lab-card table { width:100%; font-size:26px; line-height:1.2; margin:12px 0; }
+.reveal .lab-card :is(th,td) { padding:10px 12px; }
+.lab-pause { display:flex; flex-direction:column; gap:12px; background:#fff3d1; border-left:8px solid var(--gold); border-radius:0 12px 12px 0; padding:18px 24px; margin:22px 0; font-size:27px; line-height:1.4; }
+.reveal .lab-pause p { margin:0; }
+.lab-pause>b,.lab-pause>p:first-child { color:#76580d; }
+.reveal .lab-slide button { background:#17364a; color:white; border:2px solid #17364a; border-radius:8px; padding:9px 13px; font-weight:600; font-family:inherit; font-size:22px; line-height:1.2; cursor:pointer; }
+.reveal .lab-slide button:hover { background:#21645f; }
+.reveal .lab-slide :is(button,input):focus-visible { outline:4px solid #c78b0b; outline-offset:3px; }
+.reveal :is(.lab-slide,.glove-slide,.overview-slide) .takeaway { font-size:27px; line-height:1.35; margin:24px 0 0!important; padding:18px 24px; }
+.lab-equation { font-size:32px; text-align:center; margin:38px 0; }
+/* Corpus: actual examples on the left, corresponding counts on the right. */
+#word2vec-data .lab-grid { grid-template-columns:1fr 1.12fr; gap:22px; margin:18px 0; }
+#word2vec-data .lab-card h3 { font-size:27px; }
+.generated-corpus { display:grid; gap:12px; }
+.corpus-group { display:grid; grid-template-columns:105px minmax(0,1fr); gap:16px; align-items:center; padding:12px 14px; border-left:6px solid var(--group-color); border-radius:8px; background:#f2f6f5; }
+.corpus-group>b { font-size:24px; color:var(--group-color); }
+.corpus-group>span { font-size:26px; line-height:1.35; }
+.corpus-group strong { color:var(--group-color); }
+.reveal #w2v-counts { table-layout:fixed; font-size:25px; margin:0; }
+.reveal #w2v-counts :is(th,td) { font-size:25px; padding:9px 12px; line-height:1.15; }
+.reveal #w2v-counts tbody th { background:#edf3f3; color:#17364a; }
+#w2v-counts td b { float:right; color:#147d78; }
+#w2v-data-size { color:var(--teal); font-weight:700; }
+/* Dashboard: bounded row sizes, with room for eight table rows and controls. */
+.sim-toolbar { display:grid; grid-template-columns:auto auto auto auto minmax(330px,1fr); align-items:center; gap:12px; margin:0 0 18px; }
+.sim-scrubber { display:flex; align-items:center; gap:16px; min-width:0; }
+.sim-scrubber label { font-size:23px; flex-shrink:0; }
+.sim-scrubber input { width:100%; min-width:0; accent-color:#147d78; }
+.sim-grid { display:grid; grid-template-columns:1.25fr 1fr; grid-template-rows:395px 205px; gap:18px; }
+.sim-grid .lab-card { padding:16px 20px; }
+.reveal .sim-grid h3 { font-size:25px; margin:0 0 10px; }
+#w2v-scatter svg { display:block; width:100%; height:300px; }
+#w2v-scatter text { font-family:inherit; font-size:29px; }
+.reveal .sim-coordinates table { font-size:25px; line-height:1.1; margin:0; font-variant-numeric:tabular-nums; }
+.reveal .sim-coordinates :is(td,th) { line-height:1.1; padding:3px 12px; }
+.sim-coordinates :is(td,th):not(:first-child) { text-align:right; }
+#w2v-loss { float:right; color:#147d78; font-variant-numeric:tabular-nums; }
+#w2v-loss-plot svg { display:block; width:100%; height:122px; }
+#w2v-loss-plot text { font-family:inherit; font-size:25px; }
+#w2v-metrics { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px 14px; }
+#w2v-metrics>div { display:flex; align-items:center; justify-content:space-between; gap:8px; padding:10px; background:#eff5f3; border-radius:8px; }
+#w2v-metrics span { font-size:23px; line-height:1.2; }
+#w2v-metrics b { font-size:27px; line-height:1.1; color:#147d78; font-variant-numeric:tabular-nums; }
+.sim-footnote { font-size:24px; line-height:1.35; color:#536a75; margin:18px 0 0; }
+#w2v-batch { display:grid; gap:16px; font-size:29px; margin:20px 0; }
+#w2v-batch>div { display:flex; justify-content:space-between; padding:16px; border-radius:8px; }
+.sample-positive { background:#dcefe9; }.sample-noise { background:#f8e5df; }
+.reveal .score-readout { font-size:30px; font-weight:700; line-height:1.7; }
+/* GloVe: shared two-column and example layouts, without accumulated overrides. */
+.glove-slide .lab-grid>.lab-card { min-height:290px; }
+.reveal .glove-slide table { font-size:28px; width:100%; line-height:1.25; }
+.reveal .glove-slide :is(td,th) { padding:12px 16px; }
+.count-ledger { display:grid; grid-template-columns:1.65fr 1fr; gap:24px; margin:30px 0; }
+.reveal .glove-matrix { border-collapse:separate; border-spacing:5px; margin:0; font-size:30px; }
+.reveal .glove-matrix td { text-align:center; border:0; border-radius:5px; font-weight:700; padding:14px; }
+.reveal .glove-matrix th { font-size:25px; }
+.zero { color:#92a0a6; background:#eff2f3; }.heat2 { background:#d9ece7; }.heat8 { background:#5ca69b; color:white; }.heat10 { background:#176d65; color:white; }
+.reveal .ledger-explanation p { margin:22px 0; font-size:27px; }
+.probability-rows { display:grid; gap:28px; margin:40px 0; }
+.probability-rows>div { display:flex; align-items:stretch; min-height:130px; gap:6px; }
+.probability-rows b { display:flex; align-items:center; width:125px; font-size:31px; }
+.probability-rows span { display:flex; flex-direction:column; align-items:center; justify-content:center; padding:10px 0; border-radius:8px; font-size:27px; line-height:1.4; }
+.prob-solid { background:#b3dcd2; }.prob-gas { background:#f0bbac; }.prob-water { background:#cadfeb; }
+.ratio-strip { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:22px; margin:30px 0; }
+.ratio-strip>div { display:flex; flex-direction:column; gap:16px; align-items:center; justify-content:center; text-align:center; padding:24px; border-radius:14px; min-height:175px; }
+.ratio-strip strong { font-size:54px; }.ratio-strip span { font-size:27px; line-height:1.4; }
+.ratio-ice { background:#d7ece6; }.ratio-steam { background:#f7e0d6; }.ratio-shared { background:#dbe7f0; }
+.log-contrast { margin:32px auto; width:94%; }
+.log-axis { display:flex; justify-content:space-between; margin-left:150px; font-size:27px; color:#536a75; }
+.log-row { display:flex; align-items:center; height:85px; gap:20px; }
+.log-row>b { width:130px; font-size:30px; }
+.log-track { position:relative; flex:1; height:65px; background:linear-gradient(90deg,transparent 49.8%,#91a3ac 49.8%,#91a3ac 50.2%,transparent 50.2%); }
+.log-track span { position:absolute; top:9px; height:48px; display:flex; align-items:center; justify-content:center; border-radius:8px; font-size:29px; font-weight:700; }
+.log-positive { left:50%; width:43%; background:#c0e2d7; }.log-negative { right:50%; width:43%; background:#f1cbbd; }.log-zero { left:calc(50% - 25px); width:50px; background:#dce7ef; }
+.glove-cell-flow { display:grid; grid-template-columns:1fr 45px 1fr 45px 1fr; gap:12px; align-items:center; margin:30px 0; }
+.glove-cell-flow .lab-card { min-height:270px; text-align:center; padding:24px 18px; }
+.cell-operation { text-align:center; font-size:50px; color:#aa8120; }
+.numeric-vector { font-family:monospace; font-size:38px; font-weight:700; }
+.cell-target { background:#fff3d1; border-top-color:var(--gold); }
+.calculation-steps { display:grid; gap:18px; margin:28px 0; }
+.calculation-steps>div { display:grid; grid-template-columns:290px 1fr; gap:20px; align-items:center; background:white; border-radius:12px; padding:18px 24px; font-size:31px; }
+.calculation-steps b { font-size:27px; color:#147d78; }
+.error-ruler { display:flex; gap:30px; align-items:center; justify-content:center; margin:28px 0; padding:22px; background:#e6f0f2; border-radius:14px; }
+.error-ruler>span { text-align:center; font-size:27px; }.error-ruler b { font-size:40px; }.error-ruler>div { font-size:28px; border-bottom:4px solid #c89e35; padding:16px; }
+.weight-layout { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:24px; margin:30px 0; }
+.weight-bar { display:flex; gap:14px; align-items:center; margin:25px 0; font-size:27px; }
+.weight-bar>b { min-width:105px; font-size:27px; }.weight-bar>span { width:calc(var(--weight) * .72); min-width:82px; padding:10px 0; background:#b3dcd2; border-radius:0 8px 8px 0; text-align:center; font-weight:700; }
+.weight-layout .lab-card { font-size:28px; }
+.assembled-objective { font-size:33px; margin:60px 0 40px; }
+.objective-story { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:24px; margin:28px 0; }
+.objective-story>div { display:flex; flex-direction:column; justify-content:center; gap:22px; background:white; padding:24px; border-top:6px solid var(--teal); border-radius:14px; min-height:195px; text-align:center; }
+.objective-story b { font-size:28px; color:var(--teal); }.objective-story span { font-size:30px; line-height:1.5; }
+.ratio-derivation { font-size:36px; margin:60px 0; }.derivation-arrow { font-size:27px; color:#927019; text-align:center; margin:30px 0; }
+.compression-route { display:grid; grid-template-columns:1fr 100px 1fr 100px 1fr; gap:12px; align-items:center; margin:65px 0 50px; }
+.compression-matrix { display:grid; grid-template-columns:repeat(4,1fr); gap:8px; }
+.compression-matrix span { background:#b3dcd2; padding:20px 8px; text-align:center; border-radius:5px; font-size:30px; }.compression-matrix span:nth-child(even) { background:#e0eeea; }
+.compression-arrow { font-size:55px; color:#927019; text-align:center; }.compression-arrow small { display:block; font-size:23px; line-height:1.4; }
+.compression-route .lab-card { min-height:320px; padding:24px 20px; }
+/* Opening and ending use the same content budget as the teaching slides. */
+.learning-overview { display:block; width:100%; height:370px; object-fit:contain; margin:28px 0 16px!important; }
+.overview-labels { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:30px; text-align:center; margin:0 0 40px; }
+.overview-labels>div { display:flex; flex-direction:column; gap:14px; }.overview-labels b { font-size:28px; color:var(--teal); }.overview-labels span { font-size:26px; }
+.prediction-bridge { display:flex; align-items:center; gap:12px; margin:60px 0; min-height:360px; }
+.bridge-review,.bridge-vectors,.bridge-unknown,.bridge-outcomes { display:flex; flex-direction:column; gap:20px; align-items:center; justify-content:center; background:white; border-radius:16px; padding:24px 18px; min-height:300px; flex:1; min-width:0; font-size:26px; text-align:center; border-top:6px solid var(--teal); }
+.bridge-review b { color:var(--teal); }.bridge-review span { font-size:31px; }.bridge-vectors { font-family:monospace; font-size:25px; }.bridge-vectors span { background:#dceee8; padding:9px; border-radius:5px; }.bridge-unknown { background:#fff0c7; border-top-color:var(--gold); }.bridge-unknown strong { font-size:95px; }.bridge-outcomes>span { background:#dce7ee; border-radius:9px; padding:12px; }.bridge-outcomes>b { font-size:24px; }.bridge-transfer { position:relative; width:45px; height:4px; background:#d6dfe0; flex-shrink:0; }.bridge-transfer i { position:absolute; width:10px; height:10px; border-radius:50%; background:var(--teal); top:-3px; animation:embedding-flow 2.5s linear infinite; }.bridge-transfer i:nth-child(2) { animation-delay:-.8s; }.bridge-transfer i:nth-child(3) { animation-delay:-1.6s; }
+@keyframes embedding-flow { from {left:0;opacity:0} 20% {opacity:1} 80% {opacity:1} to {left:37px;opacity:0} }
+@media (prefers-reduced-motion:reduce) { .bridge-transfer i { animation:none; left:20px; } }
+
+/* Minimal table and simulation slides requested for the classroom deck. */
+.reveal .visual-only>h2 { display:none; }
+.reveal #word2vec-data>table { width:88%; margin:40px auto 0; font-size:36px; }
+.reveal #word2vec-data>table :is(th,td) { font-size:36px; padding:16px 24px; line-height:1.2; }
+#word2vec-training #w2v-demo { padding-top:20px; }
+.simulation-only { background:white; border:1px solid #d6e1e3; border-radius:14px; padding:16px 24px; }
+.simulation-only #w2v-scatter svg { height:480px; width:100%; }
+.simulation-loss { display:grid; grid-template-columns:170px 1fr; align-items:center; gap:24px; border-top:1px solid #d6e1e3; padding-top:12px; font-size:28px; }
+.simulation-loss #w2v-loss { float:none; }
+.simulation-only #w2v-loss-plot svg { height:130px; }
+.reveal .glove-simple { font-size:30px; line-height:1.3; }
+.reveal .glove-simple h2 { font-size:44px; margin-bottom:36px; }
+.reveal .glove-simple table { width:94%; font-size:32px; margin:25px auto; }
+.reveal .glove-simple :is(th,td) { padding:16px 20px; }
+.reveal .glove-simple .takeaway { font-size:28px; margin-top:36px!important; }
+.count-prompt { font-size:28px; line-height:1.35; background:#fff3d1; border-left:8px solid var(--gold); padding:18px 24px; margin-top:28px; }
+.reveal .count-prompt p { margin:10px 0; }
+.reveal .matrix-only table { font-size:36px; margin-top:48px; }
+.reveal .matrix-only :is(th,td) { padding:20px; }
+.reveal .glove-simple .glove-equation { font-size:38px; margin:80px 0 60px; }
+.reveal .glove-simple .equation-legend { display:grid; grid-template-columns:1fr 1fr; gap:20px; }
+.reveal .glove-simple .equation-legend span { font-size:27px; padding:18px; }
+.reveal .glove-simple .glove-route { margin:70px 0; }
+.reveal .glove-simple .glove-route>div { min-height:230px; justify-content:center; padding:20px 12px; }
+.reveal .glove-simple .glove-route strong { font-size:32px; }
+.reveal .glove-simple .glove-route span { font-size:28px; line-height:1.5; }
+.reveal .glove-simple .wrong-contrast { font-size:29px; margin:75px 0; }
+.reveal .glove-simple .answer { font-size:30px; }
+
+/* One concrete GloVe example, with the matrix and results carrying the lesson. */
+.reveal .glove-example { font-size:29px; line-height:1.3; }
+.reveal .glove-example h2 { font-size:43px; margin:0 0 26px; line-height:1.15; }
+.reveal .glove-example table { width:94%; margin:28px auto; font-size:30px; line-height:1.2; font-variant-numeric:tabular-nums; }
+.reveal .glove-example :is(th,td) { padding:11px 16px; }
+.reveal .glove-ten-matrix { width:100%; table-layout:fixed; margin:22px 0; font-size:27px; }
+.reveal .glove-ten-matrix :is(th,td) { text-align:center; font-size:27px; padding:8px 5px; line-height:1.1; }
+.reveal .glove-ten-matrix th:first-child { width:110px; text-align:left; padding-left:12px; }
+.reveal .glove-ten-matrix tbody th { background:#edf2f3; color:#17364a; }
+.reveal .glove-ten-matrix .cup-column { background:#f4dc97; color:#17364a; font-weight:800; border-left:2px solid #c9a138; border-right:2px solid #c9a138; }
+.reveal .glove-ten-matrix .matrix-zero { color:#89989e; }
+.glove-lookup-pause { display:flex; align-items:center; gap:22px; background:#fff2cf; border-left:7px solid #d6a734; padding:17px 22px; margin:24px 0 0; font-size:27px; line-height:1.4; }
+.glove-lookup-pause>b { flex-shrink:0; color:#76580d; }
+.glove-example-caption { font-size:27px; line-height:1.4; margin:26px 0; padding:17px 22px; background:#e5f2ef; border-left:7px solid var(--teal); }
+#glove-cup-ranking table { width:80%; margin-top:24px; }
+#glove-cup-ranking :is(th,td) { padding:10px 18px; }
+#glove-cup-ranking tbody tr:first-child { background:#d8eee5; }
+.glove-reconstruct-target { font-size:33px; background:#edf3f3; padding:20px 24px; margin:28px 0; }
+#glove-reconstruct-question table { margin:35px auto; }
+#glove-reconstruct-question .math.display { font-size:32px; }
+.glove-fit-score { display:flex; align-items:center; justify-content:center; gap:24px; font-size:33px; margin:42px 0; padding:26px; background:#edf3f3; border-radius:10px; }
+.glove-fit-score span { color:#536a75; }
+.glove-example-question { font-size:30px; color:#147d78; margin:28px 0; }
