@@ -5,6 +5,7 @@ project:
     - "lectures/**/*.qmd"
     - "notes/**/*.qmd"
     - "projects/**/index.qmd"
+    - "projects/02-embedding-laboratory/starter/embedding_lab.ipynb"
   resources:
     - "projects/**/*.py"
     - "projects/**/*.ipynb"

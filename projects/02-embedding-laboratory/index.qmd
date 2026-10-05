@@ -36,7 +36,7 @@ flowchart LR
 
 ## Open or download
 
-[Open the notebook on the course site](starter/embedding_lab.ipynb){.btn .btn-primary}
+[Read the notebook](starter/embedding_lab.html){.btn .btn-primary}
 
 [Download the complete starter ZIP](starter/embedding-laboratory-starter.zip){.btn .btn-secondary download="embedding-laboratory-starter.zip"}
 
