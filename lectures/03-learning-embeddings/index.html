@@ -10,7 +10,7 @@
   <meta name="generator" content="quarto-1.10.18">
 
   <meta name="author" content="Dr.&nbsp;A. Belcaid · CS 351">
-  <meta name="dcterms.date" content="2026-09-21">
+  <meta name="dcterms.date" content="2026-10-05">
   <title>CS 351 · NLP – How Do Words Learn Meaning?</title>
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -231,7 +231,28 @@ Dr.&nbsp;A. Belcaid · CS 351
 </div>
 </div>
 
-  <p class="date">2026-09-21</p>
+  <p class="date">2026-10-05</p>
+</section>
+<section id="from-company-to-coordinates" class="slide level2 overview-slide">
+<h2>From company to coordinates</h2>
+
+<img class="learning-overview r-stretch" src="images/learning-journey.svg" alt="A corpus supplies local pairs and global counts; learning turns them into coordinates for similarity queries."><div class="overview-labels">
+<div>
+<b>1 · Observe</b><span>Tokens in a corpus</span>
+</div>
+<div>
+<b>2 · Collect</b><span>Window pairs and counts</span>
+</div>
+<div>
+<b>3 · Learn</b><span>Word2Vec and GloVe</span>
+</div>
+<div>
+<b>4 · Inspect</b><span>Neighbors, uses, and limits</span>
+</div>
+</div>
+<div class="takeaway">
+<p>Today’s question: how can context generate the coordinates of meaning?</p>
+</div>
 </section>
 <section id="before-we-begin" class="slide level2 question-slide">
 <h2>Before we begin</h2>
@@ -241,52 +262,6 @@ Dr.&nbsp;A. Belcaid · CS 351
 </div>
 <div class="fragment answer">
 <p>Look at the company they keep.</p>
-</div>
-<aside class="notes">
-<p>Let students propose signals before revealing the answer. Accept shared neighbors, sentences, documents, or grammatical roles. 3 minutes.</p>
-<style type="text/css">
-        span.MJX_Assistive_MathML {
-          position:absolute!important;
-          clip: rect(1px, 1px, 1px, 1px);
-          padding: 1px 0 0 0!important;
-          border: 0!important;
-          height: 1px!important;
-          width: 1px!important;
-          overflow: hidden!important;
-          display:block!important;
-      }</style></aside>
-</section>
-<section id="our-journey-today" class="slide level2">
-<h2>Our journey today</h2>
-<div class="journey">
-<div class="stage active">
-<p><strong>NUMBERS</strong></p>
-<p>What should distance mean?</p>
-</div>
-<div class="arrow">
-<p>→</p>
-</div>
-<div class="stage">
-<p><strong>CONTEXT</strong></p>
-<p>Where is meaning visible?</p>
-</div>
-<div class="arrow">
-<p>→</p>
-</div>
-<div class="stage">
-<p><strong>LEARNING</strong></p>
-<p>Word2Vec · GloVe</p>
-</div>
-<div class="arrow">
-<p>→</p>
-</div>
-<div class="stage">
-<p><strong>USE</strong></p>
-<p>Query real vectors</p>
-</div>
-</div>
-<div class="timeline">
-<p><strong>Part I · 20 min</strong> meaning as distance &nbsp; · &nbsp; <strong>Part II · 45 min</strong> learn from context &nbsp; · &nbsp; <strong>Part III · 20 min</strong> use and critique</p>
 </div>
 </section>
 <section id="the-question-chapter-2-left-open" class="slide level2">
@@ -984,14 +959,76 @@ book <span>[ … ]</span>
 <p>Pull compatible directions together; push sampled noise apart.</p>
 </div>
 </section>
-<section id="meaning-emerges-from-shared-updates" class="slide level2">
-<h2>Meaning emerges from shared updates</h2>
-<div class="update-space">
-<p><span class="context-cloud c1">drink</span> <span class="context-cloud c2">cup</span> <span class="context-cloud c3">hot</span> <span class="context-cloud c4">morning</span> <span class="moving-word coffee">coffee</span> <span class="moving-word tea">tea</span> <span class="moving-word airplane">airplane</span></p>
+<section id="word2vec-data" class="slide level2 lab-slide visual-only">
+<h2>Word2Vec training pairs</h2>
+<table id="w2v-counts" aria-label="Observed context counts for eight target words">
+<thead>
+<tr>
+<th>
+Target
+</th>
+<th>
+Context 1
+</th>
+<th>
+Context 2
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td colspan="3">
+Generating data…
+</td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="word2vec-training" class="slide level2 lab-slide visual-only">
+<h2>Watch actual Word2Vec training</h2>
+<div id="w2v-demo">
+<div class="sim-toolbar">
+<button id="w2v-play" type="button">
+Play training
+</button>
+<button id="w2v-step" type="button">
++1 epoch
+</button>
+<button id="w2v-reset" type="button">
+Reset
+</button>
+<button id="w2v-final" type="button">
+Final result
+</button>
+<div class="sim-scrubber">
+<label for="w2v-slider" id="w2v-epoch">Epoch 0 / 30</label><input id="w2v-slider" type="range" min="0" max="30" value="0" aria-label="Training epoch">
 </div>
-<div class="fragment takeaway">
-<p><code>coffee</code> and <code>tea</code> receive updates involving many of the same contexts.</p>
 </div>
+<div class="simulation-only">
+<div id="w2v-scatter">
+
+</div>
+<div class="simulation-loss">
+<span>Loss <b id="w2v-loss"></b></span>
+<div id="w2v-loss-plot">
+
+</div>
+</div>
+</div>
+</div>
+<aside class="notes">
+<p>The browser trains eight-dimensional embeddings for 30 epochs. The eight target words are shown in a fixed PCA projection fitted to the final vectors. Colors identify corpus groups; group labels are not used for training. The curve measures mean binary loss on a fixed diagnostic sample. Play, pause, step, reset, or scrub to inspect the computed checkpoints.</p>
+<style type="text/css">
+        span.MJX_Assistive_MathML {
+          position:absolute!important;
+          clip: rect(1px, 1px, 1px, 1px);
+          padding: 1px 0 0 0!important;
+          border: 0!important;
+          height: 1px!important;
+          width: 1px!important;
+          overflow: hidden!important;
+          display:block!important;
+      }</style></aside>
 </section>
 <section id="the-whole-learning-loop" class="slide level2">
 <h2>The whole learning loop</h2>
@@ -1133,94 +1170,782 @@ student
 <h1>GloVe</h1>
 
 </section>
-<section id="local-prediction-vs-global-counts" class="slide level2">
+<section id="local-prediction-vs-global-counts" class="slide level2 glove-simple">
 <h2>Local prediction vs global counts</h2>
-<div class="two-col method-contrast">
-<div>
-<p><strong>Word2Vec</strong></p>
-<p>Reads local pairs repeatedly</p>
-<p><code>(student, reads)</code></p>
-<p><code>(student, book)</code></p>
+<table class="caption-top">
+<thead>
+<tr class="header">
+<th>Toy sentence</th>
+<th style="text-align: right;">Copies</th>
+<th>Toy sentence</th>
+<th style="text-align: right;">Copies</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>ice solid</code></td>
+<td style="text-align: right;">8</td>
+<td><code>steam solid</code></td>
+<td style="text-align: right;">2</td>
+</tr>
+<tr class="even">
+<td><code>ice gas</code></td>
+<td style="text-align: right;">2</td>
+<td><code>steam gas</code></td>
+<td style="text-align: right;">8</td>
+</tr>
+<tr class="odd">
+<td><code>ice water</code></td>
+<td style="text-align: right;">10</td>
+<td><code>steam water</code></td>
+<td style="text-align: right;">10</td>
+</tr>
+</tbody>
+</table>
+<div class="count-prompt">
+<p><strong>PAUSE · build three cells</strong></p>
+<p>Window ±1; count both directions; never cross sentences.</p>
+<p>Find <span class="math inline">\(X_{ice,solid}\)</span>, <span class="math inline">\(X_{solid,ice}\)</span>, and <span class="math inline">\(X_{ice,steam}\)</span>.</p>
 </div>
-<div>
-<p><strong>GloVe</strong></p>
-<p>Starts from aggregated counts</p>
-<p><span class="math inline">\(X_{student,reads}=417\)</span></p>
-<p><span class="math inline">\(X_{student,book}=286\)</span></p>
-</div>
-</div>
-<div class="fragment takeaway">
-<p>Same evidence. Different route into the objective.</p>
-</div>
-<div class="citation">
-GloVe: Global Vectors <span class="citation" data-cites="pennington2014glove">(<a href="#/references" role="doc-biblioref" onclick="">Pennington et al. 2014</a>)</span>.
-</div>
+<aside class="notes">
+<p>These are invented teaching data. Word2Vec processes the individual pairs; GloVe aggregates them into counts across the corpus. There are forty two-token sentences. Each neighboring token contributes one. The next slide contains the complete matrix, with no worked-answer side panel.</p>
+<style type="text/css">
+        span.MJX_Assistive_MathML {
+          position:absolute!important;
+          clip: rect(1px, 1px, 1px, 1px);
+          padding: 1px 0 0 0!important;
+          border: 0!important;
+          height: 1px!important;
+          width: 1px!important;
+          overflow: hidden!important;
+          display:block!important;
+      }</style></aside>
 </section>
-<section id="ratios-reveal-relationships" class="slide level2">
+<section id="global-co-occurrence-counts" class="slide level2 glove-simple matrix-only">
+<h2>Global co-occurrence counts</h2>
+<table class="caption-top">
+<thead>
+<tr class="header">
+<th>center ↓ / context →</th>
+<th style="text-align: right;">ice</th>
+<th style="text-align: right;">steam</th>
+<th style="text-align: right;">solid</th>
+<th style="text-align: right;">gas</th>
+<th style="text-align: right;">water</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><strong>ice</strong></td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;"><strong>8</strong></td>
+<td style="text-align: right;">2</td>
+<td style="text-align: right;">10</td>
+</tr>
+<tr class="even">
+<td><strong>steam</strong></td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">2</td>
+<td style="text-align: right;"><strong>8</strong></td>
+<td style="text-align: right;">10</td>
+</tr>
+<tr class="odd">
+<td><strong>solid</strong></td>
+<td style="text-align: right;"><strong>8</strong></td>
+<td style="text-align: right;">2</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr class="even">
+<td><strong>gas</strong></td>
+<td style="text-align: right;">2</td>
+<td style="text-align: right;"><strong>8</strong></td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr class="odd">
+<td><strong>water</strong></td>
+<td style="text-align: right;">10</td>
+<td style="text-align: right;">10</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+</tr>
+</tbody>
+</table>
+<aside class="notes">
+<p>The answers are visible in the matrix: 8, 8, 0. Ice and steam each have row total twenty. Use these totals on the next slide to compare conditional context probabilities. “Global” means aggregation over all local windows, not an unlimited context window.</p>
+<style type="text/css">
+        span.MJX_Assistive_MathML {
+          position:absolute!important;
+          clip: rect(1px, 1px, 1px, 1px);
+          padding: 1px 0 0 0!important;
+          border: 0!important;
+          height: 1px!important;
+          width: 1px!important;
+          overflow: hidden!important;
+          display:block!important;
+      }</style></aside>
+</section>
+<section id="ratios-reveal-relationships" class="slide level2 glove-simple">
 <h2>Ratios reveal relationships</h2>
 <table class="caption-top">
 <thead>
 <tr class="header">
-<th>probe word</th>
-<th style="text-align: right;">near <code>ice</code></th>
-<th style="text-align: right;">near <code>steam</code></th>
+<th>probe</th>
+<th style="text-align: right;"><span class="math inline">\(P(c\mid ice)\)</span></th>
+<th style="text-align: right;"><span class="math inline">\(P(c\mid steam)\)</span></th>
 <th style="text-align: right;">ratio</th>
 </tr>
 </thead>
 <tbody>
 <tr class="odd">
 <td><strong>solid</strong></td>
-<td style="text-align: right;">high</td>
-<td style="text-align: right;">low</td>
-<td style="text-align: right;">large</td>
+<td style="text-align: right;">8 / 20</td>
+<td style="text-align: right;">2 / 20</td>
+<td style="text-align: right;"><strong>4</strong></td>
 </tr>
 <tr class="even">
 <td><strong>gas</strong></td>
-<td style="text-align: right;">low</td>
-<td style="text-align: right;">high</td>
-<td style="text-align: right;">small</td>
+<td style="text-align: right;">2 / 20</td>
+<td style="text-align: right;">8 / 20</td>
+<td style="text-align: right;"><strong>¼</strong></td>
 </tr>
 <tr class="odd">
 <td><strong>water</strong></td>
-<td style="text-align: right;">high</td>
-<td style="text-align: right;">high</td>
-<td style="text-align: right;">near 1</td>
-</tr>
-<tr class="even">
-<td><strong>fashion</strong></td>
-<td style="text-align: right;">low</td>
-<td style="text-align: right;">low</td>
-<td style="text-align: right;">near 1</td>
+<td style="text-align: right;">10 / 20</td>
+<td style="text-align: right;">10 / 20</td>
+<td style="text-align: right;"><strong>1</strong></td>
 </tr>
 </tbody>
 </table>
 <div class="fragment takeaway">
-<p>A useful contrast separates what belongs to one word from what both share.</p>
+<p><strong>solid</strong> favors ice · <strong>gas</strong> favors steam · <strong>water</strong> is shared.</p>
 </div>
+<!-- Generated by build_glove_example.py; edit the generator to change these slides. -->
 </section>
-<section id="the-glove-objectiveread-it-in-pieces" class="slide level2">
+<section id="glove-ten-words" class="slide level2 glove-example">
+<h2>Ten words: which one belongs beside “cup”?</h2>
+<table class="glove-ten-matrix" aria-label="Ten-word symmetric co-occurrence matrix; cup column highlighted">
+<thead>
+<tr>
+<th>
+word
+</th>
+<th class="">
+coffee
+</th>
+<th class="">
+tea
+</th>
+<th class="">
+milk
+</th>
+<th class="">
+juice
+</th>
+<th class="cup-column">
+cup
+</th>
+<th class="">
+drink
+</th>
+<th class="">
+hot
+</th>
+<th class="">
+cold
+</th>
+<th class="">
+car
+</th>
+<th class="">
+road
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<th scope="row">
+coffee
+</th>
+<td class="matrix-zero">
+0
+</td>
+<td class="">
+2
+</td>
+<td class="">
+3
+</td>
+<td class="matrix-zero">
+0
+</td>
+<td class="cup-column">
+12
+</td>
+<td class="">
+16
+</td>
+<td class="">
+14
+</td>
+<td class="">
+3
+</td>
+<td class="matrix-zero">
+0
+</td>
+<td class="matrix-zero">
+0
+</td>
+</tr>
+<tr>
+<th scope="row">
+tea
+</th>
+<td class="">
+2
+</td>
+<td class="matrix-zero">
+0
+</td>
+<td class="matrix-zero">
+0
+</td>
+<td class="matrix-zero">
+0
+</td>
+<td class="cup-column">
+10
+</td>
+<td class="">
+14
+</td>
+<td class="">
+12
+</td>
+<td class="">
+2
+</td>
+<td class="matrix-zero">
+0
+</td>
+<td class="matrix-zero">
+0
+</td>
+</tr>
+<tr>
+<th scope="row">
+milk
+</th>
+<td class="">
+3
+</td>
+<td class="matrix-zero">
+0
+</td>
+<td class="matrix-zero">
+0
+</td>
+<td class="matrix-zero">
+0
+</td>
+<td class="cup-column">
+4
+</td>
+<td class="">
+8
+</td>
+<td class="">
+3
+</td>
+<td class="">
+6
+</td>
+<td class="matrix-zero">
+0
+</td>
+<td class="matrix-zero">
+0
+</td>
+</tr>
+<tr>
+<th scope="row">
+juice
+</th>
+<td class="matrix-zero">
+0
+</td>
+<td class="matrix-zero">
+0
+</td>
+<td class="matrix-zero">
+0
+</td>
+<td class="matrix-zero">
+0
+</td>
+<td class="cup-column">
+2
+</td>
+<td class="">
+10
+</td>
+<td class="">
+1
+</td>
+<td class="">
+12
+</td>
+<td class="matrix-zero">
+0
+</td>
+<td class="matrix-zero">
+0
+</td>
+</tr>
+<tr>
+<th scope="row">
+cup
+</th>
+<td class="">
+12
+</td>
+<td class="">
+10
+</td>
+<td class="">
+4
+</td>
+<td class="">
+2
+</td>
+<td class="cup-column">
+0
+</td>
+<td class="matrix-zero">
+0
+</td>
+<td class="matrix-zero">
+0
+</td>
+<td class="matrix-zero">
+0
+</td>
+<td class="matrix-zero">
+0
+</td>
+<td class="matrix-zero">
+0
+</td>
+</tr>
+<tr>
+<th scope="row">
+drink
+</th>
+<td class="">
+16
+</td>
+<td class="">
+14
+</td>
+<td class="">
+8
+</td>
+<td class="">
+10
+</td>
+<td class="cup-column">
+0
+</td>
+<td class="matrix-zero">
+0
+</td>
+<td class="matrix-zero">
+0
+</td>
+<td class="matrix-zero">
+0
+</td>
+<td class="matrix-zero">
+0
+</td>
+<td class="matrix-zero">
+0
+</td>
+</tr>
+<tr>
+<th scope="row">
+hot
+</th>
+<td class="">
+14
+</td>
+<td class="">
+12
+</td>
+<td class="">
+3
+</td>
+<td class="">
+1
+</td>
+<td class="cup-column">
+0
+</td>
+<td class="matrix-zero">
+0
+</td>
+<td class="matrix-zero">
+0
+</td>
+<td class="matrix-zero">
+0
+</td>
+<td class="matrix-zero">
+0
+</td>
+<td class="matrix-zero">
+0
+</td>
+</tr>
+<tr>
+<th scope="row">
+cold
+</th>
+<td class="">
+3
+</td>
+<td class="">
+2
+</td>
+<td class="">
+6
+</td>
+<td class="">
+12
+</td>
+<td class="cup-column">
+0
+</td>
+<td class="matrix-zero">
+0
+</td>
+<td class="matrix-zero">
+0
+</td>
+<td class="matrix-zero">
+0
+</td>
+<td class="matrix-zero">
+0
+</td>
+<td class="matrix-zero">
+0
+</td>
+</tr>
+<tr>
+<th scope="row">
+car
+</th>
+<td class="matrix-zero">
+0
+</td>
+<td class="matrix-zero">
+0
+</td>
+<td class="matrix-zero">
+0
+</td>
+<td class="matrix-zero">
+0
+</td>
+<td class="cup-column">
+0
+</td>
+<td class="matrix-zero">
+0
+</td>
+<td class="matrix-zero">
+0
+</td>
+<td class="matrix-zero">
+0
+</td>
+<td class="matrix-zero">
+0
+</td>
+<td class="">
+18
+</td>
+</tr>
+<tr>
+<th scope="row">
+road
+</th>
+<td class="matrix-zero">
+0
+</td>
+<td class="matrix-zero">
+0
+</td>
+<td class="matrix-zero">
+0
+</td>
+<td class="matrix-zero">
+0
+</td>
+<td class="cup-column">
+0
+</td>
+<td class="matrix-zero">
+0
+</td>
+<td class="matrix-zero">
+0
+</td>
+<td class="matrix-zero">
+0
+</td>
+<td class="">
+18
+</td>
+<td class="matrix-zero">
+0
+</td>
+</tr>
+</tbody>
+</table>
+<div class="glove-lookup-pause">
+<b>PAUSE</b><span>Context = <strong>cup</strong>. Read the highlighted column. Which candidate has the largest count?</span>
+</div>
+<aside class="notes">
+<p>Invented teaching corpus: each nonzero unordered pair corresponds to the stated number of copies of a two-token sentence. Count both directions in a radius-one window; do not cross sentence boundaries. The full 10 × 10 matrix is symmetric. This is an association lookup, not next-word prediction. Do not reveal the answer until the following slide.</p>
+<style type="text/css">
+        span.MJX_Assistive_MathML {
+          position:absolute!important;
+          clip: rect(1px, 1px, 1px, 1px);
+          padding: 1px 0 0 0!important;
+          border: 0!important;
+          height: 1px!important;
+          width: 1px!important;
+          overflow: hidden!important;
+          display:block!important;
+      }</style></aside>
+</section>
+<section id="glove-cup-ranking" class="slide level2 glove-example">
+<h2>The column gives the answer</h2>
+<table class="caption-top">
+<thead>
+<tr class="header">
+<th>Candidate</th>
+<th style="text-align: right;">Count beside cup</th>
+<th style="text-align: right;">Count / 28</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><strong>coffee</strong></td>
+<td style="text-align: right;">12</td>
+<td style="text-align: right;">0.429</td>
+</tr>
+<tr class="even">
+<td><strong>tea</strong></td>
+<td style="text-align: right;">10</td>
+<td style="text-align: right;">0.357</td>
+</tr>
+<tr class="odd">
+<td><strong>milk</strong></td>
+<td style="text-align: right;">4</td>
+<td style="text-align: right;">0.143</td>
+</tr>
+<tr class="even">
+<td><strong>juice</strong></td>
+<td style="text-align: right;">2</td>
+<td style="text-align: right;">0.071</td>
+</tr>
+<tr class="odd">
+<td><strong>drink</strong></td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0.000</td>
+</tr>
+<tr class="even">
+<td><strong>hot</strong></td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0.000</td>
+</tr>
+<tr class="odd">
+<td><strong>cold</strong></td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0.000</td>
+</tr>
+<tr class="even">
+<td><strong>car</strong></td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0.000</td>
+</tr>
+<tr class="odd">
+<td><strong>road</strong></td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0.000</td>
+</tr>
+</tbody>
+</table>
+<div class="glove-example-caption">
+<strong>Coffee wins:</strong> 12 of 28 observed neighbors. This answer comes directly from the counts.
+</div>
+<aside class="notes">
+<p>The final column is the empirical probability of a candidate token among this corpus’s cup neighbors. The diagonal is zero because the corpus contains no repeated-token sentences. The five zero-count candidates tie; their order is arbitrary. These are unordered context associations and do not model sentence order.</p>
+<style type="text/css">
+        span.MJX_Assistive_MathML {
+          position:absolute!important;
+          clip: rect(1px, 1px, 1px, 1px);
+          padding: 1px 0 0 0!important;
+          border: 0!important;
+          height: 1px!important;
+          width: 1px!important;
+          overflow: hidden!important;
+          display:block!important;
+      }</style></aside>
+</section>
+<section id="glove-reconstruct-question" class="slide level2 glove-example">
+<h2>Can short vectors reproduce those counts?</h2>
+<div class="glove-reconstruct-target">
+Observed: <strong>coffee → cup = 12</strong>
+</div>
+<table class="caption-top">
+<thead>
+<tr class="header">
+<th>Learned parameter</th>
+<th>Two coordinates</th>
+<th style="text-align: right;">Bias</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>coffee · word vector</td>
+<td><code>[0.547, -0.988]</code></td>
+<td style="text-align: right;">0.777</td>
+</tr>
+<tr class="even">
+<td>cup · context vector</td>
+<td><code>[0.564, -0.954]</code></td>
+<td style="text-align: right;">0.449</td>
+</tr>
+</tbody>
+</table>
+<p><span class="math display">\[\widehat{\ell}_{coffee,cup}=\mathbf w_{coffee}^T\widetilde{\mathbf w}_{cup}+b_{coffee}+\widetilde b_{cup}\]</span></p>
+<div class="glove-lookup-pause">
+<b>PAUSE</b><span>Multiply matching coordinates, add them, then add both biases. How close is the result to <strong>ln 12 ≈ 2.485</strong>?</span>
+</div>
+<aside class="notes">
+<p>These are actual fitted parameters from a seeded two-dimensional GloVe model, not hand-picked coordinates. Both vector tables and bias tables were fitted against all nonzero cells in this exact matrix. The two-dimensional bottleneck shares parameters across cells. Training settings: seed 351; 400 AdaGrad epochs; learning rate 0.08; f(x) = min((x/10)^0.75, 1). Ten is a teaching setting for the weighting cap. Show the worked score on the next slide. Displayed parameters are rounded to three decimals.</p>
+<style type="text/css">
+        span.MJX_Assistive_MathML {
+          position:absolute!important;
+          clip: rect(1px, 1px, 1px, 1px);
+          padding: 1px 0 0 0!important;
+          border: 0!important;
+          height: 1px!important;
+          width: 1px!important;
+          overflow: hidden!important;
+          display:block!important;
+      }</style></aside>
+</section>
+<section id="glove-reconstruction" class="slide level2 glove-example">
+<h2>Compare the predictions with the same data</h2>
+<table class="caption-top">
+<thead>
+<tr class="header">
+<th>Pair</th>
+<th style="text-align: right;">Count</th>
+<th style="text-align: right;">Target: ln count</th>
+<th style="text-align: right;">Before training</th>
+<th style="text-align: right;">After training</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>coffee → cup</td>
+<td style="text-align: right;">12</td>
+<td style="text-align: right;">2.485</td>
+<td style="text-align: right;">-0.004</td>
+<td style="text-align: right;"><strong>2.477</strong></td>
+</tr>
+<tr class="even">
+<td>tea → cup</td>
+<td style="text-align: right;">10</td>
+<td style="text-align: right;">2.303</td>
+<td style="text-align: right;">0.001</td>
+<td style="text-align: right;"><strong>2.323</strong></td>
+</tr>
+<tr class="odd">
+<td>milk → cup</td>
+<td style="text-align: right;">4</td>
+<td style="text-align: right;">1.386</td>
+<td style="text-align: right;">-0.007</td>
+<td style="text-align: right;"><strong>1.311</strong></td>
+</tr>
+<tr class="even">
+<td>juice → cup</td>
+<td style="text-align: right;">2</td>
+<td style="text-align: right;">0.693</td>
+<td style="text-align: right;">-0.001</td>
+<td style="text-align: right;"><strong>0.751</strong></td>
+</tr>
+</tbody>
+</table>
+<div class="glove-fit-score">
+coffee · cup + both biases ≈ <strong>2.477</strong><span>Target: 2.485</span>
+</div>
+<div class="glove-example-caption">
+Mean weighted squared error over all nonzero cells: <strong>3.571 → 0.0015</strong>
+</div>
+<div class="glove-example-question">
+What objective makes these predictions approach the log counts?
+</div>
+<aside class="notes">
+<p>The before/after entries are genuine outputs of the same model and matrix, at initialization and after training. The dot product plus biases predicts a log count, not a word probability. Zero cells are omitted from the GloVe loss, so they are not trained negative examples. Do not infer that zero-count pairs must receive low model scores. The loss is averaged over all positive directed cells, not just the four rows displayed here. Full values and settings are in glove-example-data.json; regenerate both the data and these slides with build_glove_example.py.</p>
+<style type="text/css">
+        span.MJX_Assistive_MathML {
+          position:absolute!important;
+          clip: rect(1px, 1px, 1px, 1px);
+          padding: 1px 0 0 0!important;
+          border: 0!important;
+          height: 1px!important;
+          width: 1px!important;
+          overflow: hidden!important;
+          display:block!important;
+      }</style></aside>
+</section>
+<section id="the-glove-objectiveread-it-in-pieces" class="slide level2 glove-simple">
 <h2>The GloVe objective—read it in pieces</h2>
 <div class="glove-equation">
-<p><span class="math display">\[J=\sum_{i,j}f(X_{ij})
+<p><span class="math display">\[J=\sum_{X_{ij}&gt;0}f(X_{ij})
 \left(\mathbf{w}_i^T\widetilde{\mathbf{w}}_j+b_i+\widetilde b_j-\log X_{ij}\right)^2\]</span></p>
 </div>
 <div class="fragment equation-legend">
-<p><span><b><span class="math inline">\(X_{ij}\)</span></b> global count</span> <span><b>dot product</b> prediction</span> <span><b><span class="math inline">\(\log\)</span></b> compress scale</span> <span><b><span class="math inline">\(f\)</span></b> weight evidence</span></p>
+<p><span><b><span class="math inline">\(X_{ij}\)</span></b> global count</span> <span><b>dot product + biases</b> predicted log count</span> <span><b><span class="math inline">\(\log X_{ij}\)</span></b> target</span> <span><b><span class="math inline">\(f\)</span></b> weight evidence</span></p>
 </div>
 </section>
-<section id="what-is-glove-trying-to-do" class="slide level2">
+<section id="what-is-glove-trying-to-do" class="slide level2 glove-simple">
 <h2>What is GloVe trying to do?</h2>
 <div class="pipeline-strip glove-route">
 <div>
-<strong>Observe</strong><span><span class="math inline">\(X_{ij}\)</span></span>
+<strong>Observe</strong><span><span class="math inline">\(X_{ice,solid}=8\)</span><br><span class="math inline">\(\log 8 \approx 2.08\)</span></span>
 </div>
 <b>→</b>
 <div>
-<strong>Predict</strong><span><span class="math inline">\(\log X_{ij}\)</span></span>
+<strong>Predict</strong><span>dot product<br>+ two biases</span>
 </div>
 <b>→</b>
 <div>
-<strong>Compare</strong><span>squared error</span>
+<strong>Compare</strong><span>weighted<br>squared error</span>
 </div>
 <b>→</b>
 <div>
@@ -1231,7 +1956,7 @@ GloVe: Global Vectors <span class="citation" data-cites="pennington2014glove">(<
 <p>Make vector compatibility reconstruct global co-occurrence structure.</p>
 </div>
 </section>
-<section id="word2vec-and-glove" class="slide level2">
+<section id="word2vec-and-glove" class="slide level2 glove-simple">
 <h2>Word2Vec and GloVe</h2>
 <table class="caption-top">
 <thead>
@@ -1264,11 +1989,11 @@ GloVe: Global Vectors <span class="citation" data-cites="pennington2014glove">(<
 </tr>
 </tbody>
 </table>
-<div class="fragment big-summary">
-<p>Predict the company—or compress the record of that company.</p>
+<div class="fragment takeaway">
+<p>Predict contexts—or reconstruct their counts.</p>
 </div>
 </section>
-<section id="a-false-contrast-to-avoid" class="slide level2">
+<section id="a-false-contrast-to-avoid" class="slide level2 glove-simple">
 <h2>A false contrast to avoid</h2>
 <div class="wrong-contrast">
 <p><span>Word2Vec = neural</span> <strong>vs</strong> <span>GloVe = just counting</span></p>
@@ -1598,6 +2323,35 @@ Mikolov, Tomas, Ilya Sutskever, Kai Chen, Greg S. Corrado, and Jeffrey Dean. 201
 Pennington, Jeffrey, Richard Socher, and Christopher D. Manning. 2014. <span>“<span>GloVe</span>: Global Vectors for Word Representation.”</span> <em>Proceedings of the 2014 Conference on Empirical Methods in Natural Language Processing</em>, 1532–43. <a href="https://doi.org/10.3115/v1/D14-1162">https://doi.org/10.3115/v1/D14-1162</a>.
 </div>
 </div>
+</section>
+<section id="a-vector-is-a-representation.-what-makes-a-prediction" class="slide level2 bridge-slide">
+<h2>A vector is a representation. What makes a prediction?</h2>
+<div class="prediction-bridge" role="img" aria-label="A review becomes word vectors, which flow into an unknown decision mechanism. Two possible class outputs lead to a held-out evaluation question.">
+<div class="bridge-review">
+<b>A new review</b><span>“the movie was moving”</span>
+</div>
+<div class="bridge-transfer">
+<i></i><i></i><i></i>
+</div>
+<div class="bridge-vectors">
+<span>the ▰ ▱ ▰</span><span>movie ▱ ▰ ▰</span><span>was ▰ ▰ ▱</span><span>moving ▱ ▰ ▱</span>
+</div>
+<div class="bridge-transfer">
+<i></i><i></i><i></i>
+</div>
+<div class="bridge-unknown">
+<strong>?</strong><span>learn a decision</span>
+</div>
+<div class="bridge-transfer">
+<i></i><i></i><i></i>
+</div>
+<div class="bridge-outcomes">
+<span>positive?</span><span>negative?</span><b>Test on unseen reviews</b>
+</div>
+</div>
+<div class="big-summary">
+<p>What extra evidence would let us turn these vectors into a prediction we can trust?</p>
+</div>
 
 
 </section></section>
@@ -1816,6 +2570,7 @@ Pennington, Jeffrey, Richard Socher, and Christopher D. Manning. 2014. <span>“
         ]
       });
     </script>
+    <script src="word2vec-simulation.js"></script>
     <script id="quarto-html-after-body" type="application/javascript">
       window.document.addEventListener("DOMContentLoaded", function (event) {
         const tabsets =  window.document.querySelectorAll(".panel-tabset-tabby")
