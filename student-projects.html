@@ -6,7 +6,7 @@
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
-<meta name="description" content="Final project themes, milestones, presentation schedule, and assessment.">
+<meta name="description" content="Propose an NLP investigation: a question, a dataset, and a controlled experiment.">
 
 <title>Student Projects – CS 351 · NLP</title>
 <style>
@@ -36,6 +36,8 @@ ul.task-list li input[type="checkbox"] {
 <script src="site_libs/quarto-search/fuse.min.js"></script>
 <script src="site_libs/quarto-search/quarto-search.js"></script>
 <meta name="quarto:offset" content="./">
+<script src="site_libs/quarto-listing/list.min.js"></script>
+<script src="site_libs/quarto-listing/quarto-listing.js"></script>
 <script src="site_libs/quarto-html/quarto.js" type="module"></script>
 <script src="site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
 <script src="site_libs/quarto-html/popper.min.js"></script>
@@ -73,10 +75,69 @@ ul.task-list li input[type="checkbox"] {
     "search-label": "Search"
   }
 }</script>
+<script>
+
+  window.document.addEventListener("DOMContentLoaded", function (_event) {
+    const listingTargetEl = window.document.querySelector('#listing-project-gallery .list');
+    if (!listingTargetEl) {
+      // No listing discovered, do not attach.
+      return; 
+    }
+
+    const options = {
+      valueNames: ['listing-title','listing-students','listing-description','listing-thumbnail','listing-thumbnail_alt','listing-thumbnail_credit','listing-status','listing-example',{ data: ['index'] },{ data: ['categories'] }],
+      
+      searchColumns: ["listing-title","listing-students","listing-description","listing-thumbnail","listing-thumbnail_alt","listing-thumbnail_credit","listing-status","listing-example"],
+    };
+
+    window['quarto-listings'] = window['quarto-listings'] || {};
+    window['quarto-listings']['listing-project-gallery'] = new List('listing-project-gallery', options);
+
+    if (window['quarto-listing-loaded']) {
+      window['quarto-listing-loaded']();
+    }
+  });
+
+  window.addEventListener('hashchange',() => {
+    if (window['quarto-listing-loaded']) {
+      window['quarto-listing-loaded']();
+    }
+  })
+  </script>
 <style>html{ scroll-behavior: smooth; }</style>
 
+  <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
+  <script defer="" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-chtml.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN" && texText && texText.data) {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script>
 
 <link rel="stylesheet" href="styles.css">
+<link rel="stylesheet" href="student-projects/gallery.css">
 </head>
 
 <body class="floating nav-fixed quarto-light">
@@ -138,7 +199,16 @@ ul.task-list li input[type="checkbox"] {
     <h2 id="toc-title">On this page</h2>
    
   <ul>
-  <li><a href="#what-will-live-here" id="toc-what-will-live-here" class="nav-link active" data-scroll-target="#what-will-live-here">What will live here</a></li>
+  <li><a href="#the-project-gallery" id="toc-the-project-gallery" class="nav-link active" data-scroll-target="#the-project-gallery">The project gallery</a></li>
+  <li><a href="#submit-your-proposal" id="toc-submit-your-proposal" class="nav-link" data-scroll-target="#submit-your-proposal">Submit your proposal</a></li>
+  <li><a href="#what-makes-a-good-project" id="toc-what-makes-a-good-project" class="nav-link" data-scroll-target="#what-makes-a-good-project">What makes a good project?</a>
+  <ul class="collapse">
+  <li><a href="#direction-1-understand-a-model-by-building-it" id="toc-direction-1-understand-a-model-by-building-it" class="nav-link" data-scroll-target="#direction-1-understand-a-model-by-building-it">Direction 1 · Understand a model by building it</a></li>
+  <li><a href="#direction-2-use-a-model-to-solve-a-real-problem" id="toc-direction-2-use-a-model-to-solve-a-real-problem" class="nav-link" data-scroll-target="#direction-2-use-a-model-to-solve-a-real-problem">Direction 2 · Use a model to solve a real problem</a></li>
+  </ul></li>
+  <li><a href="#what-makes-a-useful-proposal" id="toc-what-makes-a-useful-proposal" class="nav-link" data-scroll-target="#what-makes-a-useful-proposal">What makes a useful proposal?</a></li>
+  <li><a href="#public-summary-and-instructor-review" id="toc-public-summary-and-instructor-review" class="nav-link" data-scroll-target="#public-summary-and-instructor-review">Public summary and instructor review</a></li>
+  <li><a href="#presentations-and-approved-projects" id="toc-presentations-and-approved-projects" class="nav-link" data-scroll-target="#presentations-and-approved-projects">Presentations and approved projects</a></li>
   </ul>
 </nav>
 </nav>
@@ -156,7 +226,7 @@ ul.task-list li input[type="checkbox"] {
 
 <div>
   <div class="description">
-    Final project themes, milestones, presentation schedule, and assessment.
+    Propose an NLP investigation: a question, a dataset, and a controlled experiment.
   </div>
 </div>
 
@@ -173,18 +243,117 @@ ul.task-list li input[type="checkbox"] {
 </header>
 
 
-<p>The final four weeks of the course are reserved for student project presentations.</p>
-<section id="what-will-live-here" class="level2">
-<h2 class="anchored" data-anchor-id="what-will-live-here">What will live here</h2>
+<p>Start with an NLP question you can investigate, a dataset you can access, and an experiment you can finish with your available time and hardware.</p>
+<p><a href="#submit-your-proposal" class="btn btn-primary">Propose a project ↓</a></p>
+<section id="the-project-gallery" class="level2">
+<h2 class="anchored" data-anchor-id="the-project-gallery">The project gallery</h2>
+<p>Approved proposals will appear here. The fictional example below previews how a team’s project will look.</p>
+<div id="listing-project-gallery" class="quarto-listing quarto-listing-container-custom">
+<div class="student-project-grid">
+
+<article class="student-project-card">
+  <figure class="student-project-visual figure">
+    <img src="student-projects/images/sentiment-languages.svg" alt="A mixed-language review branches into a TF–IDF baseline and a multilingual model, then converges on a shared comparison of sentiment errors." width="1200" height="750" loading="lazy" class="figure-img">
+    <figcaption>Original course diagram · proposed experiment, not measured results</figcaption>
+  </figure>
+  <div class="student-project-copy">
+    <span class="student-project-status">Fictional example</span>
+    <h3 class="anchored">Sentiment Across Languages</h3>
+    <p class="student-project-team">Lina El Mansouri · Adam Rami</p>
+    <p class="student-project-description">Can a sentiment classifier understand reviews that mix Darija and French? We plan to compare a TF–IDF baseline with a multilingual transformer, then vary text normalization while keeping the data split fixed. We will inspect errors involving negation, spelling variation, and language switching to understand where each approach succeeds or fails.</p>
+    <p class="student-project-example">Sample proposal with fictional names. This is a layout preview, not a student submission.</p>
+    
+  </div>
+</article>
+
+</div>
+
+<div class="listing-no-matching d-none">No matching items</div>
+</div>
+</section>
+<section id="submit-your-proposal" class="level2">
+<h2 class="anchored" data-anchor-id="submit-your-proposal">Submit your proposal</h2>
+<ol type="1">
+<li><strong>Download and fill in the YAML template.</strong> Write a short public summary, list your teammates, and describe the dataset, approach, and evaluation plan.</li>
+<li><strong>Send your proposal to the instructor for review</strong>, together with a thumbnail if you have one. A simple diagram is welcome; a thumbnail is optional at this stage.</li>
+<li><strong>Revise after feedback.</strong> Once approved, your title, team, summary, and thumbnail can appear on this page. Reports and code can be linked later.</li>
+</ol>
+<p><a class="btn btn-primary" href="student-projects/project-proposal.yml" download="project-proposal.yml">Download proposal template · YAML</a></p>
+<p>Rename the file to <code>your-team-project.yml</code>. Use spaces for indentation and keep the field names unchanged. The comments in the template explain what to write; text after <code>&gt;-</code> can span several indented lines.</p>
+</section>
+<section id="what-makes-a-good-project" class="level2">
+<h2 class="anchored" data-anchor-id="what-makes-a-good-project">What makes a good project?</h2>
+<p>A strong project can take <strong>either of two directions</strong>: a deep implementation from scratch of a model from the research literature, or a thoughtful application of an existing model to a real problem. Both are equally valid. Choose the direction that lets you demonstrate understanding, make meaningful decisions, and support your conclusions with evidence.</p>
+<section id="direction-1-understand-a-model-by-building-it" class="level3">
+<h3 class="anchored" data-anchor-id="direction-1-understand-a-model-by-building-it">Direction 1 · Understand a model by building it</h3>
+<p>Choose a published model and implement its central mechanisms yourself. Explain how the paper’s ideas become code, verify that the implementation behaves as intended, and investigate at least one design choice through a controlled experiment. You may use PyTorch and automatic differentiation; identify clearly which components you implement and which you reuse. A smaller model and dataset are acceptable when they let you study the mechanism carefully.</p>
 <ul>
-<li>Available project themes</li>
-<li>Proposal requirements</li>
-<li>Project milestones</li>
-<li>Presentation schedule</li>
-<li>Deliverables and reproducibility checklist</li>
-<li>Evaluation rubric</li>
-<li>Published student work</li>
+<li><strong>Word2Vec from scratch:</strong> Implement skip-gram with negative sampling, train on a manageable corpus, and investigate how context-window size changes the learned word relationships.</li>
+<li><strong>An attention-based translation model:</strong> Build an encoder–decoder with attention, trace how it uses the source sentence, and compare it with a version without attention on the same translation task.</li>
+<li><strong>A miniature Transformer language model:</strong> Implement causal self-attention, positional information, and Transformer blocks, then examine how context length affects predictions and generation errors.</li>
 </ul>
+</section>
+<section id="direction-2-use-a-model-to-solve-a-real-problem" class="level3">
+<h3 class="anchored" data-anchor-id="direction-2-use-a-model-to-solve-a-real-problem">Direction 2 · Use a model to solve a real problem</h3>
+<p>Choose a concrete user need and apply or adapt an existing model using relevant data. The contribution lies in the complete investigation: preparing the data, choosing an approach, comparing it with a simple baseline, evaluating realistic cases, and explaining failures. Show what the system helps a user accomplish and where it still needs improvement.</p>
+<ul>
+<li><strong>A university regulations assistant:</strong> Build a question-answering system over actual university documents that cites its sources, then evaluate answer correctness and its behavior when the documents do not contain an answer.</li>
+<li><strong>Routing multilingual support requests:</strong> Adapt an existing classifier to assign French, Arabic, or Darija requests to the right service, and inspect which categories and language mixtures cause routing errors.</li>
+<li><strong>Extracting information from local job advertisements:</strong> Use an existing language model to extract skills, experience requirements, and locations, then evaluate the extracted fields against manually checked examples for a searchable job catalogue.</li>
+</ul>
+<p>For either direction, state one clear question, compare against a baseline, and discuss concrete errors. The project’s strength comes from the depth of the implementation or the usefulness of the application, supported by careful evaluation. These examples are starting points; you may propose your own topic.</p>
+</section>
+</section>
+<section id="what-makes-a-useful-proposal" class="level2">
+<h2 class="anchored" data-anchor-id="what-makes-a-useful-proposal">What makes a useful proposal?</h2>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 50%">
+<col style="width: 50%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Include</th>
+<th>Make it concrete</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><strong>Question</strong></td>
+<td>One research or engineering question about language</td>
+</tr>
+<tr class="even">
+<td><strong>Dataset</strong></td>
+<td>Source, access and usage terms, languages, domain, and usable size</td>
+</tr>
+<tr class="odd">
+<td><strong>Approach</strong></td>
+<td>A baseline and the model you intend to build or adapt; identify reused components and pretrained weights</td>
+</tr>
+<tr class="even">
+<td><strong>Evaluation</strong></td>
+<td>Train/validation/test splits, leakage prevention, suitable metrics, and example-level error analysis</td>
+</tr>
+<tr class="odd">
+<td><strong>Experiment</strong></td>
+<td>One design choice you will vary and a prediction before running it</td>
+</tr>
+<tr class="even">
+<td><strong>Feasibility</strong></td>
+<td>Available hardware, computation, milestones, a smaller fallback, and team roles</td>
+</tr>
+</tbody>
+</table>
+<p>Describe a plan, not results you have not measured. A focused comparison with clear evidence is a useful starting point.</p>
+</section>
+<section id="public-summary-and-instructor-review" class="level2">
+<h2 class="anchored" data-anchor-id="public-summary-and-instructor-review">Public summary and instructor review</h2>
+<p>The first block of the YAML contains your proposed <strong>public card</strong>: title, student names, a 40–70-word description, and optional thumbnail information. The <code>proposal</code> block contains the detailed plan <strong>for instructor review</strong> and is not intended for the public gallery.</p>
+<p>Do not include student IDs, phone numbers, or other private information. If you supply a thumbnail, send it alongside the YAML file, choose an image you may share, include its source, and write useful alt text. A landscape PNG, JPG, or WebP around 1200 × 750 pixels works well; leave the thumbnail fields empty if you do not have one.</p>
+</section>
+<section id="presentations-and-approved-projects" class="level2">
+<h2 class="anchored" data-anchor-id="presentations-and-approved-projects">Presentations and approved projects</h2>
+<p>The final <strong>four weeks</strong> of this NLP course are reserved for student project presentations. Approved proposals and their public summaries will be added here after review.</p>
 <div class="callout callout-style-default callout-note callout-titled">
 <div class="callout-header d-flex align-content-center">
 <div class="callout-icon-container">
@@ -195,9 +364,11 @@ Note
 </div>
 </div>
 <div class="callout-body-container callout-body">
-<p>The project catalogue and assessment material from the previous course will be reviewed and adapted here.</p>
+<p>The proposal deadline, submission arrangements, exact presentation schedule, and detailed evaluation rubric will be announced separately.</p>
 </div>
 </div>
+<p>Looking for the course notebooks? <a href="./coding-projects.html">Browse coding projects</a>.</p>
+
 
 
 </section>
