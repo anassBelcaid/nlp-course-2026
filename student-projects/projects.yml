@@ -1,0 +1,18 @@
+# Instructor-maintained public gallery: approved public information only.
+# Remove this fictional example when the first real proposal is ready.
+# Keep the private proposal block outside this repository.
+- title: "Sentiment Across Languages"
+  students:
+    - "Lina El Mansouri"
+    - "Adam Rami"
+  description: >-
+    Can a sentiment classifier understand reviews that mix Darija and French?
+    We plan to compare a TF–IDF baseline with a multilingual transformer,
+    then vary text normalization while keeping the data split fixed.
+    We will inspect errors involving negation, spelling variation, and
+    language switching to understand where each approach succeeds or fails.
+  thumbnail: "images/sentiment-languages.svg"
+  thumbnail_alt: "A mixed-language review branches into a TF–IDF baseline and a multilingual model, then converges on a shared comparison of sentiment errors."
+  thumbnail_credit: "Original course diagram · proposed experiment, not measured results"
+  status: "Proposal approved"
+  example: true

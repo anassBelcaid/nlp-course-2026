@@ -64,6 +64,14 @@ Ask questions, compare approaches, help your classmates, and follow course annou
 :::
 :::
 
+:::{.callout-important}
+## Student project proposals
+
+Prepare your NLP project proposal: choose a question, identify a dataset, and plan one controlled experiment. Fill in the YAML template and send it to the instructor for review.
+
+[Read the proposal instructions](student-projects.qmd#submit-your-proposal) · [Download the YAML template](student-projects/project-proposal.yml)
+:::
+
 ## Reference Books
 
 :::{.book-container}

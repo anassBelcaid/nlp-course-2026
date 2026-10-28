@@ -1,20 +1,82 @@
 ---
 title: "Student Projects"
-description: "Final project themes, milestones, presentation schedule, and assessment."
+description: "Propose an NLP investigation: a question, a dataset, and a controlled experiment."
+css: student-projects/gallery.css
+listing:
+  id: project-gallery
+  contents: student-projects/projects.yml
+  template: student-projects/_cards.ejs.md
+  field-required: [title, students, description]
 ---
 
-The final four weeks of the course are reserved for student project presentations.
+Start with an NLP question you can investigate, a dataset you can access, and an experiment you can finish with your available time and hardware.
 
-## What will live here
+[Propose a project ↓](#submit-your-proposal){.btn .btn-primary}
 
-- Available project themes
-- Proposal requirements
-- Project milestones
-- Presentation schedule
-- Deliverables and reproducibility checklist
-- Evaluation rubric
-- Published student work
+## The project gallery
+
+Approved proposals will appear here. The fictional example below previews how a team's project will look.
+
+:::{#project-gallery}
+:::
+
+## Submit your proposal
+
+1. **Download and fill in the YAML template.** Write a short public summary, list your teammates, and describe the dataset, approach, and evaluation plan.
+2. **Send your proposal to the instructor for review**, together with a thumbnail if you have one. A simple diagram is welcome; a thumbnail is optional at this stage.
+3. **Revise after feedback.** Once approved, your title, team, summary, and thumbnail can appear on this page. Reports and code can be linked later.
+
+<a class="btn btn-primary" href="student-projects/project-proposal.yml" download="project-proposal.yml">Download proposal template · YAML</a>
+
+Rename the file to `your-team-project.yml`. Use spaces for indentation and keep the field names unchanged. The comments in the template explain what to write; text after `>-` can span several indented lines.
+
+## What makes a good project?
+
+A strong project can take **either of two directions**: a deep implementation from scratch of a model from the research literature, or a thoughtful application of an existing model to a real problem. Both are equally valid. Choose the direction that lets you demonstrate understanding, make meaningful decisions, and support your conclusions with evidence.
+
+### Direction 1 · Understand a model by building it
+
+Choose a published model and implement its central mechanisms yourself. Explain how the paper's ideas become code, verify that the implementation behaves as intended, and investigate at least one design choice through a controlled experiment. You may use PyTorch and automatic differentiation; identify clearly which components you implement and which you reuse. A smaller model and dataset are acceptable when they let you study the mechanism carefully.
+
+- **Word2Vec from scratch:** Implement skip-gram with negative sampling, train on a manageable corpus, and investigate how context-window size changes the learned word relationships.
+- **An attention-based translation model:** Build an encoder–decoder with attention, trace how it uses the source sentence, and compare it with a version without attention on the same translation task.
+- **A miniature Transformer language model:** Implement causal self-attention, positional information, and Transformer blocks, then examine how context length affects predictions and generation errors.
+
+### Direction 2 · Use a model to solve a real problem
+
+Choose a concrete user need and apply or adapt an existing model using relevant data. The contribution lies in the complete investigation: preparing the data, choosing an approach, comparing it with a simple baseline, evaluating realistic cases, and explaining failures. Show what the system helps a user accomplish and where it still needs improvement.
+
+- **A university regulations assistant:** Build a question-answering system over actual university documents that cites its sources, then evaluate answer correctness and its behavior when the documents do not contain an answer.
+- **Routing multilingual support requests:** Adapt an existing classifier to assign French, Arabic, or Darija requests to the right service, and inspect which categories and language mixtures cause routing errors.
+- **Extracting information from local job advertisements:** Use an existing language model to extract skills, experience requirements, and locations, then evaluate the extracted fields against manually checked examples for a searchable job catalogue.
+
+For either direction, state one clear question, compare against a baseline, and discuss concrete errors. The project's strength comes from the depth of the implementation or the usefulness of the application, supported by careful evaluation. These examples are starting points; you may propose your own topic.
+
+## What makes a useful proposal?
+
+| Include | Make it concrete |
+|---|---|
+| **Question** | One research or engineering question about language |
+| **Dataset** | Source, access and usage terms, languages, domain, and usable size |
+| **Approach** | A baseline and the model you intend to build or adapt; identify reused components and pretrained weights |
+| **Evaluation** | Train/validation/test splits, leakage prevention, suitable metrics, and example-level error analysis |
+| **Experiment** | One design choice you will vary and a prediction before running it |
+| **Feasibility** | Available hardware, computation, milestones, a smaller fallback, and team roles |
+
+Describe a plan, not results you have not measured. A focused comparison with clear evidence is a useful starting point.
+
+## Public summary and instructor review
+
+The first block of the YAML contains your proposed **public card**: title, student names, a 40–70-word description, and optional thumbnail information. The `proposal` block contains the detailed plan **for instructor review** and is not intended for the public gallery.
+
+Do not include student IDs, phone numbers, or other private information. If you supply a thumbnail, send it alongside the YAML file, choose an image you may share, include its source, and write useful alt text. A landscape PNG, JPG, or WebP around 1200 × 750 pixels works well; leave the thumbnail fields empty if you do not have one.
+
+## Presentations and approved projects
+
+The final **four weeks** of this NLP course are reserved for student project presentations. Approved proposals and their public summaries will be added here after review.
 
 :::{.callout-note}
-The project catalogue and assessment material from the previous course will be reviewed and adapted here.
+The proposal deadline, submission arrangements, exact presentation schedule, and detailed evaluation rubric will be announced separately.
 :::
+
+Looking for the course notebooks? [Browse coding projects](coding-projects.qmd).

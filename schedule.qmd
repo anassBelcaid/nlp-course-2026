@@ -7,6 +7,8 @@ page-layout: full
 
 The course has **ten teaching weeks** followed by **four weeks of student project presentations**. Color bands indicate major conceptual shifts in the course.
 
+[Student project proposal instructions](student-projects.qmd#submit-your-proposal) · [Download the proposal template · YAML](student-projects/project-proposal.yml)
+
 <div class="schedule-legend" aria-label="Schedule theme legend">
   <span class="legend-item"><span class="legend-swatch era-foundations"></span>Foundations & representations</span>
   <span class="legend-item"><span class="legend-swatch era-sequences"></span>Neural sequences</span>

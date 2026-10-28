@@ -7,6 +7,8 @@ project:
     - "projects/**/index.qmd"
     - "projects/02-embedding-laboratory/starter/embedding_lab.ipynb"
   resources:
+    - "student-projects/project-proposal.yml"
+    - "student-projects/images/**"
     - "projects/**/*.py"
     - "projects/**/*.ipynb"
     - "projects/**/pyproject.toml"
