@@ -3651,7 +3651,7 @@
     "href": "student-projects.html#the-project-gallery",
     "title": "Student Projects",
     "section": "The project gallery",
-    "text": "The project gallery\nApproved proposals will appear here. The fictional example below previews how a team’s project will look.\n\n\n\n\n  \n    \n    Original course diagram · proposed experiment, not measured results\n  \n  \n    Fictional example\n    Sentiment Across Languages\n    Lina El Mansouri · Adam Rami\n    Can a sentiment classifier understand reviews that mix Darija and French? We plan to compare a TF–IDF baseline with a multilingual transformer, then vary text normalization while keeping the data split fixed. We will inspect errors involving negation, spelling variation, and language switching to understand where each approach succeeds or fails.\n    Sample proposal with fictional names. This is a layout preview, not a student submission.\n    \n  \n\n\n\n\nNo matching items"
+    "text": "The project gallery\nExplore the questions our students are investigating.\n\n\n\n\n  \n    \n    \n  \n  \n    Does Reranking Fix 'Lost in the Middle'? Cross-Encoder Reranking in Small-LLM RAG, in English and French\n    Yasmine El Alaoui · Fatima Zahrae Ahannuk · Merouane Ayach\n  \n\n\n\n  \n    \n    Original AI-assisted illustration by the team\n  \n  \n    When Does Neural Memory Fail? Investigating Distractors in Multi-Hop Reasoning\n    Bjibji Hamza · Elbouk Abderrahimane\n  \n\n\n\n\nNo matching items"
   },
   {
     "objectID": "student-projects.html#submit-your-proposal",

@@ -85,9 +85,9 @@ ul.task-list li input[type="checkbox"] {
     }
 
     const options = {
-      valueNames: ['listing-title','listing-students','listing-description','listing-thumbnail','listing-thumbnail_alt','listing-thumbnail_credit','listing-status','listing-example',{ data: ['index'] },{ data: ['categories'] }],
+      valueNames: ['listing-title','listing-students','listing-description','listing-status','listing-thumbnail','listing-thumbnail_alt','listing-thumbnail_credit',{ data: ['index'] },{ data: ['categories'] }],
       
-      searchColumns: ["listing-title","listing-students","listing-description","listing-thumbnail","listing-thumbnail_alt","listing-thumbnail_credit","listing-status","listing-example"],
+      searchColumns: ["listing-title","listing-students","listing-description","listing-status","listing-thumbnail","listing-thumbnail_alt","listing-thumbnail_credit"],
     };
 
     window['quarto-listings'] = window['quarto-listings'] || {};
@@ -247,22 +247,29 @@ window.Quarto = {
 <p><a href="#submit-your-proposal" class="btn btn-primary">Propose a project ↓</a></p>
 <section id="the-project-gallery" class="level2">
 <h2 class="anchored" data-anchor-id="the-project-gallery">The project gallery</h2>
-<p>Approved proposals will appear here. The fictional example below previews how a team’s project will look.</p>
+<p>Explore the questions our students are investigating.</p>
 <div id="listing-project-gallery" class="quarto-listing quarto-listing-container-custom">
 <div class="student-project-grid">
 
 <article class="student-project-card">
   <figure class="student-project-visual figure">
-    <img src="student-projects/images/sentiment-languages.svg" alt="A mixed-language review branches into a TF–IDF baseline and a multilingual model, then converges on a shared comparison of sentiment errors." width="1200" height="750" loading="lazy" class="figure-img">
-    <figcaption>Original course diagram · proposed experiment, not measured results</figcaption>
+    <img src="student-projects/images/placeholder.svg" alt="Abstract network illustration; project thumbnail forthcoming." width="1200" height="750" loading="lazy" class="figure-img">
+    
   </figure>
   <div class="student-project-copy">
-    <span class="student-project-status">Fictional example</span>
-    <h3 class="anchored">Sentiment Across Languages</h3>
-    <p class="student-project-team">Lina El Mansouri · Adam Rami</p>
-    <p class="student-project-description">Can a sentiment classifier understand reviews that mix Darija and French? We plan to compare a TF–IDF baseline with a multilingual transformer, then vary text normalization while keeping the data split fixed. We will inspect errors involving negation, spelling variation, and language switching to understand where each approach succeeds or fails.</p>
-    <p class="student-project-example">Sample proposal with fictional names. This is a layout preview, not a student submission.</p>
-    
+    <h3 class="anchored">Does Reranking Fix 'Lost in the Middle'? Cross-Encoder Reranking in Small-LLM RAG, in English and French</h3>
+    <p class="student-project-team">Yasmine El Alaoui · Fatima Zahrae Ahannuk · Merouane Ayach</p>
+  </div>
+</article>
+
+<article class="student-project-card">
+  <figure class="student-project-visual figure">
+    <img src="student-projects/images/multi-hop-memory-network.png" alt="Academic diagram showing external memory, relevant and distracting sentences, and attention-based retrieval across three memory hops." width="1200" height="750" loading="lazy" class="figure-img">
+    <figcaption>Original AI-assisted illustration by the team</figcaption>
+  </figure>
+  <div class="student-project-copy">
+    <h3 class="anchored">When Does Neural Memory Fail? Investigating Distractors in Multi-Hop Reasoning</h3>
+    <p class="student-project-team">Bjibji Hamza · Elbouk Abderrahimane</p>
   </div>
 </article>
 
