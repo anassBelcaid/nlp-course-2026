@@ -15,7 +15,7 @@ Start with an NLP question you can investigate, a dataset you can access, and an
 
 ## The project gallery
 
-Explore the approved student projects below. Reports and code will be added as the projects progress.
+Explore the questions our students are investigating.
 
 :::{#project-gallery}
 :::

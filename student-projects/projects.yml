@@ -12,3 +12,21 @@
     pipeline, vary where the key evidence sits in the prompt, and test two
     models with questions in English and French, measuring accuracy and latency.
   status: "Proposal approved"
+- title: "When Does Neural Memory Fail? Investigating Distractors in Multi-Hop Reasoning"
+  students:
+    - "Bjibji Hamza"
+    - "Elbouk Abderrahimane"
+  description: >-
+    Can neural networks retrieve relevant information when surrounded by
+    distracting facts? We propose implementing an End-to-End Memory Network
+    from scratch, based on the 2015 research paper. Using the bAbI
+    question-answering dataset, we will compare memory-hop configurations
+    and investigate how irrelevant sentences affect performance to better
+    understand attention-based memory in multi-fact reasoning.
+
+  thumbnail: "images/multi-hop-memory-network.png"
+  thumbnail_alt: >-
+    Academic diagram showing external memory, relevant and distracting
+    sentences, and attention-based retrieval across three memory hops.
+  thumbnail_credit: "Original AI-assisted illustration by the team"
+  status: "Proposal approved"

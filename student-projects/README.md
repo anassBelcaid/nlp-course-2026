@@ -15,5 +15,6 @@ Use `[]` for an empty gallery.
 
 The root `student-projects.qmd` renders the YAML through `_cards.ejs.md`.
 Run `quarto render student-projects.qmd` from the repository root to rebuild.
-Cards appear in YAML order, with a wide layout for one project and a responsive
-grid for multiple projects. The proposal download remains a separate resource.
+Cards appear in YAML order in a compact responsive grid, showing a thumbnail,
+title, and student names. Descriptions and status remain in YAML for future
+detail pages; they are not displayed on the cards. The proposal download remains a separate resource.
