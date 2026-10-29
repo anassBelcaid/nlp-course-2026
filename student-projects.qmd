@@ -15,7 +15,7 @@ Start with an NLP question you can investigate, a dataset you can access, and an
 
 ## The project gallery
 
-Approved proposals will appear here. The fictional example below previews how a team's project will look.
+Explore the approved student projects below. Reports and code will be added as the projects progress.
 
 :::{#project-gallery}
 :::

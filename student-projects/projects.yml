@@ -1,18 +1,14 @@
 # Instructor-maintained public gallery: approved public information only.
-# Remove this fictional example when the first real proposal is ready.
-# Keep the private proposal block outside this repository.
-- title: "Sentiment Across Languages"
+# Keep detailed proposal reviews outside this public gallery.
+- title: "Does Reranking Fix 'Lost in the Middle'? Cross-Encoder Reranking in Small-LLM RAG, in English and French"
   students:
-    - "Lina El Mansouri"
-    - "Adam Rami"
+    - "Yasmine El Alaoui"
+    - "Fatima Zahrae Ahannuk"
+    - "Merouane Ayach"
   description: >-
-    Can a sentiment classifier understand reviews that mix Darija and French?
-    We plan to compare a TF–IDF baseline with a multilingual transformer,
-    then vary text normalization while keeping the data split fixed.
-    We will inspect errors involving negation, spelling variation, and
-    language switching to understand where each approach succeeds or fails.
-  thumbnail: "images/sentiment-languages.svg"
-  thumbnail_alt: "A mixed-language review branches into a TF–IDF baseline and a multilingual model, then converges on a shared comparison of sentiment errors."
-  thumbnail_credit: "Original course diagram · proposed experiment, not measured results"
+    We study whether cross-encoder reranking reduces the "Lost in the Middle"
+    effect when small open-source LLMs answer questions over a niche video-game
+    wiki. We compare vanilla retrieval-augmented generation with a reranked
+    pipeline, vary where the key evidence sits in the prompt, and test two
+    models with questions in English and French, measuring accuracy and latency.
   status: "Proposal approved"
-  example: true
