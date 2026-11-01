@@ -30,3 +30,18 @@
     sentences, and attention-based retrieval across three memory hops.
   thumbnail_credit: "Original AI-assisted illustration by the team"
   status: "Proposal approved"
+
+- title: "How Can We Perform Sentiment Analysis on Amazon Food Reviews?"
+  students:
+    - "Michel Sagesse KOLIE"
+  description: >-
+    This project studies sentiment in Amazon Food Reviews and explores how
+    different NLP methods interpret customer opinions. We will compare VADER,
+    RoBERTa, BERT-based embeddings and fine-tuning, and single- and two-layer
+    LSTM models for negative, neutral and positive classification. We will also
+    build a retrieval-augmented generation system to explore review evidence and
+    summarize customer feedback.
+  thumbnail: "images/amazon-food-reviews.png"
+  thumbnail_alt: >-
+    Assorted foods surrounding the words Writing for Food on Amazon.
+  status: "Proposal approved"

@@ -14,6 +14,10 @@
   <div class="student-project-copy">
     <h3><%- item.title %></h3>
     <p class="student-project-team"><%- item.students.join(' · ') %></p>
+    <details class="student-project-description">
+      <summary>Project description</summary>
+      <p><%- item.description %></p>
+    </details>
   </div>
 </article>
 <% } %>
