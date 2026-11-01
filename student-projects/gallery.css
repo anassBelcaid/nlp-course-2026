@@ -53,3 +53,8 @@
   line-height: 1.6;
   color: var(--muted);
 }
+
+.student-project-description { margin-top: .8rem; font-size: .9rem; line-height: 1.6; }
+.student-project-description summary { cursor: pointer; color: var(--teal, #087e8b); font-weight: 600; }
+.student-project-description summary:focus-visible { outline: 2px solid currentColor; outline-offset: 4px; }
+.student-project-description p { margin: .7rem 0 0; }
