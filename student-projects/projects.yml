@@ -1,5 +1,24 @@
 # Instructor-maintained public gallery: approved public information only.
 # Keep detailed proposal reviews outside this public gallery.
+- title: "Knowing When Not to Answer: Abstention in Retrieval-Augmented Question Answering"
+  students:
+    - "Youssef Ech-chahlaoui"
+    - "Zouhair Fezzaz"
+  description: >-
+    This project investigates whether a retrieval-augmented question-answering
+    system can recognize when its retrieved evidence does not support an answer.
+    We will compare a standard answer-generating baseline with lightweight
+    abstention strategies based on retrieval scores and answerability signals,
+    using answerable and unanswerable questions. We aim to identify when these
+    strategies improve reliability and when they incorrectly refuse valid
+    questions.
+  thumbnail: "images/rag-abstention.png"
+  thumbnail_alt: >-
+    Dark blue and purple infographic showing the RAG pipeline, a confidence
+    check, and the two outcomes: answer with evidence or abstain.
+  thumbnail_credit: "Original illustration generated for the project by the team"
+  status: "Proposal approved"
+
 - title: "Does Reranking Fix 'Lost in the Middle'? Cross-Encoder Reranking in Small-LLM RAG, in English and French"
   students:
     - "Yasmine El Alaoui"
@@ -11,6 +30,25 @@
     wiki. We compare vanilla retrieval-augmented generation with a reranked
     pipeline, vary where the key evidence sits in the prompt, and test two
     models with questions in English and French, measuring accuracy and latency.
+  status: "Proposal approved"
+
+- title: "Local Personal Data Masking Before Sharing Documents with LLMs"
+  students:
+    - "Konate Bachirou"
+    - "Sylla Karamo"
+  description: >-
+    Sharing documents with external LLMs can expose personal information.
+    We will build a system that processes French documents locally, detects
+    personal data using fine-tuned CamemBERT, and replaces it with descriptive
+    labels before sharing. Users will be able to review the masked text.
+    We will evaluate detection accuracy, masking errors, and CPU performance
+    to assess the system's usefulness and limitations.
+  thumbnail: "images/personal-data-masking-system.png"
+  thumbnail_alt: >-
+    An original document passes through a local system represented by a laptop
+    with a security symbol, producing a masked document with [NAME], [EMAIL],
+    and [PHONE] placeholders.
+  thumbnail_credit: "Original illustration by the team."
   status: "Proposal approved"
 - title: "When Does Neural Memory Fail? Investigating Distractors in Multi-Hop Reasoning"
   students:
