@@ -85,9 +85,9 @@ ul.task-list li input[type="checkbox"] {
     }
 
     const options = {
-      valueNames: ['listing-title','listing-students','listing-description','listing-status','listing-thumbnail','listing-thumbnail_alt','listing-thumbnail_credit',{ data: ['index'] },{ data: ['categories'] }],
+      valueNames: ['listing-title','listing-students','listing-description','listing-thumbnail','listing-thumbnail_alt','listing-thumbnail_credit','listing-status',{ data: ['index'] },{ data: ['categories'] }],
       
-      searchColumns: ["listing-title","listing-students","listing-description","listing-status","listing-thumbnail","listing-thumbnail_alt","listing-thumbnail_credit"],
+      searchColumns: ["listing-title","listing-students","listing-description","listing-thumbnail","listing-thumbnail_alt","listing-thumbnail_credit","listing-status"],
     };
 
     window['quarto-listings'] = window['quarto-listings'] || {};
@@ -253,6 +253,21 @@ window.Quarto = {
 
 <article class="student-project-card">
   <figure class="student-project-visual figure">
+    <img src="student-projects/images/rag-abstention.png" alt="Dark blue and purple infographic showing the RAG pipeline, a confidence check, and the two outcomes: answer with evidence or abstain." width="1200" height="750" loading="lazy" class="figure-img">
+    <figcaption>Original illustration generated for the project by the team</figcaption>
+  </figure>
+  <div class="student-project-copy">
+    <h3 class="anchored">Knowing When Not to Answer: Abstention in Retrieval-Augmented Question Answering</h3>
+    <p class="student-project-team">Youssef Ech-chahlaoui · Zouhair Fezzaz</p>
+    <details class="student-project-description">
+      <summary>Project description</summary>
+      <p>This project investigates whether a retrieval-augmented question-answering system can recognize when its retrieved evidence does not support an answer. We will compare a standard answer-generating baseline with lightweight abstention strategies based on retrieval scores and answerability signals, using answerable and unanswerable questions. We aim to identify when these strategies improve reliability and when they incorrectly refuse valid questions.</p>
+    </details>
+  </div>
+</article>
+
+<article class="student-project-card">
+  <figure class="student-project-visual figure">
     <img src="student-projects/images/placeholder.svg" alt="Abstract network illustration; project thumbnail forthcoming." width="1200" height="750" loading="lazy" class="figure-img">
     
   </figure>
@@ -262,6 +277,21 @@ window.Quarto = {
     <details class="student-project-description">
       <summary>Project description</summary>
       <p>We study whether cross-encoder reranking reduces the "Lost in the Middle" effect when small open-source LLMs answer questions over a niche video-game wiki. We compare vanilla retrieval-augmented generation with a reranked pipeline, vary where the key evidence sits in the prompt, and test two models with questions in English and French, measuring accuracy and latency.</p>
+    </details>
+  </div>
+</article>
+
+<article class="student-project-card">
+  <figure class="student-project-visual figure">
+    <img src="student-projects/images/personal-data-masking-system.png" alt="An original document passes through a local system represented by a laptop with a security symbol, producing a masked document with [NAME], [EMAIL], and [PHONE] placeholders." width="1200" height="750" loading="lazy" class="figure-img">
+    <figcaption>Original illustration by the team.</figcaption>
+  </figure>
+  <div class="student-project-copy">
+    <h3 class="anchored">Local Personal Data Masking Before Sharing Documents with LLMs</h3>
+    <p class="student-project-team">Konate Bachirou · Sylla Karamo</p>
+    <details class="student-project-description">
+      <summary>Project description</summary>
+      <p>Sharing documents with external LLMs can expose personal information. We will build a system that processes French documents locally, detects personal data using fine-tuned CamemBERT, and replaces it with descriptive labels before sharing. Users will be able to review the masked text. We will evaluate detection accuracy, masking errors, and CPU performance to assess the system's usefulness and limitations.</p>
     </details>
   </div>
 </article>
@@ -284,7 +314,7 @@ window.Quarto = {
 <article class="student-project-card">
   <figure class="student-project-visual figure">
     <img src="student-projects/images/amazon-food-reviews.png" alt="Assorted foods surrounding the words Writing for Food on Amazon." width="1200" height="750" loading="lazy" class="figure-img">
-
+    
   </figure>
   <div class="student-project-copy">
     <h3 class="anchored">How Can We Perform Sentiment Analysis on Amazon Food Reviews?</h3>
