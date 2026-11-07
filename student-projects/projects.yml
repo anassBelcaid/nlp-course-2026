@@ -1,5 +1,21 @@
 # Instructor-maintained public gallery: approved public information only.
 # Keep detailed proposal reviews outside this public gallery.
+- title: "From Large to Small Models: How Much Knowledge Can Be Transferred?"
+  students:
+    - "BEN SBEH Chaimae"
+    - "CHAOU Nabila"
+    - "CHAKKOUR Karima"
+  description: >-
+    This project investigates whether knowledge distillation can improve small
+    models for banking intent classification. Using the Banking77 benchmark,
+    we will transfer knowledge from large teacher models to smaller students.
+    We aim to understand how student size and the amount of labeled training
+    data influence the effectiveness of distillation.
+  thumbnail: "images/banking-knowledge-distillation.png"
+  thumbnail_alt: "Knowledge distillation illustration: a teacher model guiding a student model."
+  thumbnail_credit: "https://huggingface.co/blog/Kseniase/kd"
+  status: "Proposal approved"
+
 - title: "Knowing When Not to Answer: Abstention in Retrieval-Augmented Question Answering"
   students:
     - "Youssef Ech-chahlaoui"
