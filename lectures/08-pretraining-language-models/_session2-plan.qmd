@@ -1,0 +1,33 @@
+## Session 2 · How do we use the model? {#session-2 .session-contents}
+
+<p class="session-lead">When do we change the weights—and when do we only change the input?</p>
+<div class="session-agenda">
+<div><b>01</b><strong>Retrieve the three recipes</strong><span>What did we train, and what do we keep?</span><em>10 min</em></div>
+<div><b>02</b><strong>Fine-tune for sentiment</strong><span>A new head; frozen features versus full fine-tuning.</span><em>25 min</em></div>
+<div><b>03</b><strong>Change the task’s output</strong><span>Token labels and answer spans for extractive QA.</span><em>20 min</em></div>
+<div><b>04</b><strong>Inspect a small experiment</strong><span>Training examples, predictions, and held-out errors.</span><em>15 min</em></div>
+<div><b>05</b><strong>Prompt instead of fine-tuning</strong><span>Zero-shot and few-shot examples; weights stay fixed.</span><em>20 min</em></div>
+<div><b>06</b><strong>Data, scale, and limits</strong><span>What shapes learning? From base model to assistant.</span><em>20 min</em></div>
+</div>
+<p class="session-budget">110 minutes including a 5-minute closing bridge + 10 minutes for questions or a break.</p>
+<p class="route-question">Predicting text is useful—but what teaches a model to follow our instructions?</p>
+
+::: {.notes}
+The last 20-minute item contains 15 minutes on data, scale, and limitations and
+5 minutes for the closing bridge. Keep instruction tuning, preference optimization,
+LoRA, adapters, and quantization for Lecture 09.
+
+Use Berkeley PDF pages 45–46 for classification versus token labeling, page 44
+for the extractive-QA interface, and page 77 for fine-tuning versus in-context
+learning. Use one legible historical evidence figure and Stanford PDF page 49
+for the data/compute/parameter discussion, rather than a catalogue of models.
+Retain original paper attribution when reusing figures from the base lectures.
+
+Reuse the current draft's sentiment diagrams, full/frozen update control, and QA
+span diagram where they help. Keep the recorded diagnostic experiments intact
+as optional material; select the practical demonstration during section review.
+Do not conceal their failures or present a small experiment as a general benchmark.
+
+This is the proposed table of contents, not an authored second session. The full
+session will end with a purposeful visual bridge to instruction following.
+:::

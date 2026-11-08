@@ -141,8 +141,8 @@ The course has **ten teaching weeks** followed by **four weeks of student projec
 <tr class="era-transformers">
   <td>08</td>
   <td><span class="era-label">Transformers</span></td>
-  <td><strong>Pretrained Language Models</strong><br><span class="topic-detail">Causal and masked language modeling, BERT, GPT, transfer learning, and fine-tuning</span></td>
-  <td><span class="resource-pending">Lecture</span> <span class="resource-pending">Notes</span></td>
+  <td><strong>Pretraining Language Models · two sessions</strong><br><span class="topic-detail">1. Learn from text: BERT, GPT, and T5.<br>2. Reuse the model: fine-tuning, task heads, and prompting.<br>Two hours per session; dates to be confirmed.</span></td>
+  <td><a class="project-link" href="lectures/08-pretraining-language-models/index.html">Lecture · Session 1 in progress</a> <a class="project-link" href="lectures/08-pretraining-language-models/previous-draft.html">Earlier draft · demonstrations</a> <span class="resource-pending">Notes</span></td>
   <td><span class="link-pending">Coming soon</span></td>
   <td><a class="project-link" href="coding-projects.html">Project 04 · finish</a></td>
 </tr>

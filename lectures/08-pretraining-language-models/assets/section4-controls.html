@@ -1,0 +1,64 @@
+<script>
+(() => {
+  const byId = id => document.getElementById(id);
+  const runButtons = [...document.querySelectorAll('[data-s4-run]')];
+  const modeButtons = [...document.querySelectorAll('[data-s4-mode]')];
+  modeButtons.forEach(button => button.addEventListener('click', () => {
+    const full = button.dataset.s4Mode === 'full';
+    byId('s4-update-graph').dataset.mode = full ? 'full' : 'frozen';
+    modeButtons.forEach(b => b.setAttribute('aria-pressed', String(b === button)));
+    byId('s4-backbone-status').textContent = full ? 'UPDATED' : 'FROZEN';
+    byId('s4-backbone-gradient').textContent = full ? '← gradient continues into the encoder' : 'STOP: no encoder parameter updates';
+    byId('s4-update-rule').textContent = full ? 'Update θ, W and b using the task loss.' : 'Keep θ fixed; update only the new head W and b.';
+    byId('s4-update-takeaway').textContent = full ? 'Pretrained describes the starting values—not a rule that those values must stay fixed.' : 'The frozen reader still computes contextual states; the task head learns to use them.';
+  }));
+  const ns='http://www.w3.org/2000/svg';
+  function element(tag, attrs, text) {
+    const e=document.createElementNS(ns,tag);
+    Object.entries(attrs).forEach(([k,v])=>e.setAttribute(k,String(v)));
+    if(text!==undefined)e.textContent=text;
+    return e;
+  }
+  function draw(records) {
+    const svg=byId('s4-learning-chart');svg.replaceChildren();
+    const x=v=>85+v/80*635, y=v=>300-v*260;
+    const label=(xx,yy,t,anchor='middle',fill='#526873')=>svg.append(element('text',{x:xx,y:yy,'text-anchor':anchor,'font-size':21,fill},t));
+    [0,.25,.5,.75,1].forEach(v=>{
+      svg.append(element('path',{d:`M85 ${y(v)}H720`,stroke:v===.5?'#8e9c9f':'#d6dfdb','stroke-width':v===.5?2:1,'stroke-dasharray':v===.5?'6 5':'none'}));
+      label(72,y(v)+7,(v*100)+'%','end');
+    });
+    [0,10,20,40,80].forEach(v=>label(x(v),329,String(v)));
+    label(403,364,'Fine-tuning steps');label(85,23,'Held-out accuracy','start');
+    ['pretrained','random'].forEach(init=>{
+      const rows=records.filter(r=>r.initialization===init);
+      const curve=rows[0].curve.map((p,i)=>({step:p.step,accuracy:rows.reduce((s,r)=>s+r.curve[i].accuracy,0)/rows.length}));
+      const color=init==='pretrained'?'#0f7881':'#a34832';
+      svg.append(element('path',{d:curve.map((p,i)=>(i?'L':'M')+x(p.step)+' '+y(p.accuracy)).join(' '),fill:'none',stroke:color,'stroke-width':4,'stroke-dasharray':init==='random'?'9 6':'none'}));
+      curve.forEach(p=>{const dot=element('circle',{cx:x(p.step),cy:y(p.accuracy),r:5,fill:color});dot.append(element('title',{},`${init}, step ${p.step}: ${(100*p.accuracy).toFixed(2)}%`));svg.append(dot);});
+    });
+  }
+  fetch('assets/evidence/section4.json').then(r=>{if(!r.ok)throw Error('Section 4 evidence missing');return r.json();}).then(data=>{
+    if(data.results.length!==6 || data.results.some(r=>r.curve.at(-1).step!==80))throw Error('Unexpected evidence protocol');
+    function show(which) {
+      const records=data.results.filter(r=>which==='mean'||r.seed===Number(which));draw(records);
+      const mean=init=>{const rows=records.filter(r=>r.initialization===init);return rows.reduce((s,r)=>s+r.curve.at(-1).accuracy,0)/rows.length;};
+      const pre=mean('pretrained'),random=mean('random'),gap=100*(pre-random);
+      byId('s4-result-pretrained').textContent=(100*pre).toFixed(1)+'% pretrained';
+      byId('s4-result-random').textContent=(100*random).toFixed(1)+'% random';
+      byId('s4-result-gap').textContent='Difference: '+(gap>=0?'+':'')+gap.toFixed(1)+' percentage points';
+      byId('s4-result-caveat').textContent=which==='mean'?'A modest mean advantage; random wins in one of three seeds.':gap<0?'This seed reverses the final comparison. Keep the result.':'This is one seed under one fixed training budget.';
+      runButtons.forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.s4Run===which)));
+      byId('s4-learning-chart').setAttribute('aria-label',`Held-out accuracy over 80 fine-tuning steps, ${which==='mean'?'mean of three seeds':'seed '+which}. Final pretrained ${(pre*100).toFixed(1)}%, random ${(random*100).toFixed(1)}%.`);
+    }
+    runButtons.forEach(b=>b.addEventListener('click',()=>show(b.dataset.s4Run)));show('mean');document.documentElement.dataset.section4Ready='true';
+  }).catch(error=>{
+    byId('s4-result-pretrained').textContent='Recorded evidence unavailable.';
+    byId('s4-result-caveat').textContent='Serve the lecture over HTTP with assets/evidence/section4.json.';
+    runButtons.forEach(b=>b.disabled=true);console.error(error);
+  });
+  const svg=document.querySelector('#transfer-probe-bridge svg');
+  const reduced=matchMedia('(prefers-reduced-motion: reduce)');
+  function motion(){if(!svg)return;const active=window.Reveal&&Reveal.getCurrentSlide()?.id==='transfer-probe-bridge';if(active&&!reduced.matches)svg.unpauseAnimations();else svg.pauseAnimations();}
+  if(window.Reveal){Reveal.on('ready',motion);Reveal.on('slidechanged',motion);}reduced.addEventListener('change',motion);motion();
+})();
+</script>

@@ -1,0 +1,33 @@
+<script>
+(() => {
+ const buttons=[...document.querySelectorAll('[data-s5-case]')];
+ const el=id=>document.getElementById(id);
+ const observations=[
+  'Original: the model predicts positive, matching the intended label.',
+  '“hated” lowers p(positive), but the decision stays positive: this contrast fails.',
+  'The typo splits “loved” into three pieces. The label survives; its probability falls.',
+  'Adding “did not” changes the prediction to negative on this example.'
+ ];
+ buttons.forEach(b=>b.disabled=true);
+ fetch('assets/evidence/section5.json').then(r=>{if(!r.ok)throw Error('Evidence file unavailable');return r.json();}).then(data=>{
+  if(data.classifier?.length!==4 || data.classifier.some(r=>!Number.isFinite(r.after)))throw Error('Invalid recorded evidence');
+  function show(index){
+   const r=data.classifier[index];
+   el('s5-sentence').textContent=r.sentence;
+   el('s5-tokens').replaceChildren(...r.tokens.map(t=>{const s=document.createElement('span');s.textContent=t;return s;}));
+   el('s5-probability').textContent=`p(positive) = ${(100*r.after).toFixed(2)}%`;
+   el('s5-fill').style.width=(100*r.after)+'%';
+   el('s5-prediction').textContent=`Prediction: ${r.prediction_after?'positive':'negative'}`;
+   el('s5-expected').textContent=`Intended label: ${r.expected_label?'positive':'negative'}`;
+   el('s5-observation').textContent=observations[index];
+   buttons.forEach(b=>b.setAttribute('aria-pressed',String(Number(b.dataset.s5Case)===index)));
+  }
+  buttons.forEach(b=>{b.disabled=false;b.addEventListener('click',()=>show(Number(b.dataset.s5Case)));});
+  show(0);document.documentElement.dataset.section5Ready='true';
+ }).catch(error=>{
+  el('s5-sentence').textContent='Recorded evidence could not be loaded.';
+  el('s5-observation').textContent=error.message+' — serve the rendered lecture with its assets.';
+  document.documentElement.dataset.section5Ready='error';
+ });
+})();
+</script>

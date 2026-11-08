@@ -9,6 +9,13 @@ project:
   resources:
     - "student-projects/project-proposal.yml"
     - "student-projects/images/**"
+    - "lectures/08-pretraining-language-models/assets/evidence/**"
+    - "lectures/08-pretraining-language-models/assets/build_section1.py"
+    - "lectures/08-pretraining-language-models/assets/build_section2.py"
+    - "lectures/08-pretraining-language-models/assets/build_section3.py"
+    - "lectures/08-pretraining-language-models/assets/build_section4.py"
+    - "lectures/08-pretraining-language-models/assets/build_section5.py"
+    - "lectures/08-pretraining-language-models/assets/build_section4_visuals.py"
     - "projects/**/*.py"
     - "projects/**/*.ipynb"
     - "projects/**/pyproject.toml"

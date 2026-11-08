@@ -1,0 +1,15 @@
+/*-- scss:defaults --*/
+$body-bg: #fbfaf6;
+$body-color: #17364a;
+$link-color: #0f7881;
+$presentation-heading-color: #17364a;
+$presentation-heading-font: "Aptos Display", "Avenir Next", "Segoe UI", sans-serif;
+$font-family-sans-serif: "Aptos", "Avenir Next", "Segoe UI", sans-serif;
+$presentation-font-size-root: 38px;
+$presentation-line-height: 1.22;
+
+/*-- scss:rules --*/
+:root { --navy: #17364a; --teal: #0f7881; --gold: #d6a734; --coral: #d7664f; }
+.reveal h1, .reveal h2, .reveal h3 { letter-spacing: -.025em; text-transform: none; }
+.reveal .slide-number { color: var(--navy); background: transparent; }
+.reveal .footer { color: #61717b; font-size: 15px; }

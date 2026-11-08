@@ -1,0 +1,1093 @@
+---
+title: "Pretraining Language Models"
+subtitle: "How text becomes a learning signal"
+author: "Dr. A. Belcaid · CS 351"
+image: images/pretraining-overview.png
+title-slide-attributes:
+  data-visibility: hidden
+format:
+  revealjs:
+    theme: [default, theme.scss]
+    css: slides.css
+    include-after-body:
+      - assets/section1-controls.html
+      - assets/section2-controls.html
+      - assets/section3-controls.html
+      - assets/section4-controls.html
+      - assets/section5-controls.html
+    slide-number: c/t
+    progress: true
+    controls: true
+    transition: fade
+    background-transition: fade
+    width: 1440
+    height: 900
+    margin: 0.06
+    center: false
+    auto-stretch: false
+    footer: "CS 351 · Pretraining Language Models"
+execute:
+  enabled: false
+---
+
+## Pretraining Language Models {.opening-title}
+
+<p class="lecture-kicker">LECTURE 08 · FROM ARCHITECTURE TO LEARNING</p>
+
+<p class="opening-subtitle">How text becomes<br>a learning signal.</p>
+
+<div class="opening-sequence"><span>TEXT</span><b>→</b><span>PREDICTION</span><b>→</b><span>LEARNED REPRESENTATIONS</span></div>
+
+<p class="opening-author">Dr. A. Belcaid · CS 351 · 2026–2027</p>
+
+::: {.notes}
+Opening and Sections 1–5, prepared for instructor review. The previous lecture established the Transformer architecture. This lecture asks how its parameters acquire useful language representations from text. The overview and contents describe the planned complete lecture; later sections remain to be authored.
+:::
+
+## From a text collection to a reusable model {.overview-slide}
+
+![](images/pretraining-overview.png){.overview-image fig-alt="Conceptual overview: document collections become tokens; next-token and missing-token prediction tasks feed a neural model and learning loop; the learned model supports classification, retrieval, and conversation applications."}
+
+<div class="overview-route">
+<div><strong>TEXT → SUPERVISION</strong><span>Learn from a large corpus</span></div>
+<div><strong>PREDICTION TASKS</strong><span>Recover hidden content</span></div>
+<div><strong>PRETRAINED MODELS</strong><span>Train three model families</span></div>
+<div><strong>TRANSFER + SCALE</strong><span>Adapt, test, and scale up</span></div>
+</div>
+
+<p class="overview-caption">Conceptual overview · original course artwork · downstream use can require further adaptation.</p>
+
+::: {.notes}
+Trace the image from left to right. Text supplies both the context and the prediction targets. The two branches preview causal and masked prediction. The learning loop changes model parameters; the resulting model can later be adapted to useful tasks. This is an orientation image, not experimental evidence. Keep details for the sections that follow.
+:::
+
+## Our route through pretraining {.contents-slide}
+
+<div class="contents-route">
+<div><b>01</b><strong>Learning from raw text</strong><span>A large corpus supplies its own targets. Where do unfamiliar spellings fit?</span></div>
+<div><b>02</b><strong>The BERT idea</strong><span>Hide or replace tokens; recover the original using context.</span></div>
+<div><b>03</b><strong>Three families, three recipes</strong><span>Encoder, decoder, encoder–decoder: inputs, targets, losses, and uses.</span></div>
+<div><b>04</b><strong>Pretrain once, adapt to tasks</strong><span>Fine-tune BERT for sentiment, sentence pairs, and question answering.</span></div>
+<div><b>05</b><strong>What did the model learn?</strong><span>Probe context, knowledge, and typo robustness; check for memorization.</span></div>
+<div><b>06</b><strong>Modern pretraining at scale</strong><span>Data and compute choices in Llama 3; open training with OLMo.</span></div>
+</div>
+
+<p class="route-question">A model can learn to predict text. What else must it learn to follow an instruction?</p>
+
+<p class="outline-sources">Reading path: <a href="https://web.stanford.edu/class/cs224n/slides_w26/cs224n-2026-lecture07-pretraining.pdf">Stanford CS224N · Pretraining</a> · <a href="https://arxiv.org/abs/1810.04805">BERT</a> · <a href="https://www.jmlr.org/papers/v21/20-074.html">T5</a> · <a href="https://arxiv.org/abs/2407.21783">Llama 3</a> · <a href="https://arxiv.org/abs/2512.13961">Olmo 3</a></p>
+
+::: {.notes}
+The instructor's revised sequence starts with learning from a large unlabeled corpus, develops BERT's contextual recovery task, compares the three Transformer families and their training recipes, then shows transfer through simple task heads and supervised fine-tuning. The two concluding sections examine learned capabilities and limitations, then modern data/compute choices. The reference PDF's filename says lecture07; its title page says Lecture 6: Pretraining.
+
+Keep the distinction precise: subword/byte representations help encode unfamiliar spellings; BERT's deliberate token corruption supplies self-supervised targets. Neither implies guaranteed understanding of misspellings. In original BERT, select 15% of token positions; of those selected positions, use MASK 80%, random replacement 10%, and unchanged input 10%. Predict the original token at all selected positions. Mention original next-sentence prediction as a historical second objective, not a requirement for every encoder.
+
+For the three families, retain one sentence and show visible context, target alignment, scored positions, and one training update: BERT masked-token prediction, GPT causal next-token prediction, and T5 corrupted-span reconstruction with a causal decoder. Architecture and objective are related choices, not exclusive lists of permitted downstream tasks. Do not reteach the Transformer blocks from Lecture 07.
+
+For transfer, contrast pretraining's automatically obtained targets with task labels. Show a sentiment head, a sentence-pair head, and extractive QA start/end heads. Fine-tuning normally updates the pretrained backbone as well as the task head. Compare pretrained and randomly initialized versions under the same downstream budget. Historical BERT results must be labeled as such, not current rankings.
+
+The final sections should use controlled context/typo interventions, fixed-input checkpoint comparisons, and research evidence on data quality, data mixtures, and training budgets. Llama 3 is the intended “Herd of Models” reference; Olmo 3 supplies an open model-flow case study. Briefly distinguish in-context examples (fixed weights) from fine-tuning (updated weights). Keep instruction tuning, preference optimization, and efficient adaptation for Lecture 09. The detailed authoring plan and references are in OUTLINE.md. Sections 1–4 follow; stop at the Section 4 bridge for instructor review.
+:::
+
+## Learning from raw text {#raw-text .part-opening data-background-color="#17364a"}
+
+<p class="part-count">PART 01 / 06</p>
+<div class="part-progress" aria-label="Section 1 of 6"><i></i><i></i><i></i><i></i><i></i><i></i></div>
+<div class="part-sentence"><span>the</span><span>cat</span><span>sat</span><span>on</span><span>the</span><span class="part-target">mat</span></div>
+<p class="part-question">The corpus contains the answers.<br>We need to turn them into questions.</p>
+<p class="part-subline">Text → prediction task → reusable representations</p>
+
+::: {.notes}
+Section 1 is about where supervision comes from, not the BERT corruption recipe yet. Retrieve the known Transformer architecture briefly. We can assemble that machinery, but most weights still need to be learned. A raw corpus gives us observed token sequences. The opportunity is to construct prediction questions whose answers are already recorded in the text. The tiny corpus in this section is deliberately hand-authored and uses whitespace words for clarity; it is not a training benchmark or a claim about corpus quality.
+:::
+
+## Turn a sentence into its own training example {#corpus-workbench .s1-slide}
+
+<p class="s1-lead">Choose a source sentence. Then choose the word to withhold.</p>
+<div class="corpus-workbench">
+<div class="corpus-sources"><span class="lab-label">OUR ENTIRE TOY CORPUS</span><button data-corpus-row="0" aria-pressed="true">the cat sat on the mat</button><button data-corpus-row="1" aria-pressed="false">the dog slept by the door</button><button data-corpus-row="2" aria-pressed="false">the child read a good book</button><p>No sentiment labels.<br>No question–answer annotations.</p></div>
+<div class="example-machine"><span class="lab-label">SELECT A POSITION · WORDS, FOR NOW</span><div id="corpus-position-buttons" class="token-picker"></div><div class="machine-line"><span>MODEL INPUT</span><div id="corpus-context" class="context-tokens"></div></div><div class="target-line"><div><span class="lab-label">TRAINING TARGET</span><strong id="corpus-target">Hidden for your prediction</strong></div><button id="corpus-reveal">Reveal the source word</button></div><p id="corpus-status" class="lab-status" aria-live="polite">Loading local examples…</p></div>
+</div>
+<p class="s1-takeaway fragment">We withhold part of the text from the model, then use the original as the target.</p>
+<p class="s1-source">Exact browser transformation of three authored sentences · conceptual setup for self-supervision; not BERT’s sampling policy.</p>
+
+::: {.notes}
+Begin with the last word of sentence 1 withheld. Students can read the source, but the model receives only the right-hand input. The source and target are visible to us as experiment designers; there is no model inference in this widget. Ask what the target is and why no annotator was needed. Reveal the original word, then select a different position and a different sentence. An alternative completion can be linguistically plausible; the training target is still the particular observed word. This is supervised prediction with labels constructed automatically, commonly called self-supervised learning. The exact masking recipe, selected-position loss, and architecture are reserved for later sections.
+:::
+
+## How many questions are already in these lines? {#corpus-pause .s1-slide}
+
+<div class="exercise-corpus"><div><b>A</b><span>the</span><span>cat</span><span>sat</span><span>on</span><span>the</span><span>mat</span></div><div><b>B</b><span>the</span><span>dog</span><span>slept</span><span>by</span><span>the</span><span>door</span></div><div><b>C</b><span>the</span><span>child</span><span>read</span><span>a</span><span>good</span><span>book</span></div></div>
+<div class="pause-contract"><div><span class="lab-label">GIVEN</span><p>3 sentences · 6 word positions each.<br>Withhold exactly one position per example.</p></div><div><span class="lab-label">YOUR TASK</span><p>How many (sentence, hidden-position) pairs can we construct? Write one input–target pair.</p></div></div>
+<div class="s1-pause"><strong>PAUSE</strong><span>45 seconds</span><p>Count positions, including repeated words. Keep each sentence separate.</p></div>
+
+::: {.notes}
+This is the first calculation, with explicit givens and no solution on the prompt slide. Allow 45 seconds, then advance to the separate worked solution. Count (sentence, position) pairs, not unique vocabulary items. This exhaustive toy construction is not how original BERT selects 15% of positions. Do not introduce that recipe yet.
+:::
+
+## One corpus, eighteen input–target pairs {#corpus-solution .s1-slide}
+
+<p class="s1-lead">Worked solution · each cell withholds one position. Click any cell to inspect it.</p>
+<div class="pair-matrix" id="pair-matrix" aria-label="Three rows of six possible hidden positions"></div>
+<div class="pair-detail"><div><span class="lab-label">INPUT</span><p id="pair-context">the cat sat on the ____</p></div><div><span class="lab-label">TARGET</span><strong id="pair-target">mat</strong></div></div>
+<div class="count-equation"><span>3 sentences</span><b>×</b><span>6 positions</span><b>=</b><strong>18 pairs</strong></div>
+<p class="s1-takeaway">The labels come from the corpus. These overlapping examples are not 18 independent observations.</p>
+<p class="s1-source">Exact enumeration of the visible toy corpus · no padding, punctuation, or special tokens counted.</p>
+
+::: {.notes}
+Students should get 18. Click A1 and A5: both targets are “the”, but the withheld positions differ. Show B6 and C6 to illustrate how the same construction applies across sentences. We have reused existing text to obtain prediction targets, not created new independent information. On a real corpus we sample training instances under a declared objective; we do not need a human to label every prediction. Do not equate a larger count of overlapping examples with a proportionate gain in knowledge.
+:::
+
+## One word, two contextual representations {#context-lab .s1-slide}
+
+<div class="lab-toolbar"><button data-context="0" aria-pressed="true">Money context</button><button data-context="1" aria-pressed="false">Water context</button><span>Fixed model · fixed position of <b>bank</b></span></div>
+<div id="context-sentence" class="context-sentence" aria-live="polite">she put money in the <strong>bank</strong>.</div>
+<div class="representation-flow"><div><span class="lab-label">WORD LOOKUP · e(bank)</span><div id="lookup-vector" class="vector-heat" role="img" aria-label="Word embedding values"></div><p id="lookup-status">Same token ID → same lookup</p></div><div class="reader-module"><span>2-layer</span><strong>pretrained<br>Transformer</strong><small>whole sentence enters</small><b>→</b></div><div><span class="lab-label">FINAL LAYER · h(bank | sentence)</span><div id="context-vector" class="vector-heat" role="img" aria-label="Contextual representation values"></div><p id="vector-status">128 recorded coordinates</p></div></div>
+<div class="vector-comparison"><div><span>Lookup similarity across contexts</span><strong>cosine = 1.000</strong></div><div><span>Final-layer similarity across contexts</span><strong id="context-cosine">Loading…</strong></div><p>128 coordinates in each grid · blue = negative, coral = positive.<br>One symmetric color scale per grid, held fixed across both contexts.</p></div>
+<p class="s1-takeaway fragment">Pretraining can prepare the contextual reader, not only the word dictionary.</p>
+<p class="s1-source">Actual recorded <a href="https://huggingface.co/prajjwal1/bert-tiny">BERT-tiny</a> outputs · eval mode · all 128 coordinates · two authored examples; different vectors alone do not prove sense understanding.</p>
+
+::: {.notes}
+This returns to the bank example from Lecture 03. Switch contexts before stating the takeaway. The token ID and its position remain fixed. Other sentence tokens change; model weights remain fixed. The left grid is the input word-table lookup alone, excluding position and segment additions; the right is the final layer at bank. It displays all 128 coordinates in row-major order, not a semantic map or attention matrix. Both grids use independently fixed symmetric scales so each representation is legible; their color intensities are not directly comparable. Each cell exposes its dimension and raw value as a tooltip. The printed cosine uses the full vectors, not their displayed colors. No model runs in the browser. This measures context dependence, not the quality or correctness of a word-sense decision; even an untrained contextual network can produce different vectors. The small pretrained model is a 2-layer, 128-dimensional BERT variant, not BERT-base. Its weights and source are recorded in the manifest.
+:::
+
+## Which part of the reader gets a head start? {#pretraining-scope .s1-slide}
+
+<div class="lab-toolbar"><button data-scope="lookup" aria-pressed="true">Pretrain word embeddings</button><button data-scope="whole" aria-pressed="false">Pretrain the whole reader</button><span>Schematic · color shows initialization source</span></div>
+<div class="scope-layout"><div class="scope-corpus"><span class="lab-label">UNLABELED CORPUS</span><div>sentences<br>contexts<br>prediction targets</div><svg viewBox="0 0 150 100" aria-hidden="true"><path d="M10 50H125M105 30L130 50L105 70"/></svg></div><div class="scope-stack"><div class="scope-block" data-scope-block="read2">Contextual layer 2 <span>random initialization</span></div><div class="scope-block" data-scope-block="read1">Contextual layer 1 <span>random initialization</span></div><div class="scope-block is-pretrained" data-scope-block="lookup">Word lookup table <span>learned from text</span></div><p>token IDs ↑ representations</p></div><div class="scope-destination"><span class="lab-label">BEFORE THE DOWNSTREAM TASK</span><p id="scope-message">The dictionary has a head start.<br>The contextual reader still has to learn.</p><div class="scope-key"><i></i> learned from text<br><i></i> randomly initialized</div></div></div>
+<p class="s1-takeaway">The same corpus can supply training signals for far more than an embedding table.</p>
+<p class="s1-source">Schematic comparison of initialization strategies · <a href="https://arxiv.org/abs/1810.04805">Devlin et al., BERT</a>, introduction and Figure 1 · task-specific heads are omitted here.</p>
+
+::: {.notes}
+The diagrams represent alternative starting points for downstream task training. They do not show an optimizer running, layerwise training, or a claim that random layers are frozen. The left button retrieves the earlier static-embedding approach; the right switches the initialization source of the contextual layers. In whole-model pretraining, gradients from the text prediction task can adjust the embedding table and the contextual layers jointly. A later task may add a new head. Keep full fine-tuning details for section 4; the present point is the scope of what unlabeled text can initialize.
+:::
+
+## Can the reader even represent a new spelling? {#spelling-lab .s1-slide}
+
+<div class="lab-toolbar"><button data-spelling="0" aria-pressed="true">learning</button><button data-spelling="1" aria-pressed="false">relearning</button><button data-spelling="2" aria-pressed="false">laerning</button><span>Same vocabularies · only the input spelling changes</span></div>
+<div class="spelling-word" id="spelling-word">learning</div>
+<div class="spelling-paths"><div class="word-path"><span class="lab-label">TOY WHOLE-WORD LOOKUP</span><p class="toy-vocab">Vocabulary: learn · learning · language · models</p><strong id="whole-word-output">learning</strong><p id="whole-word-status">One known word</p></div><div class="subword-path"><span class="lab-label">ACTUAL BERT WORDPIECE TOKENIZER</span><div id="wordpiece-output" class="wordpiece-output"></div><p>Joining the pieces gives <strong id="spelling-rejoined">learning</strong></p></div></div>
+<p class="s1-takeaway fragment">Representing a typo does not correct it—or guarantee that the model understands it.</p>
+<p class="s1-source">Recorded tokenizer output from the BERT-tiny vocabulary · IDs shown under each piece · <code>##</code> marks a continuation within a word.</p>
+
+::: {.notes}
+Brief retrieval of Lecture 02, not a new tokenization lesson. Select relearning, then laerning. The whole-word baseline is explicitly a tiny authored vocabulary; it is not claimed to be Word2Vec's actual vocabulary. The right side uses a real BERT WordPiece tokenizer and records exact IDs. For these selected strings there is no UNK, but the typo remains when pieces are joined. Do not imply all possible strings are always representable by this tokenizer or infer robustness from segmentation alone. Byte-level coverage is a separate design choice. The next section's intentional token corruption is also different from a naturally occurring typo. Real robustness experiments belong to section 5.
+:::
+
+## The corpus supplies answers. The task controls access. {#raw-text-bridge .s1-slide}
+
+<div class="synthesis-flow"><div><b>TEXT</b><span>observed sequences</span></div><i>→</i><div><b>SELF-SUPERVISION</b><span>constructed inputs + targets</span></div><i>→</i><div><b>PRETRAINED READER</b><span>contextual representations</span></div></div>
+<div class="bridge-scene"><div class="bridge-context"><span>she put money in the</span><strong>bank</strong><span>yesterday</span></div><svg viewBox="0 0 1260 220" role="img" aria-label="Left and right context can inform a prediction, but a direct copying path from the target would reveal the answer."><defs><marker id="bridge-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0L10 5L0 10" fill="#0f7881"/></marker></defs><path class="bridge-context-path" d="M180 25C180 145 370 165 520 165"/><path class="bridge-context-path" d="M1080 25C1080 145 890 165 740 165"/><rect x="520" y="125" width="220" height="75" rx="16" fill="#17364a"/><text x="630" y="171" text-anchor="middle" fill="white" font-size="30">predict bank</text><g class="fragment" data-fragment-index="0"><path d="M630 5V110" stroke="#d7664f" stroke-width="5" stroke-dasharray="10 8"/><text x="655" y="65" fill="#a34832" font-size="27">copying shortcut?</text></g></svg></div>
+<p class="bridge-question fragment" data-fragment-index="1">How can a word use both sides of a sentence<br>without seeing the answer it must predict?</p>
+<p class="s1-source">Schematic information-flow question · the masking mechanism begins in Part 02.</p>
+
+::: {.notes}
+Synthesize the section: text supplies targets, objectives determine what is exposed, and pretraining can initialize the contextual reader. Tokenization makes the input representable but is not itself understanding. Reveal the copying shortcut only after tracing context into the prediction, then reveal the question. The sentence includes “yesterday” on the right so both sides are visible; the copying path is aligned with bank. The diagram is schematic, not a measured attention pattern. Continue into the BERT corruption task.
+:::
+
+## The BERT idea {#bert-idea .part-opening data-background-color="#17364a"}
+
+<p class="part-count">PART 02 / 06</p>
+<div class="part-progress s2-progress"><i></i><i></i><i></i><i></i><i></i><i></i></div>
+<div class="part-sentence"><span>read the</span><span class="part-target">[MASK]</span><span>in context</span></div>
+<p class="part-question">Hide an answer.<br>Learn to recover it from both sides.</p>
+<p class="part-subline">A prediction task → a loss → an empirical test</p>
+
+::: {.notes}
+BERT stands for Bidirectional Encoder Representations from Transformers. Connect to the copying shortcut: a bidirectional reader can access surrounding context, but we remove or perturb selected answers before it reads. This section introduces the original recipe and tests what the paper's ablations actually establish. We do not yet catalogue downstream heads or teach all three model families.
+:::
+
+## A missing token is a prediction problem {#bert-prediction .s2-slide}
+
+<div class="s2-source-sentence"><span>SOURCE · VISIBLE TO US</span>she put money in the <b>bank</b> yesterday.</div>
+<div class="s2-cloze"><span>she put money in the</span><strong>[MASK]</strong><span>yesterday.</span></div>
+<div class="s2-reader"><span>left context ↘</span><strong>Bidirectional Transformer → vocabulary scores → softmax</strong><span>↙ right context</span></div>
+<p class="s2-predict-question">What would you predict? Is there only one plausible completion?</p>
+<div class="s2-predictions fragment">
+<div><span class="lab-label">RECORDED BERT-TINY · TOP 5</span><div id="mlm-bars">Loading local model evidence…</div></div>
+<div class="s2-target-result"><span class="lab-label">CORPUS TARGET</span><strong>bank</strong><p id="mlm-target-score">Loading…</p><p>The loss follows the observed token, even when another word sounds plausible.</p></div>
+</div>
+<p class="s1-source">Actual <a href="https://huggingface.co/prajjwal1/bert-tiny">BERT-tiny</a> inference · fixed weights · one authored sentence · full-vocabulary probabilities, not renormalized top-five scores. This small model is not BERT-base.</p>
+
+::: {.notes}
+The source stays visible to the audience, but only the corrupted sentence enters the model. Special tokens CLS and SEP are omitted in the large sentence; the evidence file contains exact token IDs, including them. Ask for predictions before advancing the fragment. The recorded model prefers house; bank is not in its top five. Keep the failure: a training target is the original observed token, not a list of every acceptable completion. These are probabilities from a pretrained checkpoint in eval mode, not a training trajectory. The arrows show available information, not measured attention weights. The output is a distribution over 30,522 vocabulary entries. The bars use a shared 0–5% axis and do not sum to 100%, because most probability lies outside the displayed five tokens.
+:::
+
+## Select positions first. Then corrupt their inputs. {#bert-corruption .s2-slide .s1-slide}
+
+<div class="s2-policy"><div><b>15%</b><span>of eligible token positions<br>selected as prediction targets</span></div><i>→</i><div><b>80 / 10 / 10</b><span>of those selected: mask / random / unchanged</span></div></div>
+<div class="lab-toolbar"><button data-corruption="mask" aria-pressed="true">[MASK] · 80%</button><button data-corruption="random" aria-pressed="false">Random token · 10%</button><button data-corruption="unchanged" aria-pressed="false">Unchanged · 10%</button><span>Inspect one selected position.<br>Same original sentence and target.</span></div>
+<div class="s2-corruption-line">she put money in the <strong id="corruption-token">[MASK]</strong> yesterday.</div>
+<table class="s2-inspector"><thead><tr><th>Position</th><th>Original</th><th>Model receives</th><th>Loss target</th></tr></thead><tbody><tr><td>2 · not selected</td><td>put</td><td>put</td><td>Ignored</td></tr><tr class="selected-row"><td>6 · selected</td><td>bank</td><td id="corruption-cell">[MASK]</td><td>bank · always</td></tr></tbody></table>
+<p id="corruption-explanation" class="s2-policy-note" aria-live="polite">The answer disappears from this input position; context must supply evidence.</p>
+<p class="s1-source"><a href="https://aclanthology.org/N19-1423/">Devlin et al., 2019</a>, §3.1 · schematic corruption inspector, no model inference. Positions include [CLS] at 0; the random replacement “table” is fixed for inspection.</p>
+
+::: {.notes}
+The first probability is about selection, the other three are conditional on having been selected. A short classroom sentence with one selected position is not a literal 15% sample. Real training selects WordPiece positions, excluding CLS/SEP here. The unselected row has no direct MLM loss term, but contextual tokens can still receive gradients through their influence on a selected output. Click each branch. Random replacement is a vocabulary token, not an intentional misspelling. Unchanged selected positions still have bank as their loss target, whereas unselected put has no target in this objective. These occasional unchanged targets are easier; their purpose is to reduce dependence on the artificial MASK input, not to eliminate all copying on every training example. The model is not given a separate selected-position flag. The loss computation knows which positions were selected. At a population level the recipe corresponds approximately to 12% MASK, 1.5% random, 1.5% unchanged targets and 85% unselected; finite examples need not match those proportions exactly.
+:::
+
+## Which probabilities should training reward? {#bert-loss-pause .s2-slide}
+
+<div class="s2-source-sentence"><span>ORIGINAL</span>the <b>cat</b> sat on the <b>mat</b></div>
+<div class="s2-cloze s2-double-mask"><span>the</span><strong>[MASK]</strong><span>sat on the</span><strong>[MASK]</strong></div>
+<table class="s2-loss-table"><thead><tr><th>Selected target</th><th>p(original token | corrupted input)</th></tr></thead><tbody><tr><td>cat</td><td>0.25</td></tr><tr><td>mat</td><td>0.50</td></tr></tbody></table>
+<div class="s1-pause"><strong>PAUSE</strong><span>60 seconds</span><p>Compute the mean loss over the two selected positions.<br>Use −ln(p) per target. Which prediction contributes more?</p></div>
+<p class="s2-math-hint">Given: ln(2) ≈ 0.693 and ln(4) ≈ 1.386.<br>Ignore all unselected positions. Use natural logarithms.</p>
+<p class="s1-source">Illustrative probabilities, not measured BERT outputs. Both blanks are present in the same model input.</p>
+
+::: {.notes}
+Leave the exact task and givens visible without revealing an answer. Ask students to compute each term and average across the two selected positions, not all six words. The probabilities are intentionally simple, normalized vocabulary probabilities supplied as givens. They are not the top-five scores from the previous experiment. Selecting two out of six positions here is a loss example, not the original masking rate. No assumption of statistically independent words is required to define this summed training objective.
+:::
+
+## From two errors to the masked-language-model loss {#bert-loss-solution .s2-slide}
+
+<div class="s2-worked"><div><span>cat · p = 0.25</span><strong>−ln(0.25) = 1.386</strong></div><div><span>mat · p = 0.50</span><strong>−ln(0.50) = 0.693</strong></div></div>
+<div class="s2-loss-answer">Mean = (1.386 + 0.693) / 2 ≈ <b>1.040 nats</b></div>
+<div class="s2-formula">
+
+$$\mathcal{L}_{\mathrm{MLM}}(\theta) = -\frac{1}{|M|}\sum_{i\in M}\log p_\theta(x_i\mid\widetilde{x})$$
+
+</div>
+<div class="s2-notation"><p><b>x</b><br>original tokens<br>the cat sat on the mat</p><p><b>x̃</b><br>corrupted input<br>the [MASK] sat on the [MASK]</p><p><b>M</b><br>selected positions<br>{cat position, mat position}</p></div>
+<p class="s2-conclusion">A smaller probability for the observed token means a larger penalty.</p>
+<p class="s1-source">Mean cross-entropy over selected positions · one training example shown; training averages over examples and corruption draws. Gradients update the prediction head and contextual reader.</p>
+
+::: {.notes}
+The cat term is twice the mat term here. Keep the example visible while mapping to x, corrupted x, and M. M includes every selected position, even when its input is a random token or unchanged. The normalization shown is our per-example mean convention; batching can average over all selected tokens. The MLM head produces vocabulary logits from contextual states, and softmax converts them into the probabilities used here. Backpropagation connects these errors to the head, Transformer layers, and embeddings. This is a sum of token prediction losses conditioned on the same corrupted sequence, not a left-to-right factorization of the probability of the complete sentence. No additional hand labels were supplied.
+:::
+
+## Original BERT also asked: do these passages follow? {#bert-nsp .s2-slide}
+
+<div class="s2-document"><span class="lab-label">A SHORT DOCUMENT · AUTHORED EXAMPLE</span><p><b>A</b> Sara opened her book.</p><p><b>B</b> She began to read.</p></div>
+<div class="s2-nsp-pairs"><div><span>50% · actual continuation</span><p>A + “She began to read.”</p><strong>IsNext</strong></div><div><span>50% · random corpus passage</span><p>A + “The train arrived late.”</p><strong>NotNext</strong></div></div>
+<div class="s2-nsp-sequence"><b>[CLS]</b><span>passage A</span><b>[SEP]</b><span>passage B</span><b>[SEP]</b></div>
+<p class="s2-nsp-equation">[CLS] representation → binary classifier</p>
+<p class="s2-conclusion">Original training objective: <b>MLM loss + NSP loss.</b></p>
+<p class="s1-source"><a href="https://aclanthology.org/N19-1423/">Devlin et al., 2019</a>, §3.1 · NSP = next sentence prediction. The labels come from document order and sampling; no human annotation.</p>
+
+::: {.notes}
+Only a brief introduction, enough to read the next ablation table. Original BERT forms two text segments, which may contain more than a grammatical sentence. The classifier uses the final CLS representation; token-level MLM predictions use the selected token representations. Segment embeddings distinguish A and B in addition to SEP delimiters. MLM corruption is omitted from this schematic to make the pair construction legible; both objectives operate during original pretraining. NSP classifies actual adjacency versus a sampled alternative; it is not a test of truth, and a random continuation can sound plausible. The 50/50 proportions refer to training pair construction. Do not claim NSP is essential to all later encoder recipes.
+:::
+
+## Does the pretraining task matter after fine-tuning? {#bert-ablation .s2-slide}
+
+<p class="s1-lead">A controlled comparison from the original BERT paper</p>
+<table class="s2-benchmark"><caption>BERT-base architecture · downstream development sets · higher is better</caption><thead><tr><th>Pretraining variant</th><th>MNLI-m<br><small>Accuracy (%)</small></th><th>MRPC<br><small>Accuracy (%)</small></th><th>SQuAD 1.1<br><small>Token F1 (%)</small></th></tr></thead><tbody><tr><th>BERT-base: MLM + NSP</th><td>84.4</td><td>86.7</td><td>88.5</td></tr><tr><th>MLM, no NSP</th><td>83.9</td><td>86.5</td><td>87.9</td></tr><tr><th>Left-to-right LM, no NSP</th><td>82.1</td><td>77.5</td><td>77.8</td></tr></tbody></table>
+<div class="s2-task-key"><span><b>MNLI-m</b> matched-domain entailment</span><span><b>MRPC</b> paraphrase detection</span><span><b>SQuAD</b> extractive question answering</span></div>
+<div class="s2-evidence-reading fragment"><strong>87.9 → 77.8</strong><p>Without NSP in either run, switching to left-only prediction costs <b>10.1 F1 points</b> on SQuAD in this experiment.</p></div>
+<p class="s2-caveat">Same pretraining data, fine-tuning scheme, and hyperparameters. The left-only constraint also remains during fine-tuning: this tests a recipe, not the objective in isolation.</p>
+<p class="s1-source">Selected columns and rows from <a href="https://aclanthology.org/N19-1423/">Devlin et al., 2019, Table 5 & §5.1</a>. Published results, not our runs; no uncertainty intervals reported in this table. Historical ablation, not a current leaderboard.</p>
+
+::: {.notes}
+Ask which two rows isolate the removal of NSP under this setup, then which compare MLM with left-to-right modeling without NSP. Reveal the 10.1-point difference only after students inspect the table. Explain token F1 as overlap between predicted and reference answer tokens, unlike classification accuracy; do not average these columns. All entries are development scores from Table 5, not the main paper's GLUE test table. MRPC here is accuracy, whereas the main GLUE table reports F1. The left-only model is an ablation of the BERT-base recipe, not the released GPT checkpoint. The conclusion is specific to these tasks and training conditions; it does not say all encoders beat all decoders. Downstream tasks and heads will be examined in section 4. The original paper has additional columns and a BiLSTM ablation, omitted here for legibility.
+:::
+
+## A useful reader—but what if the output is new text? {#bert-family-bridge .s2-slide}
+
+<div class="s2-bridge-summary"><span><b>CONSTRUCT</b> targets from text</span><span><b>CORRUPT</b> selected inputs</span><span><b>OPTIMIZE</b> recovery loss</span></div>
+<div class="s2-bridge-visual"><div class="s2-complete-input">the <b>[MASK]</b> sat on the mat</div><div class="s2-reading-arrows">context ↘ &nbsp; &nbsp; ↙ context</div><div class="s2-bridge-reader">BERT reader</div><div class="s2-reading-arrows">↓</div><div class="s2-recovered">a distribution at a supplied position</div></div>
+<div class="s2-open-output fragment"><span>Now ask for a continuation:</span><strong>the cat … <i>?</i> <i>?</i> <i>?</i></strong></div>
+<p class="bridge-question">Who can see which tokens—and where do the next targets come from?</p>
+<p class="s1-source">Next: encoder, decoder, and encoder–decoder training recipes.</p>
+
+::: {.notes}
+Synthesize: the source supplies targets, corruption controls access, and a selected-position objective updates the reader. Published ablations give evidence about the resulting representations after adaptation. BERT recovers tokens at input positions; this is different from the usual left-to-right continuation interface. Do not assert that masked models can never generate—specialized decoding procedures exist. The next section compares attention visibility and target construction across three representative recipes. Continue to Section 3 to inspect the three recipes.
+:::
+
+
+## Three families, three recipes {#three-families .part-opening data-background-color="#17364a"}
+
+<p class="part-count">PART 03 / 06</p>
+<div class="part-progress s3-progress"><i></i><i></i><i></i><i></i><i></i><i></i></div>
+<div class="part-sentence"><span>read</span><span class="part-target">predict</span><span>generate</span></div>
+<p class="part-question">Keep the text.<br>Change what the model can see.</p>
+<p class="part-subline">Encoder · decoder · encoder–decoder</p>
+
+::: {.notes}
+We know the Transformer blocks from Lecture 07. Here the question is how to train them: which inputs, which allowed context, which targets, and which loss positions? BERT, GPT and T5 are representative recipes, not definitions of every possible objective for their architectures.
+:::
+
+## Three families: trace the attention paths {#family-architecture-map .s3-slide}
+
+<p class="s1-lead">Read bottom → top. Each square is one token state; each line is an allowed attention connection.</p>
+
+```{=html}
+<svg class="family-map" viewBox="0 0 1320 600" role="img" aria-labelledby="family-map-title family-map-desc">
+<title id="family-map-title">Token-level attention paths in three Transformer architectures</title>
+<desc id="family-map-desc">Read bottom to top. Encoder states connect to every input position. Decoder-only states connect only to current and earlier positions. The encoder–decoder has separate source and target streams: the target uses causal self-attention and cross-attention to all final encoder states.</desc>
+<defs><marker id="family-up" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto"><path d="M0 0L10 5L0 10Z" fill="#a34832"/></marker></defs>
+<rect x="0" y="0" width="340" height="574" rx="10" class="fm-panel"/>
+<rect x="360" y="0" width="340" height="574" rx="10" class="fm-panel"/>
+<rect x="720" y="0" width="600" height="574" rx="10" class="fm-panel"/>
+<text x="170" y="38" class="fm-title" text-anchor="middle">ENCODER</text>
+<text x="170" y="70" class="fm-sub" text-anchor="middle">BERT-style</text>
+<text x="530" y="38" class="fm-title" text-anchor="middle">DECODER-ONLY</text>
+<text x="530" y="70" class="fm-sub" text-anchor="middle">GPT-style</text>
+<text x="1020" y="38" class="fm-title" text-anchor="middle">ENCODER–DECODER</text>
+<text x="1020" y="70" class="fm-sub" text-anchor="middle">T5-style</text>
+<path d="M65 462L65 348" class="fm-edge fm-full"/>
+<path d="M170 462L65 348" class="fm-edge fm-full"/>
+<path d="M275 462L65 348" class="fm-edge fm-full"/>
+<path d="M65 462L170 348" class="fm-edge fm-full"/>
+<path d="M170 462L170 348" class="fm-edge fm-full"/>
+<path d="M275 462L170 348" class="fm-edge fm-full"/>
+<path d="M65 462L275 348" class="fm-edge fm-full"/>
+<path d="M170 462L275 348" class="fm-edge fm-full"/>
+<path d="M275 462L275 348" class="fm-edge fm-full"/>
+<path d="M425 462L425 348" class="fm-edge fm-causal"/>
+<path d="M425 462L530 348" class="fm-edge fm-causal"/>
+<path d="M530 462L530 348" class="fm-edge fm-causal"/>
+<path d="M425 462L635 348" class="fm-edge fm-causal"/>
+<path d="M530 462L635 348" class="fm-edge fm-causal"/>
+<path d="M635 462L635 348" class="fm-edge fm-causal"/>
+<path d="M65 302L65 188" class="fm-edge fm-full"/>
+<path d="M170 302L65 188" class="fm-edge fm-full"/>
+<path d="M275 302L65 188" class="fm-edge fm-full"/>
+<path d="M65 302L170 188" class="fm-edge fm-full"/>
+<path d="M170 302L170 188" class="fm-edge fm-full"/>
+<path d="M275 302L170 188" class="fm-edge fm-full"/>
+<path d="M65 302L275 188" class="fm-edge fm-full"/>
+<path d="M170 302L275 188" class="fm-edge fm-full"/>
+<path d="M275 302L275 188" class="fm-edge fm-full"/>
+<path d="M425 302L425 188" class="fm-edge fm-causal"/>
+<path d="M425 302L530 188" class="fm-edge fm-causal"/>
+<path d="M530 302L530 188" class="fm-edge fm-causal"/>
+<path d="M425 302L635 188" class="fm-edge fm-causal"/>
+<path d="M530 302L635 188" class="fm-edge fm-causal"/>
+<path d="M635 302L635 188" class="fm-edge fm-causal"/>
+<rect x="35" y="462" width="60" height="46" rx="10" class="fm-node fm-encoder"/>
+<text x="65" y="493" class="fm-node-label" text-anchor="middle">the</text>
+<rect x="140" y="462" width="60" height="46" rx="10" class="fm-node fm-encoder"/>
+<text x="170" y="493" class="fm-node-label" text-anchor="middle">[M]</text>
+<rect x="245" y="462" width="60" height="46" rx="10" class="fm-node fm-encoder"/>
+<text x="275" y="493" class="fm-node-label" text-anchor="middle">sat</text>
+<rect x="395" y="462" width="60" height="46" rx="10" class="fm-node fm-decoder"/>
+<text x="425" y="493" class="fm-node-label" text-anchor="middle">〈s〉</text>
+<rect x="500" y="462" width="60" height="46" rx="10" class="fm-node fm-decoder"/>
+<text x="530" y="493" class="fm-node-label" text-anchor="middle">the</text>
+<rect x="605" y="462" width="60" height="46" rx="10" class="fm-node fm-decoder"/>
+<text x="635" y="493" class="fm-node-label" text-anchor="middle">cat</text>
+<rect x="35" y="302" width="60" height="46" rx="10" class="fm-node fm-encoder"/>
+<rect x="140" y="302" width="60" height="46" rx="10" class="fm-node fm-encoder"/>
+<rect x="245" y="302" width="60" height="46" rx="10" class="fm-node fm-encoder"/>
+<rect x="395" y="302" width="60" height="46" rx="10" class="fm-node fm-decoder"/>
+<rect x="500" y="302" width="60" height="46" rx="10" class="fm-node fm-decoder"/>
+<rect x="605" y="302" width="60" height="46" rx="10" class="fm-node fm-decoder"/>
+<rect x="35" y="142" width="60" height="46" rx="10" class="fm-node fm-encoder"/>
+<rect x="140" y="142" width="60" height="46" rx="10" class="fm-node fm-encoder"/>
+<rect x="245" y="142" width="60" height="46" rx="10" class="fm-node fm-encoder"/>
+<rect x="395" y="142" width="60" height="46" rx="10" class="fm-node fm-decoder"/>
+<rect x="500" y="142" width="60" height="46" rx="10" class="fm-node fm-decoder"/>
+<rect x="605" y="142" width="60" height="46" rx="10" class="fm-node fm-decoder"/>
+<text x="65" y="125" class="fm-output" text-anchor="middle">h₁</text>
+<text x="170" y="125" class="fm-output" text-anchor="middle">h₂</text>
+<text x="275" y="125" class="fm-output" text-anchor="middle">h₃</text>
+<path d="M425 140V128" class="fm-predict"/>
+<text x="425" y="113" class="fm-output" text-anchor="middle">the</text>
+<path d="M530 140V128" class="fm-predict"/>
+<text x="530" y="113" class="fm-output" text-anchor="middle">cat</text>
+<path d="M635 140V128" class="fm-predict"/>
+<text x="635" y="113" class="fm-output" text-anchor="middle">sat</text>
+<text x="170" y="535" class="fm-caption" text-anchor="middle">All input positions are visible.</text>
+<text x="530" y="535" class="fm-caption" text-anchor="middle">No path from a future token.</text>
+<path d="M775 462L775 388" class="fm-edge fm-full"/>
+<path d="M850 462L775 388" class="fm-edge fm-full"/>
+<path d="M925 462L775 388" class="fm-edge fm-full"/>
+<path d="M775 462L850 388" class="fm-edge fm-full"/>
+<path d="M850 462L850 388" class="fm-edge fm-full"/>
+<path d="M925 462L850 388" class="fm-edge fm-full"/>
+<path d="M775 462L925 388" class="fm-edge fm-full"/>
+<path d="M850 462L925 388" class="fm-edge fm-full"/>
+<path d="M925 462L925 388" class="fm-edge fm-full"/>
+<path d="M775 342L775 268" class="fm-edge fm-full"/>
+<path d="M850 342L775 268" class="fm-edge fm-full"/>
+<path d="M925 342L775 268" class="fm-edge fm-full"/>
+<path d="M775 342L850 268" class="fm-edge fm-full"/>
+<path d="M850 342L850 268" class="fm-edge fm-full"/>
+<path d="M925 342L850 268" class="fm-edge fm-full"/>
+<path d="M775 342L925 268" class="fm-edge fm-full"/>
+<path d="M850 342L925 268" class="fm-edge fm-full"/>
+<path d="M925 342L925 268" class="fm-edge fm-full"/>
+<path d="M1085 462L1085 388" class="fm-edge fm-causal"/>
+<path d="M1085 462L1225 388" class="fm-edge fm-causal"/>
+<path d="M1225 462L1225 388" class="fm-edge fm-causal"/>
+<path d="M775 222L1085 188" class="fm-edge fm-cross"/>
+<path d="M850 222L1085 188" class="fm-edge fm-cross"/>
+<path d="M925 222L1085 188" class="fm-edge fm-cross"/>
+<path d="M775 222L1225 188" class="fm-edge fm-cross"/>
+<path d="M850 222L1225 188" class="fm-edge fm-cross"/>
+<path d="M925 222L1225 188" class="fm-edge fm-cross"/>
+<path d="M1085 342V188" class="fm-edge fm-target-stream"/>
+<path d="M1225 342V188" class="fm-edge fm-target-stream"/>
+<rect x="745" y="462" width="60" height="46" rx="10" class="fm-node fm-encoder"/>
+<text x="775" y="493" class="fm-node-label" text-anchor="middle">x₁</text>
+<rect x="820" y="462" width="60" height="46" rx="10" class="fm-node fm-encoder"/>
+<text x="850" y="493" class="fm-node-label" text-anchor="middle">x₂</text>
+<rect x="895" y="462" width="60" height="46" rx="10" class="fm-node fm-encoder"/>
+<text x="925" y="493" class="fm-node-label" text-anchor="middle">x₃</text>
+<rect x="745" y="342" width="60" height="46" rx="10" class="fm-node fm-encoder"/>
+<rect x="820" y="342" width="60" height="46" rx="10" class="fm-node fm-encoder"/>
+<rect x="895" y="342" width="60" height="46" rx="10" class="fm-node fm-encoder"/>
+<rect x="745" y="222" width="60" height="46" rx="10" class="fm-node fm-encoder"/>
+<rect x="820" y="222" width="60" height="46" rx="10" class="fm-node fm-encoder"/>
+<rect x="895" y="222" width="60" height="46" rx="10" class="fm-node fm-encoder"/>
+<rect x="1055" y="462" width="60" height="46" rx="10" class="fm-node fm-decoder"/>
+<text x="1085" y="493" class="fm-node-label" text-anchor="middle">〈s〉</text>
+<rect x="1195" y="462" width="60" height="46" rx="10" class="fm-node fm-decoder"/>
+<text x="1225" y="493" class="fm-node-label" text-anchor="middle">y₁</text>
+<rect x="1055" y="342" width="60" height="46" rx="10" class="fm-node fm-decoder"/>
+<rect x="1195" y="342" width="60" height="46" rx="10" class="fm-node fm-decoder"/>
+<rect x="1055" y="142" width="60" height="46" rx="10" class="fm-node fm-decoder"/>
+<rect x="1195" y="142" width="60" height="46" rx="10" class="fm-node fm-decoder"/>
+<path d="M1085 140V128" class="fm-predict"/>
+<text x="1085" y="113" class="fm-output" text-anchor="middle">y₁</text>
+<path d="M1225 140V128" class="fm-predict"/>
+<text x="1225" y="113" class="fm-output" text-anchor="middle">y₂</text>
+<text x="850" y="535" class="fm-caption" text-anchor="middle">Source tokens</text>
+<text x="1155" y="535" class="fm-caption" text-anchor="middle">Shifted target tokens</text>
+<text x="850" y="205" class="fm-small" text-anchor="middle">Encoder states</text>
+<text x="1155" y="310" class="fm-small" text-anchor="middle">causal self-attention</text>
+<text x="1110" y="225" class="fm-cross-label" text-anchor="middle">cross-attention</text>
+<text x="850" y="570" class="fm-key" text-anchor="middle">x = supplied source</text>
+<text x="1155" y="570" class="fm-key" text-anchor="middle">y = generated target</text>
+<text x="170" y="570" class="fm-key" text-anchor="middle">[M] = masked token</text>
+<text x="530" y="570" class="fm-key" text-anchor="middle">〈s〉 = start token</text>
+</svg>
+```
+
+<div class="family-map-legend"><span><i class="fm-legend-full"></i>Full visibility</span><span><i class="fm-legend-causal"></i>Causal visibility</span><span><i class="fm-legend-cross"></i>Cross-attention to encoder states</span></div>
+<p class="s1-takeaway">Trace the middle position: where can its information come from?</p>
+<p class="s1-source">Original drawing using the visual convention of <a href="https://arxiv.org/pdf/1910.10683#page=17">Raffel et al., T5, Fig. 4, p. 17</a> and <a href="https://web.stanford.edu/class/cs224n/slides_w26/cs224n-2026-lecture07-pretraining.pdf#page=24">Stanford CS224N</a>. Connections show permission, not measured weights. Feed-forward, residual and normalization operations omitted.</p>
+
+::: {.notes}
+This is a token-state architecture drawing, not a pipeline of opaque labeled boxes. Read bottom to top. Every square represents a vector at a sequence position, not a neuron or an entire layer. The same colored row belongs to one stage of a Transformer stack. Edges show allowed attention dependencies across stages, not the numerical attention weights. Fully visible does not mean all positions receive equal weight. Line colors and shapes distinguish full, causal, and cross-attention connections.
+
+Begin with the encoder's middle square. Trace all three incoming lines to the lower row: it can use left, self, and right context. Repeat in the next layer. Its supplied input is “the [M] sat”; the original masked word is not available along any path. Top h1/h2/h3 are contextual states, not predicted words. A vocabulary head for masked-token recovery will appear in the recipe slide.
+
+Move to the decoder-only middle square. It has only two incoming lines: from the first and second positions. The rightmost lower state has no path to it. This restriction repeats at every layer. Read the bottom input “start, the, cat” against the top next-token targets “the, cat, sat”. The current input token may be read because the prediction target is shifted. Thin coral arrows at the top abbreviate a vocabulary prediction head. Targets are labels/prediction positions, not guaranteed model outputs. All positions can be computed together during teacher-forced training.
+
+The encoder–decoder panel separates source and target streams. Source x1/x2/x3 pass through fully visible encoder layers on the left. The decoder receives “start, y1” at the bottom right and produces distributions for y1/y2 at the top. First trace the causal self-attention connections. Then trace the dashed coral connections from all final encoder states into each decoder position: these are cross-attention. The vertical target-stream lines carry the decoder's own state into that cross-attention stage; they do not indicate target self-attention becoming bidirectional. Decoder queries attend to encoder keys and values. Cross-attention occurs in each actual decoder block; only one such block's two attention stages are expanded here. The encoder drawing shows two illustrative layers and the decoder shows two distinct attention sublayers, so row counts are not a depth comparison.
+
+The T5 paper's Figure 4 compares encoder–decoder, causal language model, and prefix language model. We borrow its token-state drawing convention but retain our lecture's encoder-only, decoder-only, and encoder–decoder categories. Do not call the paper's prefix LM an encoder-only model. Here x is any supplied source (including corrupted text for T5 pretraining); the following recipe slide gives exact sentinels and reconstruction targets. The encoder and decoder-only panels use tiny word examples to make the attention permissions inspectable; the third uses x/y to distinguish the two sequences. End by tracing an individual state, then advance to the training recipes.
+:::
+
+## One sentence becomes three different tasks {#family-recipes .s3-slide}
+
+<div class="s2-source-sentence"><span>SAME SOURCE · WORD TOKENS FOR TEACHING</span>the <b>cat</b> sat on the <b>mat</b></div>
+<div class="s3-recipe"><b>ENCODER<br><small>BERT-style</small></b><div><span>INPUT</span>the [MASK] sat on the [MASK]</div><div><span>SCORED TARGETS</span>cat, mat at their input positions</div></div>
+<div class="s3-recipe"><b>DECODER<br><small>GPT-style</small></b><div><span>INPUT</span>〈start〉 the cat sat on the</div><div><span>SCORED TARGETS</span>the cat sat on the mat</div></div>
+<div class="s3-recipe"><b>ENCODER–DECODER<br><small>T5-style</small></b><div><span>ENCODER INPUT</span>the 〈S0〉 sat on the 〈S1〉</div><div><span>DECODER TARGET</span>〈S0〉 cat 〈S1〉 mat 〈S2〉 〈eos〉</div></div>
+<p class="s1-takeaway">The architecture controls information flow. The objective chooses what to predict.</p>
+<p class="s1-source">Teaching constructions: two one-word spans; no claim of a 15% corruption sample. Start/end conventions shown explicitly; real tokenizers differ.</p>
+
+::: {.notes}
+Keep the same sentence throughout. In the encoder row only cat and mat are selected. The decoder row is shifted by one token; start supplies the context for the first word. We omit an EOS target from this finite causal window. T5's sentinels identify missing spans, not words; S2 closes the last span and EOS ends decoding. S0/S1/S2 abbreviate distinct sentinel vocabulary tokens. The controlled teaching experiment later uses exactly these sequences, including its own start token, rather than the production tokenizers or full original training recipes. Original BERT also used NSP; this comparison isolates token prediction.
+:::
+
+## Encoder: read both sides, score selected positions {#encoder-recipe .s3-slide}
+
+<div class="s3-tokenline"><span>the</span><strong>[MASK]</strong><span>sat</span><span>on</span><span>the</span><strong>[MASK]</strong></div>
+<div class="s3-flow-label">All six corrupted input positions can exchange information ↔</div>
+<div class="s3-model">Bidirectional encoder <span>one contextual state per input position</span></div>
+<div class="s3-tokenline s3-targets"><span>—</span><strong>cat</strong><span>—</span><span>—</span><span>—</span><strong>mat</strong></div>
+<div class="s3-equation">
+
+$$\mathcal L_{\rm enc}=-\tfrac12[\log p_\theta(\text{cat}\mid\widetilde x)+\log p_\theta(\text{mat}\mid\widetilde x)]$$
+
+</div>
+<p class="s1-takeaway">Two direct loss terms; gradients can still reach every contextual input.</p>
+<p class="s1-source"><a href="https://aclanthology.org/N19-1423/">BERT, §3.1</a> · MLM component only · “—” means no direct loss at that position.</p>
+
+::: {.notes}
+Retrieve Section 2 without repeating the corruption policy. The target is aligned with its corrupted input position. The attention mask permits all input-to-input connections, including self; it does not expose the original hidden cat or mat. Unselected tokens influence selected predictions and can receive gradients. Bidirectional visibility is permission to attend, not a statement that all learned attention weights are equal.
+:::
+
+## Decoder: shift the targets, block the future {#decoder-recipe .s3-slide}
+
+<p class="s1-lead">Each column is one prediction. Read the input row before the target row.</p>
+<table class="s3-alignment"><thead><tr><th>Position</th><th>1</th><th>2</th><th>3</th><th>4</th><th>5</th><th>6</th></tr></thead><tbody><tr><th>Input</th><td>〈start〉</td><td>the</td><td>cat</td><td>sat</td><td>on</td><td>the</td></tr><tr><th>Target</th><td>the</td><td>cat</td><td>sat</td><td>on</td><td>the</td><td>mat</td></tr></tbody></table>
+<div class="s3-focus"><span>TO PREDICT “sat”</span><strong>〈start〉 → the → cat</strong><p>The state at “cat” cannot read the later input “sat”.</p></div>
+<div class="s3-equation">
+
+$$p_\theta(x)=\prod_{t=1}^{6}p_\theta(x_t\mid x_{<t}),\qquad
+\mathcal L_{\rm dec}=-\frac16\sum_{t=1}^{6}\log p_\theta(x_t\mid x_{<t})$$
+
+</div>
+<p class="s1-takeaway">Training scores all six columns in parallel with a causal attention mask.</p>
+<p class="s1-source"><a href="https://cdn.openai.com/research-covers/language-unsupervised/language_understanding_paper.pdf">Radford et al., 2018, §3.1</a> · fixed-length six-word example, conditioned on an implicit start in the equation.</p>
+
+::: {.notes}
+The decoder-only family has causal self-attention without an encoder cross-attention branch. The input token at each column is allowed to attend to itself and preceding input columns. Because labels are shifted, it cannot read the token it must predict. All gold prefixes are available during training (teacher forcing), so training positions are computed together. The product is the chain rule for this fixed-length sequence; this example is not a normalized distribution over arbitrary sentence lengths without an ending convention.
+:::
+
+## What does the causal loss count? {#causal-loss-pause .s3-slide}
+
+<div class="s2-source-sentence"><span>GIVEN · TARGETS IN ORDER</span>the &nbsp; cat &nbsp; sat &nbsp; on &nbsp; the &nbsp; mat</div>
+<table class="s3-alignment"><thead><tr><th>Target</th><th>the</th><th>cat</th><th>sat</th><th>on</th><th>the</th><th>mat</th></tr></thead><tbody><tr><th>p(target | prefix)</th><td>½</td><td>¼</td><td>½</td><td>½</td><td>½</td><td>¼</td></tr></tbody></table>
+<div class="s1-pause"><strong>PAUSE</strong><span>60 seconds</span><p>Compute the mean negative log probability over all six targets. What is the probability of this six-word sequence?</p></div>
+<p class="s2-math-hint">Use natural logs: −ln(½) ≈ 0.693; −ln(¼) ≈ 1.386.<br>Each probability uses that target’s own preceding prefix.</p>
+<p class="s1-source">Illustrative full-vocabulary target probabilities; not checkpoint outputs. Fixed six-token length; start context supplied.</p>
+
+::: {.notes}
+This section's first numerical calculation has its own pause. Students should identify four half-probability terms and two quarter-probability terms. Unlike the two-position MLM example, every target here is scored. Do not reveal the product or mean until the next slide. Repeated “the” tokens are separate prediction events.
+:::
+
+## Six predictions, one sequence likelihood {#causal-loss-solution .s3-slide}
+
+<div class="s2-worked"><div><span>Four targets with p = ½</span><strong>4 × 0.693 = 2.772</strong></div><div><span>Two targets with p = ¼</span><strong>2 × 1.386 = 2.772</strong></div></div>
+<div class="s2-loss-answer">Mean loss = (2.772 + 2.772) / 6 = <b>0.924 nats</b></div>
+<div class="s3-equation">
+
+$$p_\theta(\text{the cat sat on the mat})=(\tfrac12)^4(\tfrac14)^2=\tfrac1{256}$$
+
+</div>
+<div class="s3-focus"><span>THE SAME ERRORS, TWO VIEWS</span><strong>−ln(1/256) ≈ 5.545</strong><p>Sequence negative log likelihood; divide by 6 for the mean.<br>The tiny rounding difference comes from the supplied log values.</p></div>
+<p class="s1-takeaway">A token can be predictable in one prefix and surprising in another.</p>
+<p class="s1-source">Worked solution for the preceding illustrative probabilities; no independence assumption between words.</p>
+
+::: {.notes}
+The conditional probabilities multiply by the chain rule, not because words are independent. This is different from interpreting an MLM sum as the full sentence likelihood. The decoder learns a distribution at every next-token position. Compare loss values only when targets, tokenization and evaluation conventions match; this number cannot rank the causal model against the earlier MLM example.
+:::
+
+## Encoder–decoder: read a damaged text, write its gaps {#seq2seq-recipe .s3-slide}
+
+<div class="s3-dual"><div><span class="lab-label">ENCODER INPUT</span><p>the <b>〈S0〉</b> sat on the <b>〈S1〉</b></p><div class="s3-model">Bidirectional encoder</div><p class="s3-caption">All corrupted source positions<br>become accessible memory.</p></div><div><span class="lab-label">DECODER TARGET</span><p><b>〈S0〉</b> cat <b>〈S1〉</b> mat <b>〈S2〉</b> 〈eos〉</p><div class="s3-model s3-causal">Causal decoder</div><p class="s3-caption">Reads source memory through cross-attention<br>and only earlier target tokens.</p></div></div>
+<div class="s3-focus"><span>WHEN PREDICTING “mat”</span><strong>Source memory + 〈start〉 〈S0〉 cat 〈S1〉</strong><p>“mat” and later target tokens remain hidden from this prediction.</p></div>
+<p class="s1-takeaway">One sentinel replaces a whole span. The output contains the missing spans and their boundaries.</p>
+<p class="s1-source"><a href="https://www.jmlr.org/papers/volume21/20-074/20-074.pdf">Raffel et al., T5, Figure 2 and §3.3</a> · one-word spans here; a multiword gap would still use one sentinel.</p>
+
+::: {.notes}
+The source is the same six-word sentence. For a quick verbal extension, dropping “cat sat” would replace those two words with S0 and put both words after S0 in the target. Sentinels preserve which gap is being reconstructed. They are distinct special tokens, not a repeated MASK. Our teaching start is generic; real T5 uses its configured decoder start token. Source EOS is omitted in this schematic and toy model. T5's final selected recipe uses a 15% corruption rate and mean span length 3; this handpicked two-out-of-six illustration is not a sample matching those statistics. No translation labels are needed to construct this pretraining pair.
+:::
+
+## Two inputs, one conditional generation loss {#seq2seq-loss .s3-slide}
+
+<div class="s2-source-sentence"><span>FIXED ENCODER INPUT · x̃</span>the 〈S0〉 sat on the 〈S1〉</div>
+<table class="s3-alignment"><tbody><tr><th>Decoder input</th><td>〈start〉</td><td>〈S0〉</td><td>cat</td><td>〈S1〉</td><td>mat</td><td>〈S2〉</td></tr><tr><th>Target y</th><td>〈S0〉</td><td>cat</td><td>〈S1〉</td><td>mat</td><td>〈S2〉</td><td>〈eos〉</td></tr></tbody></table>
+<div class="s3-equation">
+
+$$\mathcal L_{\rm seq2seq}=-\frac1{|y|}\sum_{t=1}^{|y|}\log p_\theta(y_t\mid y_{<t},\widetilde x)$$
+
+</div>
+<div class="s3-dual s3-explain"><div><b>Six scored decoder positions</b><p>Sentinels and the end token are targets too. The encoder has no separate token-prediction loss here.</p></div><div><b>Both stacks learn</b><p>The loss reaches the encoder through the decoder’s cross-attention to source memory.</p></div></div>
+<p class="s1-source">Conditional cross-entropy for the exact teaching pair · padding would be excluded from the mean.</p>
+
+::: {.notes}
+Align each output with the shifted decoder input. The last input sentinel predicts EOS, while S2 itself is predicted at the preceding column. Full source access does not reveal the missing original words. Training uses gold previous targets; generation must use the model's emitted previous tokens. The encoder is trained jointly even without an independent prediction head. The word-tokenized toy later uses six loss terms, of which only two are ordinary content words.
+:::
+
+## Inspect who can read whom {#visibility-lab .s3-slide .s1-slide}
+
+<div class="lab-toolbar"><button data-visibility="encoder" aria-pressed="true">Encoder</button><button data-visibility="decoder" aria-pressed="false">Decoder</button><button data-visibility="seq2seq" aria-pressed="false">Encoder–decoder</button></div>
+<div class="s3-visibility"><div id="visibility-matrix"></div><div><span class="lab-label">SELECT A QUERY ROW</span><p id="visibility-query" aria-live="polite"></p><div id="visibility-detail"></div></div></div>
+<p class="s1-takeaway">Colored = permitted connection; × = blocked. These are masks, not learned attention weights.</p>
+<p class="s1-source">Exact schematic masks for our six-position teaching inputs · columns are keys; rows are queries. All source positions are unpadded.</p>
+
+::: {.notes}
+Choose a family, then a row. Encoder mode shows full input self-attention. Decoder mode shows lower-triangular self-attention on the shifted input. Encoder–decoder mode shows the decoder's causal self-attention; the adjacent explanation shows its additional full cross-attention access to the encoded source. The encoder's own mask remains bidirectional as in encoder mode. Select row 3 in decoder mode: input cat predicts sat, and the input sat at column 4 is inaccessible. Select row 4 in encoder–decoder mode: input S1 predicts mat. Thus a target present elsewhere in the batch is not necessarily visible to a given prediction. The widget changes only which recipe/row is inspected, not any learned weights.
+:::
+
+## One real optimizer step for each recipe {#family-training-step .s3-slide .s1-slide}
+
+<div class="lab-toolbar"><button data-step-family="encoder" aria-pressed="true">Encoder</button><button data-step-family="decoder" aria-pressed="false">Decoder</button><button data-step-family="seq2seq" aria-pressed="false">Encoder–decoder</button><span>Separate tiny random models · recorded CPU runs</span></div>
+<div class="s3-step-layout"><div><span class="lab-label">p(OBSERVED TARGET) · SAME EXAMPLE</span><table class="s3-step-table"><thead><tr><th>Target</th><th>Before</th><th>After</th></tr></thead><tbody id="step-rows"></tbody></table></div><div class="s3-step-result"><span class="lab-label">MEAN LOSS · NATS</span><strong id="step-loss">Loading…</strong><p id="step-count"></p><div class="s3-step-rule">forward → loss → backward → SGD</div><p id="step-updated"></p></div></div>
+<p class="s1-takeaway">Different target construction; the same gradient-based learning loop.</p>
+<p class="s1-source">Measured teaching runs, not BERT/GPT/T5 checkpoints · width 24, 2 heads, one layer per stack, 11-token vocabulary, dropout 0, seed 351, SGD learning rate 0.05. One example, one update; no held-out evaluation. <a href="assets/build_section3.py">Script</a> · <a href="assets/evidence/section3.json">Full record</a>.</p>
+
+::: {.notes}
+These are real recorded forward/backward updates from the existing PyTorch builder, not invented probabilities or inference on pretrained checkpoints. Each family starts from its own seeded random model. We re-evaluate the same training example after one SGD step. The record retains all selected target probabilities and parameter update norms. Switching tabs compares mechanisms, not architecture quality: models have different parameter counts, contexts and target events. Falling training loss is no evidence of generalization. No promise that every target probability improves on every optimizer step. The encoder experiment trains MLM only. Decoder-only uses a TransformerEncoder implementation with a causal mask, which provides the required decoder-only self-attention structure; seq2seq adds a TransformerDecoder with cross-attention. Production recipes differ in normalization, vocabulary, scale and optimization.
+:::
+
+## Parallel training; sequential generation {#training-generation .s3-slide}
+
+<div class="s3-dual s3-explain"><div><span class="lab-label">TRAINING · GOLD PREFIXES</span><div class="s3-model">the → cat<br>the cat → sat<br>the cat sat → on</div><p>Targets already exist in the corpus.<br>Score these positions together; then update weights.</p></div><div><span class="lab-label">GENERATION · EMITTED PREFIXES</span><div class="s3-model s3-causal">the → cat<br>the cat → sleeps<br>the cat sleeps → …</div><p>Append a predicted token, then predict again.<br>Weights stay fixed during decoding.</p></div></div>
+<p class="s1-takeaway">A causal mask makes parallel training compatible with left-to-right generation.</p>
+<p class="s1-source">Schematic continuation, not recorded output. For encoder–decoder generation, source memory stays available at every decoding step.</p>
+
+::: {.notes}
+The model need not reproduce the source: sleeps is an illustrative possible emitted token. Teacher forcing feeds the observed prefix during training; normal autoregressive generation feeds earlier outputs. A decoder-only prompt occupies the same stream as its continuation. An encoder–decoder uses a separate source stream plus the causal output stream. Neither decoding process normally performs an optimizer step. Specialized masked-model generation exists, so avoid saying encoders can never generate. Keep in-context learning and post-training details for the planned later parts.
+:::
+
+## The recipe prepares a model. Who supplies the next labels? {#families-transfer-bridge .s3-slide}
+
+<table class="s3-summary"><thead><tr><th>Family</th><th>Pretraining signal</th><th>Typical use after adaptation</th></tr></thead><tbody><tr><th>Encoder</th><td>Selected tokens from both-side context</td><td>Classification, sentence pairs, extractive QA</td></tr><tr><th>Decoder</th><td>Next tokens from prefixes</td><td>Continuation and prompted generation</td></tr><tr><th>Encoder–decoder</th><td>Missing spans from source + output prefix</td><td>Text-to-text tasks: summarization, translation</td></tr></tbody></table>
+<div class="s3-transfer"><div><span>RAW TEXT</span><b>constructed targets</b></div><i>→</i><div class="s3-transfer-model"><span>PRETRAINED</span><b>contextual model</b></div><i>→</i><div><span>NEW TASK</span><b>“I loved it.” → positive</b></div></div>
+<p class="bridge-question">How do we turn BERT’s reader into a sentiment classifier?</p>
+<p class="s1-source">Typical matches, not exclusive abilities · next: task heads, labeled examples, and fine-tuning.</p>
+
+::: {.notes}
+Synthesize the three decisions: input construction, allowed context, and scored targets. The original GPT work also fine-tuned for classification; T5 can generate class labels; encoders support many heads. The table is not a capability boundary. Now the target positive is a task label rather than a word automatically withheld from this sentence. Trace the visual from raw text through a reusable model to the new labeled task. Ask which parameters should change, without teaching the heads yet. Continue to Section 4 for task heads and supervised fine-tuning.
+:::
+
+## Pretrain once, adapt to tasks {#transfer-tasks .part-opening data-background-color="#17364a"}
+
+<p class="part-count">PART 04 / 06</p>
+<div class="part-progress s4-progress" aria-label="Section 4 of 6"><i></i><i></i><i></i><i></i><i></i><i></i></div>
+<div class="part-sentence"><span>i loved this movie</span><span class="part-target">positive</span></div>
+<p class="part-question">Keep the reader.<br>Teach it a new decision.</p>
+<p class="part-subline">Sentiment → sentence pairs → answer spans</p>
+
+::: {.notes}
+This section answers the previous bridge: how does BERT's contextual reader become a useful task model? Keep the review sentence visible across the next five slides. Students have seen input tokens, contextual states and token-prediction losses; now change the target and attach a task head. A head is a small trainable mapping from hidden states to the outputs required by a task. We will distinguish where parameters came from from which parameters are updated. Stop after this section's visual bridge for instructor review; do not develop the next section yet.
+:::
+
+## Same sentence. A different source of supervision. {#transfer-labels .s4-slide}
+
+<div class="s4-source-text">i loved this movie</div>
+<div class="s4-label-comparison">
+<div><span class="lab-label">PRETRAINING · TARGET FROM THE TEXT</span><div class="s4-example-line">i loved this <b>[MASK]</b></div><div class="s4-label-arrow">↓ recover the source token</div><strong class="s4-answer">movie</strong><p>The observed sentence already supplies the answer.</p></div>
+<div><span class="lab-label">FINE-TUNING · TARGET FROM ANNOTATION</span><div class="s4-example-line">i loved this movie</div><div class="s4-label-arrow">↓ classify the review</div><strong class="s4-answer">positive</strong><p>A task annotation supplies a label for the whole sentence.</p></div>
+</div>
+<div class="s4-reuse-strip"><b>Reuse</b><span>tokenizer + embeddings + Transformer layers</span><b>Add</b><span>a new task-specific head</span></div>
+<p class="s1-takeaway">The sentiment label is not a masked vocabulary token.</p>
+<p class="s1-source">Authored example · supervised adaptation, as in BERT §3.2. We focus on sentiment classification; fine-tuning need not always use human labels.</p>
+
+::: {.notes}
+Ask where “movie” came from and where “positive” came from. In this supervised sentiment setup the task label is supplied by a labeled dataset; it is not recovered by withholding a word in this sentence. Even if “positive” happens to occur in the tokenizer vocabulary, here it names a class index in a new two-output classifier. The original MLM/NSP heads are not needed for this classifier. The tokenizer stays fixed. The word embeddings and contextual layers are loaded from a pretrained checkpoint. Each new downstream task ordinarily starts from its own copy of that checkpoint and adds its own head; this is not sequentially overwriting one model with three tasks. Our tiny worked examples are authored, not SST-2 examples.
+:::
+
+## Sentiment: read one state, predict one label {#sentiment-head .s4-slide}
+
+<p class="s1-lead">Every token can inform <b>[CLS]</b>. The new head reads its final contextual state.</p>
+
+{{< include assets/section4-diagrams/sentiment.html >}}
+
+<div class="s4-equation">
+
+$$h_{\rm CLS}=\operatorname{BERT}_{\theta}(x)_{\rm CLS},\qquad
+z=Wh_{\rm CLS}+b,\qquad p=\operatorname{softmax}(z)$$
+
+</div>
+<p class="s1-takeaway">The encoder builds the representation; the head converts it into task scores.</p>
+<p class="s1-source"><a href="https://aclanthology.org/N19-1423.pdf#page=5">BERT §4.1 and Appendix A.5</a> · original schematic; edges indicate permitted attention, not measured weights.</p>
+
+::: {.notes}
+Trace bottom to top. The visible token strings are a teaching sequence, not a claim about exact production tokenization. Embeddings enter bidirectional Transformer layers. All supplied tokens can affect the final CLS vector. The diagram shows one representative mixing stage, not BERT's full depth. The highlighted lines focus on CLS, but all other contextual states are also computed. CLS is a learned input symbol at position zero; its final representation is context-dependent, not a fixed sentence embedding and not an arithmetic mean. Supervised training makes the classifier use this state for sentiment.
+
+W and b are newly initialized task parameters. For two classes, W has two rows and as many columns as the hidden-state dimension; b has two entries. The vector z contains scores, not probabilities. Softmax turns the scores into probabilities over the two classes. We use a direct linear head on final CLS for this lesson and the recorded comparison; implementations may use a pretrained pooler or dropout before the head. A pretrained encoder with a random sentiment head is not already a trained sentiment classifier. No measured sentiment probabilities are shown here.
+:::
+
+## From a hidden state to a training loss {#sentiment-pause .s4-slide}
+
+<div class="s4-source-text">i loved this movie <span>gold label: <b>positive</b></span></div>
+<div class="s4-givens">
+<div><span class="lab-label">ILLUSTRATIVE TWO-DIMENSIONAL STATE</span>
+
+$$h_{\rm CLS}=\begin{bmatrix}1\\2\end{bmatrix}$$
+
+</div>
+<div><span class="lab-label">ROWS: NEGATIVE, POSITIVE</span>
+
+$$W=\begin{bmatrix}1&0\\0&1\end{bmatrix},\qquad b=\begin{bmatrix}0\\0\end{bmatrix}$$
+
+</div>
+</div>
+<div class="s1-pause"><strong>PAUSE</strong><span>60 seconds</span><p>Compute the two scores z = Wh + b.<br>Then compute p(positive) and the loss −ln p(positive).</p></div>
+<p class="s4-math-hint">Use softmax: p(k) = exp(zₖ) / Σⱼ exp(zⱼ).<br>Given: e¹ ≈ 2.718, e² ≈ 7.389; a calculator is allowed.</p>
+<p class="s1-source">Illustrative numbers, not BERT outputs. A two-coordinate state replaces the real hidden width solely for this calculation.</p>
+
+::: {.notes}
+This is Section 4's first numerical exercise: keep the givens and task visible and reveal no computed scores or probabilities until the next slide. Establish the class order first: negative is row zero, positive is row one. Students should distinguish hidden-state coordinates from class scores and class probabilities. The head's weight rows happen to select the two coordinates in this toy construction; real weights are learned mixtures. The use of a positive label does not mean the positive probability must already be one. The loss measures the mismatch with the annotated class.
+:::
+
+## The annotation selects the probability to reward {#sentiment-solution .s4-slide}
+
+<div class="s4-source-text">Same givens: h = [1, 2]ᵀ · W = I · b = 0 · label = positive</div>
+<div class="s4-calculation">
+<div><span class="lab-label">1 · LINEAR HEAD</span><strong>z = [1, 2]ᵀ</strong><p>negative score = 1<br>positive score = 2</p></div>
+<div><span class="lab-label">2 · SOFTMAX</span><strong>p(positive) ≈ 0.731</strong><p>7.389 / (2.718 + 7.389)<br>p(negative) ≈ 0.269</p></div>
+</div>
+<div class="s4-loss-display">−ln(0.731) ≈ <b>0.313 nats</b></div>
+<div class="s4-equation">
+
+$$\mathcal L(x,y)=-\log\!\left[\operatorname{softmax}\!\left(W\operatorname{BERT}_{\theta}(x)_{\rm CLS}+b\right)\right]_y$$
+
+</div>
+<p class="s1-takeaway">The loss depends on the new head <b>and</b> the pretrained encoder θ.</p>
+<p class="s1-source">Worked solution to the preceding illustrative example · natural logarithm · one labeled training example.</p>
+
+::: {.notes}
+Compute the scores before the probabilities. The model already favors the correct class, but cross-entropy is still positive because the correct class has probability below one. The loss uses the positive entry because the gold class is positive; it does not choose the currently predicted class as its own target. Trace the nested equation from x to the encoder, then the head, softmax and selected label. Both the head and encoder influence the final scalar, so backpropagation can reach both. Smaller loss on a training example is not proof of improved held-out performance. Next we explicitly decide which parameters the optimizer may change.
+:::
+
+## Fine-tuning changes the reader as well as the head {#finetuning-updates .s4-slide .s1-slide}
+
+<div class="lab-toolbar"><button data-s4-mode="full" aria-pressed="true">Full fine-tuning</button><button data-s4-mode="frozen" aria-pressed="false">Frozen features</button><span>Same architecture and labels.<br>Change which parameters may update.</span></div>
+<div id="s4-update-graph" class="s4-update-graph" data-mode="full">
+<div class="s4-update-input">tokens<br><small>fixed tokenizer</small></div><i>→</i>
+<div class="s4-update-backbone"><span class="lab-label">LOADED FROM PRETRAINING</span><b>Embeddings +<br>Transformer layers θ</b><span id="s4-backbone-status" class="s4-update-status">UPDATED</span></div><i>→</i>
+<div class="s4-update-head"><span class="lab-label">NEW PARAMETERS</span><b>Task head<br>W, b</b><span class="s4-update-status">UPDATED</span></div><i>→</i>
+<div class="s4-update-loss">prediction<br>+ gold label<br><b>→ loss</b></div>
+<div class="s4-gradient-to-head">← gradient to head</div><div class="s4-gradient-to-backbone" id="s4-backbone-gradient">← gradient continues into the encoder</div>
+</div>
+<div class="s4-equation" id="s4-update-rule">Update θ, W and b using the task loss.</div>
+<p class="s1-takeaway" id="s4-update-takeaway">Pretrained describes the starting values—not a rule that those values must stay fixed.</p>
+<p class="s1-source">Schematic optimizer paths · full fine-tuning is the BERT paper’s main setup; frozen features are a distinct alternative (§5.3).</p>
+
+::: {.notes}
+Click full fine-tuning and trace the loss backward through the head into the encoder and its embedding table. All three parameter groups are eligible to update; this does not mean every scalar changes on every step (unused embedding rows may have zero gradients). The tokenizer is a fixed preprocessing rule, not optimized here. SGD would subtract learning rate times gradient; practical optimizers such as AdamW transform gradients differently but still update permitted parameters.
+
+Switch to frozen features. The encoder still performs its full forward computation and produces contextual vectors. Its parameters do not receive optimizer updates; only the new task head learns. Freezing is not removing layers or using static word embeddings. At evaluation on a fixed example, a frozen encoder's representation is unchanged, while full fine-tuning can change that representation. Training may disable dropout for feature extraction; eval mode alone is not parameter freezing. No real optimizer runs in this browser control. The recorded experiment later uses full fine-tuning in both initialization conditions.
+:::
+
+## Sentence pairs: one reader sees both texts {#sentence-pair-head .s4-slide}
+
+<div class="s4-pair-example"><div><b>A</b> A cat sleeps.</div><div><b>B</b> An animal is sleeping.</div><span>Target: <strong>entailment</strong></span></div>
+
+{{< include assets/section4-diagrams/pair.html >}}
+
+<div class="s4-pair-rule"><span><b>Input</b> [CLS] A [SEP] B [SEP]</span><span><b>Readout</b> final h[CLS] → class scores</span></div>
+<p class="s1-takeaway">The same contextual machinery can learn a relation between two sentences.</p>
+<p class="s1-source">Authored entailment example · schematic A/B token groups · <a href="https://aclanthology.org/N19-1423.pdf#page=15">BERT Appendix A.5, Figure 4</a>.</p>
+
+::: {.notes}
+Read the two actual sentences first. Entailment is directional: if A is true, must B be true? A sleeping cat is a sleeping animal, so this authored pair is entailment. In an MNLI-style setup the head has three outputs: entailment, contradiction, neutral. A paraphrase task would instead use its own two-class head and labels, not reuse these three labels unchanged.
+
+A1/A2 and B1/B2 stand for illustrative token groups rather than exact WordPieces; the full text remains visible above. SEP marks boundaries, and BERT also adds segment-A/B embeddings to identify the two parts. Bidirectional attention is still allowed across the boundary; it is not two independent encoders and not a blocked attention matrix. CLS can incorporate interactions between both sentences. Position embeddings and intermediate feed-forward/residual operations are omitted. Full fine-tuning updates a task-specific copy of the encoder and this new head using labeled pairs. This is a new supervised task, not the old next-sentence prediction head and not a test of whether B follows A in the corpus.
+:::
+
+## Extractive QA: read every passage state {#qa-heads .s4-slide}
+
+<div class="s4-question"><b>QUESTION</b> Where does Lina study?<span><b>PASSAGE</b> Lina studies at <strong>New York University</strong>.</span></div>
+
+{{< include assets/section4-diagrams/qa.html >}}
+
+<p class="s1-takeaway">Classification reads one state. Extractive QA scores possible answer boundaries.</p>
+<p class="s1-source">Authored answerable example, word positions numbered 0–6 within the passage · <a href="https://aclanthology.org/N19-1423.pdf#page=6">BERT §4.2</a>. The full input is [CLS] question [SEP] passage [SEP].</p>
+
+::: {.notes}
+Start with the question and passage. The answer already occurs as a contiguous span of the passage. Unlike generated QA, this interface returns a substring rather than composing a new sentence. Feed question and passage jointly into the encoder, just as for sentence pairs. Every passage vector can depend on the question and the rest of the passage. The diagram shows passage states only; question and special-token states are also computed.
+
+Two new learned vectors, one for start and one for end, score every passage state. Each vector is shared across positions; we are not allocating separate learned weights for each token index. Normalize start scores over allowed passage positions, and separately normalize end scores. There are two distributions over locations, not vocabulary. Word positions are explicitly simplified here: actual implementations use subword positions and map the selected span back to character offsets. We treat this as answerable extractive QA, like SQuAD 1.1; detecting no-answer cases requires additional handling and is not silently assumed. Start and end labels are annotated boundaries, not labels obtained by masking the text.
+:::
+
+## Two position distributions select one answer span {#qa-span .s4-slide}
+
+<div class="s4-question"><b>QUESTION</b> Where does Lina study?</div>
+<table class="s4-span-table"><thead><tr><th>Position</th><th>0</th><th>1</th><th>2</th><th>3</th><th>4</th><th>5</th><th>6</th></tr></thead><tbody><tr><th>Token</th><td>Lina</td><td>studies</td><td>at</td><td class="s4-span-gold">New</td><td class="s4-span-gold">York</td><td class="s4-span-gold">University</td><td>.</td></tr><tr><th>Start score</th><td>−2</td><td>−2</td><td>−2</td><td class="s4-span-start">3</td><td>0</td><td>−1</td><td>−2</td></tr><tr><th>End score</th><td>−2</td><td>−2</td><td>−2</td><td>−1</td><td>0</td><td class="s4-span-end">3</td><td>−2</td></tr></tbody></table>
+<div class="s4-span-result"><span>start = 3 → end = 5</span><strong>New York University</strong></div>
+<div class="s4-equation">
+
+$$p_s=\operatorname{softmax}(s),\quad p_e=\operatorname{softmax}(e),\qquad
+\mathcal L_{\rm QA}=-\log p_s(3)-\log p_e(5)$$
+
+</div>
+<p class="s4-decode-rule">Choose the highest-scoring valid span: maximize sᵢ + eⱼ with i ≤ j.</p>
+<p class="s1-source">Illustrative logits, not measured BERT outputs · sᵢ = wₛᵀhᵢ and eᵢ = wₑᵀhᵢ · answerable passage only.</p>
+
+::: {.notes}
+The table is a controlled numerical illustration; it is not the result of a trained QA checkpoint. Read the two rows as unnormalized scores. Their softmax denominators range over the seven passage positions in this example. The highest start score is at New and the highest end score at University, yielding an ordered span. The middle word York belongs to the answer even though it is not a boundary. In general, independently choosing the two largest entries can produce an end before the start, so decoding maximizes the joint score over valid pairs. A maximum answer length may also be imposed in implementations.
+
+The displayed loss is the sum of two negative log probabilities; averaging instead changes only the constant scale. Each probability uses the same question-conditioned contextual states. Full fine-tuning propagates this boundary supervision through both heads and the encoder. No new numerical exercise is requested on this slide; the purpose is to locate where supervision lands. Do not imply that start and end probabilities directly form a normalized distribution over all valid spans without an additional normalization.
+:::
+
+## Does the pretrained starting point help? {#transfer-control .s4-slide}
+
+<p class="s1-lead">Change the encoder’s initialization. Hold the downstream experiment fixed.</p>
+<div class="s4-control-branches"><div><span class="lab-label">BRANCH A</span><b>Pretrained BERT-tiny</b><span>+ new sentiment head</span></div><strong>vs.</strong><div><span class="lab-label">BRANCH B</span><b>Same architecture, random weights</b><span>+ identically initialized sentiment head</span></div></div>
+<div class="s4-protocol-grid"><div><b>Same data</b><span>256 labeled SST-2 training examples<br>128 held-out validation examples</span></div><div><b>Same training budget</b><span>80 AdamW steps · batch 16<br>All encoder + head parameters trainable</span></div><div><b>Paired runs</b><span>Seeds 351, 352, 353<br>Same minibatch order within each pair</span></div><div><b>Fixed reporting rule</b><span>Evaluate step 80 for every run<br>No selection of a “best” checkpoint</span></div></div>
+<p class="s1-takeaway">Equal fine-tuning budgets do not include the earlier cost of pretraining.</p>
+<p class="s1-source">Recorded CPU classroom experiment · 2 layers, hidden width 128 · AdamW lr 2×10⁻⁴, weight decay .01, dropout 0, max 64 tokens · not a full SST-2 benchmark.</p>
+
+::: {.notes}
+Ask students to predict the direction before revealing the result. This tests a particular initialization choice under a fixed small downstream budget, not whether pretraining always wins. BERT-tiny is the same architecture family used earlier in the lecture, not BERT-base. A fresh direct linear head on final CLS is initialized identically within each seed pair. Both branches have exactly the same architecture, tokenizer, parameter count, dropout policy, optimizer, minibatches and training steps. Only encoder initialization changes. The model's pooler is omitted in both branches.
+
+We use class-balanced samples drawn deterministically: 128 training examples per class and 64 original validation examples per class. Exact normalized text overlaps with the selected validation set are removed from the training pool before sampling. This does not rule out related phrases or original pretraining overlap. Original validation labels are held out from updates and no hyperparameters or checkpoint were selected on these results. The experiment uses one learning rate and one budget rather than separately tuning each branch. At 80 steps, 1,280 minibatch examples have been processed, reusing the same 256 labels over five passes. Three seeds are not enough for a broad significance claim. Record all outputs, including failures. Sources: pinned prajjwal1/bert-tiny and stanfordnlp/sst2; exact revisions and sample IDs are in the evidence JSON and builder.
+:::
+
+## A head start is useful—but not a guarantee {#transfer-results .s4-slide .s1-slide}
+
+<div class="lab-toolbar"><button data-s4-run="mean" aria-pressed="true">Mean of 3 seeds</button><button data-s4-run="351" aria-pressed="false">Seed 351</button><button data-s4-run="352" aria-pressed="false">Seed 352</button><button data-s4-run="353" aria-pressed="false">Seed 353</button><span>Recorded held-out accuracy<br>Same 128 examples at every checkpoint</span></div>
+<div class="s4-evidence-layout"><div><svg id="s4-learning-chart" viewBox="0 0 760 370" role="img" aria-label="Held-out accuracy versus fine-tuning steps"> </svg><div class="s4-chart-key"><span>━ pretrained encoder</span><span>┄ random encoder</span></div></div><div class="s4-evidence-summary"><span class="lab-label">AT STEP 80</span><strong id="s4-result-pretrained">Loading recorded evidence…</strong><p id="s4-result-random"></p><p id="s4-result-gap"></p><p id="s4-result-caveat"></p></div></div>
+<table class="s4-seed-table"><thead><tr><th>Final correct / 128</th><th>Seed 351</th><th>Seed 352</th><th>Seed 353</th></tr></thead><tbody><tr><th>Pretrained</th><td>84</td><td>76</td><td>83</td></tr><tr><th>Random</th><td>74</td><td>74</td><td>84</td></tr></tbody></table>
+<p class="s1-source">Actual recorded runs · balanced SST-2 subsets, 80 CPU updates · three seeds, one fixed budget, no tuning. Lines connect recorded checkpoints; they are not continuous measurements. Seed 353 favors random initialization at the final step.</p>
+
+::: {.notes}
+All six runs are retained. The mean final accuracies are 63.28% for pretrained and 60.42% for random: a difference of 2.86 percentage points on this selected subset. These are averages over runs, not a count of 384 distinct held-out examples. The same 128 examples are reused for every seed. Seed 353 slightly reverses the final comparison, so do not narrate the chart as universal dominance or proof of statistically significant improvement. The dashed 50% line is the balanced-label baseline, not an estimate of every random classifier's exact realized accuracy. At step zero, both conditions have a new random head.
+
+The early and late comparisons differ: training dynamics matter. Accuracy and cross-entropy need not improve together; the saved evidence includes losses, and several runs become more confidently wrong on some held-out examples. The modest scores are intentionally retained; we did not rerun a hyperparameter search to obtain a prettier pretraining story. More data, better hyperparameters and repeated evaluation are needed for stronger conclusions. Clicking seed buttons switches recorded data only; the browser does not train. If evidence fails to load, controls are disabled and an explicit error appears. Use the historical results next to establish real downstream applicability, not to substitute for this controlled experiment or claim causal identification from model rankings.
+:::
+
+## One pretrained architecture, several evaluated tasks {#transfer-published .s4-slide}
+
+<p class="s1-lead">Historical BERT results after task-specific fine-tuning—not current rankings.</p>
+<table class="s4-benchmark"><thead><tr><th>Model</th><th>Sentiment<br><small>SST-2 · test accuracy</small></th><th>Paraphrase<br><small>MRPC · test F1</small></th><th>Extractive QA<br><small>SQuAD 1.1 · dev token F1</small></th></tr></thead><tbody><tr><th>BERT-base</th><td>93.5</td><td>88.9</td><td>88.5</td></tr><tr><th>BERT-large</th><td>94.9</td><td>89.3</td><td>90.9</td></tr></tbody></table>
+<div class="s4-evidence-reading"><b>What this supports</b><p>The pretrained encoder architecture can be adapted to whole-sentence, sentence-pair, and answer-span tasks.</p></div>
+<div class="s4-evidence-reading"><b>What it does not isolate</b><p>These rows compare model sizes—not pretrained versus random initialization. Metrics and splits differ across columns.</p></div>
+<p class="s1-source"><a href="https://aclanthology.org/N19-1423.pdf#page=6">Devlin et al., 2019, Table 1</a> (SST-2, MRPC; single-task models) and <a href="https://aclanthology.org/N19-1423.pdf#page=7">Table 2</a> (SQuAD 1.1; single models, no additional TriviaQA fine-tuning). All values are percentages.</p>
+
+::: {.notes}
+State the evaluation setting before reading the values. Sentiment uses accuracy, while MRPC uses positive-class F1 and SQuAD uses token-overlap F1. The first two columns are GLUE evaluation-server test results; the last is the SQuAD 1.1 development result for the single models without extra TriviaQA fine-tuning. Do not average these three columns or say 93.5 is better than 88.5 across tasks. BERT-base and BERT-large differ in capacity; this table is not a controlled estimate of the effect of pretraining. It documents that the same architecture family supports the different interfaces just introduced. Each task has a separate fine-tuned model initialized from the corresponding pretrained checkpoint. Historical evaluations are not current leaderboards, and these numbers are not comparable to our BERT-tiny subset experiment.
+:::
+
+## A useful prediction is a starting point for investigation {#transfer-probe-bridge .s4-slide}
+
+<div class="s4-synthesis"><span><b>REUSE</b> pretrained representations</span><span><b>ADAPT</b> head + task supervision</span><span><b>EVALUATE</b> held-out examples</span></div>
+
+{{< include assets/section4-diagrams/bridge.html >}}
+
+<p class="bridge-question">Did the model learn the meaning—or a shortcut that happens to predict the label?</p>
+<p class="s1-source">Schematic interventions; question marks are not measured outputs. Next: controlled context changes, typos, and evidence about learned representations.</p>
+
+::: {.notes}
+Synthesize the section in three steps: initialize from a pretrained reader, adapt an appropriate output head with a declared task loss, and evaluate on held-out data. For sentence and sentence-pair classification read CLS; for extractive QA score passage positions. Full fine-tuning updates the encoder as well as the head. A positive average result in a small comparison is not a guarantee for every seed or task.
+
+Now fix the trained model. Contrast loved with hated, then the typo lovde. The moving dots follow input-to-model-to-output paths; they communicate that we rerun one fixed function on altered inputs rather than performing more training. No predictions are supplied here. Ask which changes should affect sentiment and which should preserve it. Accurate classification alone cannot establish what evidence the model relied on. This creates the need for the next section without presenting its experiments or conclusions. Animation runs only while this slide is active and respects reduced-motion preference. Continue into controlled tests in Section 5.
+:::
+
+
+## What did the model learn? {#learned-properties .s5-slide}
+
+```{=html}
+<p class="lecture-kicker">SECTION 5 · FROM SCORES TO EVIDENCE</p>
+```
+```{=html}
+<p class="s1-lead">Start with one prediction: “i loved this movie” → positive.</p>
+```
+```{=html}
+<div class="s5-flow"><div><b>CHANGE THE INPUT</b><strong>loved → hated</strong><span>Meaning changes.<br>Should the label change?</span></div><i>→</i><div class="s5-model"><b>HOLD WEIGHTS FIXED</b><strong>Same trained model</strong><span>No gradient updates.<br>Run inference again.</span></div><i>→</i><div><b>INSPECT THE OUTPUT</b><strong>Label + probability</strong><span>Does the response match<br>the intended change?</span></div></div>
+```
+```{=html}
+<div class="s5-two"><div><b>Contrast</b><p>“loved” → “hated” should change sentiment.</p></div><div><b>Invariance</b><p>“loved” → “lovde” should preserve the intended sentiment.</p></div></div>
+```
+```{=html}
+<p class="s1-takeaway">A diagnostic asks a narrow question. One success does not establish general understanding.</p>
+```
+
+::: {.notes}
+Bring back the last slide of Section 4. Students have seen the model's aggregate held-out accuracy, but this hides which distinctions it makes. Ask them for the intended labels before showing the next slide. Here “lovde” is an authored typo for “loved,” not a newly defined word. Fixing the weights means that any change in the output comes from the changed input and its tokenization, not further training. We also keep the tokenizer, inference settings and decision rule fixed.
+
+These are behavioral diagnostics: we observe outputs under controlled changes. A representation probe is a different experiment: train a separate predictor to recover an annotation, such as a part-of-speech tag, from saved hidden vectors. Successful recovery would show accessible information, but would not by itself prove that the original model uses that information for its task. We focus on behavior here because students can inspect the input and output directly. A single failure can refute a universal claim; a few successes cannot establish one. Larger, systematically constructed test sets are needed.
+:::
+
+## One model, four controlled inputs {#learned-sentiment .s5-slide}
+
+```{=html}
+<div class="lab-toolbar"><button data-s5-case="0" aria-pressed="true">Original</button><button data-s5-case="1" aria-pressed="false">Meaning change</button><button data-s5-case="2" aria-pressed="false">Typo</button><button data-s5-case="3" aria-pressed="false">Negation</button><span>Section 4 model · seed 351 · step 80</span></div>
+```
+```{=html}
+<div class="s5-inspector" aria-live="polite"><div class="s5-input"><span class="lab-label">INPUT</span><strong id="s5-sentence">Loading recorded evidence…</strong><div id="s5-tokens" class="s5-tokens"></div><p>Actual WordPiece tokens · [CLS] and [SEP] omitted</p></div><div class="s5-output"><span class="lab-label">SAME ENCODER + SENTIMENT HEAD</span><strong id="s5-probability"></strong><div class="s5-meter"><div id="s5-fill"></div></div><p id="s5-prediction"></p><p id="s5-expected"></p></div></div>
+```
+```{=html}
+<p id="s5-observation" class="s1-takeaway"></p>
+```
+```{=html}
+<p class="s1-source">Recorded CPU inference, no updates · positive when p(positive) ≥ .5 · all four predeclared examples retained · <a href="assets/evidence/section5.json">exact tokens, probabilities and provenance</a>.</p>
+```
+
+::: {.notes}
+Use the buttons in order. The reconstructed pretrained branch from Section 4 was checked against its saved held-out probability vector before these tests. The new inputs were not used for updates. Original p(positive) is .9253. Changing loved to hated decreases it to .7695, but the predicted class remains positive: sensitivity exists without a correct decision. The typo gives .6074, preserving the positive label with a substantially smaller margin. Negation gives .1621, correctly yielding negative on this example. Do not replace the failure with a nicer example.
+
+The typo changes one token into lo, ##vd, ##e; these are actual vocabulary pieces, not invented segmentation. The ## marker indicates continuation within a word. There is no unknown token, but representability is not the same as robust interpretation. These four results do not estimate population accuracy. Model probabilities are normalized scores; without calibration evidence, .9253 is not a verified 92.53% chance that the prediction is correct. The browser switches recorded results and does not run training. A missing evidence file is shown explicitly.
+:::
+
+## PAUSE: unchanged is not necessarily correct {#robustness-pause .s5-slide}
+
+```{=html}
+<p class="s1-lead">Illustrative four-example test set. Each typo preserves the intended sentiment.</p>
+```
+```{=html}
+<table class="s5-table"><thead><tr><th>Example</th><th>Gold label</th><th>Clean prediction</th><th>Typo prediction</th></tr></thead><tbody><tr><td>A</td><td>+</td><td>+</td><td>+</td></tr><tr><td>B</td><td>−</td><td>−</td><td>+</td></tr><tr><td>C</td><td>+</td><td>−</td><td>−</td></tr><tr><td>D</td><td>−</td><td>−</td><td>−</td></tr></tbody></table>
+```
+```{=html}
+<div class="s1-pause"><strong>PAUSE</strong><span>60 seconds</span><p>1. What fraction keeps the same predicted label?<br>2. What fraction is correct after the typo?<br>Use all four rows in both denominators.</p></div>
+```
+```{=html}
+<p class="s1-source">Toy predictions for calculation—not outputs of the recorded model. “Gold” means the intended reference label.</p>
+```
+
+::: {.notes}
+Keep all givens on this slide. Ask students to compare columns 3 and 4 for the first task, and columns 2 and 4 for the second. Do not reveal the counts until the following slide. Label retention is an agreement metric, whereas accuracy needs a reference label. This exercise deliberately includes a stable mistake. The assumption that each perturbation preserves the intended label must be checked when constructing real data; a dropped negation, for example, can change the meaning.
+:::
+
+## Stable predictions can preserve mistakes {#robustness-solution .s5-slide}
+
+```{=html}
+<table class="s5-table"><thead><tr><th>Example</th><th>Gold</th><th>Clean → typo</th><th>Same label?</th><th>Typo correct?</th></tr></thead><tbody><tr><td>A</td><td>+</td><td>+ → +</td><td>Yes</td><td>Yes</td></tr><tr><td>B</td><td>−</td><td>− → +</td><td>No</td><td>No</td></tr><tr class="s5-wrong"><td>C</td><td>+</td><td>− → −</td><td>Yes</td><td>No</td></tr><tr><td>D</td><td>−</td><td>− → −</td><td>Yes</td><td>Yes</td></tr></tbody></table>
+```
+```{=html}
+<div class="s5-two s5-results"><div><b>LABEL RETENTION</b><strong>3 / 4 = 75%</strong><p>A, C, D keep their prediction.</p></div><div><b>ACCURACY AFTER TYPOS</b><strong>2 / 4 = 50%</strong><p>Only A and D match the gold label.</p></div></div>
+```
+```{=html}
+<p class="s1-takeaway">Row C is consistently wrong. Measure correctness as well as stability.</p>
+```
+
+::: {.notes}
+Let y be the gold label, f(x) the clean prediction and f(T(x)) the prediction after a label-preserving transformation. Label retention is the mean of the indicator f(x)=f(T(x)). Noisy accuracy is the mean of f(T(x))=y. The clean accuracy here is 3/4. Stability alone would overlook row C, while noisy accuracy alone would not explain which predictions changed. This small table separates the concepts before we look at a published robustness evaluation. Real tests need many examples, realistic transformations and uncertainty estimates.
+:::
+
+## Syntax: does the subject control the verb? {#learned-syntax .s5-slide}
+
+```{=html}
+<p class="s1-lead">Change only <strong>key → keys</strong>. Keep the nearby plural noun “cabinets.”</p>
+```
+```{=html}
+<svg class="s5-syntax" viewBox="0 0 1320 190" role="img" aria-label="Subject key or keys determines is or are across the intervening phrase to the cabinets. This is the grammatical dependency, not measured attention.">
+<defs><marker id="s5-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0 0L10 5L0 10Z" fill="#0f7881"/></marker></defs>
+<path d="M245 105V38H970V105" fill="none" stroke="#0f7881" stroke-width="4" marker-end="url(#s5-arrow)"/>
+<text x="610" y="27" text-anchor="middle" fill="#0f7881" font-size="25">grammatical agreement · not an attention map</text>
+<g font-size="32" text-anchor="middle" fill="#17364a"><text x="75" y="153">the</text><rect x="145" y="110" width="205" height="66" rx="10" fill="#dfede6"/><text x="247" y="153">key / keys</text><text x="615" y="153">to the cabinets</text><rect x="880" y="110" width="180" height="66" rx="10" fill="#f2dec4"/><text x="970" y="153">[MASK]</text><text x="1180" y="153">here.</text></g></svg>
+```
+```{=html}
+<table class="s5-table"><thead><tr><th>Subject</th><th>Expected agreement</th><th>p(is)</th><th>p(are)</th><th>Top token</th></tr></thead><tbody><tr class="s5-wrong"><td>key</td><td>is</td><td>3.57%</td><td>20.85%</td><td>are</td></tr><tr><td>keys</td><td>are</td><td>2.61%</td><td>20.74%</td><td>are</td></tr></tbody></table>
+```
+```{=html}
+<p class="s1-takeaway">This model prefers “are” in both contexts. The singular case fails the agreement test.</p>
+```
+```{=html}
+<p class="s1-source">Recorded original BERT-tiny MLM checkpoint—not the sentiment model · probabilities over the full vocabulary · no renormalization to is/are.</p>
+```
+
+::: {.notes}
+We now use the original pretrained masked-language-model head, with no sentiment fine-tuning. The model identity changes deliberately because sentiment labels cannot tell us which verb the model prefers. Ask what grammatical number the subject has before inspecting the scores. The arrow expresses the grammatical relation we want to test; it is not extracted model attention and cannot explain the failure causally. Both words are single vocabulary tokens. Other completions have nonzero probability, so the two displayed probabilities do not sum to one. Among is and are, agreement should favor is for key and are for keys; the recorded top vocabulary token is are in both.
+
+This is evidence of one failure, not proof that every syntactic relation is absent from all hidden states. Nor does this pair prove that cabinets causes the error. To test an attraction hypothesis, construct further controlled cases changing cabinets to cabinet, vary nouns and templates, and preserve all results. Do not equate this tiny model with larger BERT checkpoints. The exact token IDs and top five alternatives are saved in section5.json.
+:::
+
+## Context changes associations—not always the answer {#learned-context .s5-slide}
+
+```{=html}
+<div class="s5-two s5-prompts"><div><b>CONTEXT A</b><p>she put <strong>money</strong><br>in the [MASK].</p></div><div><b>CONTEXT B</b><p>she put <strong>water</strong><br>in the [MASK].</p></div></div>
+```
+```{=html}
+<table class="s5-table"><thead><tr><th>Full-vocabulary probability</th><th>Money context</th><th>Water context</th></tr></thead><tbody><tr><th>bank</th><td>0.336%</td><td>0.059%</td></tr><tr><th>glass</th><td>0.069%</td><td>0.294%</td></tr><tr class="s5-wrong"><th>Actual top token</th><td>money · 10.52%</td><td>water · 22.58%</td></tr></tbody></table>
+```
+```{=html}
+<p class="s1-takeaway">The relative preference switches from bank to glass. Neither is the model’s top answer.</p>
+```
+```{=html}
+<p class="s1-source">Recorded pretrained BERT-tiny MLM · bank/glass are plausible illustrative completions, not the only valid answers · no two-candidate normalization.</p>
+```
+
+::: {.notes}
+Read both input sentences before the table. Comparing only bank and glass would produce a pleasing narrative: semantic context changes which candidate is favored. The full distribution exposes a limitation of that narrative: the model ranks a repeated input noun first in both cases. We therefore report both candidate probabilities and the actual top token. A model can encode a useful association while still failing to produce a sensible completion. These are conditional associations, not evidence of grounded world knowledge. Ambiguous bank can also mean a river bank; these two prompts do not establish that the model reliably distinguishes every sense. Testing that claim requires a separately designed set of financial and river contexts. Avoid selecting prompts after observing outputs merely to obtain a desirable result.
+:::
+
+## Factual recall: a score is not a source {#learned-facts .s5-slide}
+
+```{=html}
+<p class="s1-lead">Keep the factual question fixed; change how it is phrased.</p>
+```
+```{=html}
+<table class="s5-table s5-facts"><thead><tr><th>Input</th><th>p(paris)</th><th>Rank of paris</th><th>Top token</th></tr></thead><tbody><tr><td>the capital of france is [MASK].</td><td>0.387%</td><td>29</td><td>france</td></tr><tr><td>france has its capital in [MASK].</td><td>0.913%</td><td>16</td><td>france</td></tr></tbody></table>
+```
+```{=html}
+<div class="s5-flow"><div><b>WHAT WE OBSERVE</b><strong>Prompt sensitivity</strong><span>The expected answer's<br>probability changes.</span></div><i>→</i><div class="s5-model"><b>WHAT IS COMPUTED</b><strong>p(token | context)</strong><span>A learned distribution<br>over vocabulary items.</span></div><i>≠</i><div><b>WHAT IS NOT PROVIDED</b><strong>A verified source</strong><span>No document retrieval<br>or fact check occurs.</span></div></div>
+```
+```{=html}
+<p class="s1-takeaway">Neither prompt succeeds here. Even a correct “paris” would not reveal how it was learned.</p>
+```
+```{=html}
+<p class="s1-source">Recorded original BERT-tiny MLM · expected answer: Paris · rank among the full vocabulary · inference without retrieval.</p>
+```
+
+::: {.notes}
+The objective rewards predicting text, not attaching a verified source to every output. Here the expected answer is known independently, and both top predictions are wrong. Do not claim that all pretrained models fail to recall capitals from this tiny checkpoint. Conversely, a stronger model's correct answer would not by itself distinguish memorizing a sentence, combining evidence from many documents, or applying a learned relation. Establishing training membership requires provenance evidence beyond a completion score. Prompt sensitivity is observable; the historical training pathway is not identified by these two runs.
+:::
+
+## Robustness needs a test distribution {#learned-robustness .s5-slide}
+
+```{=html}
+<p class="s1-lead">Published comparison: fine-tune on clean text → add noise only at evaluation.</p>
+```
+```{=html}
+<div class="s5-noise"><span>Unicode text</span><b>→</b><span>delete / repeat characters</span><b>→</b><span>same entailment task</span></div>
+```
+```{=html}
+<table class="s5-table"><thead><tr><th>XNLI · zero-shot transfer</th><th>mT5-Large</th><th>ByT5-Large</th></tr></thead><tbody><tr><th>Clean accuracy</th><td>81.1%</td><td>79.7%</td></tr><tr><th>Character deletion: change</th><td>−18.3 pp</td><td>−11.4 pp</td></tr><tr><th>Character repetition: change</th><td>−12.3 pp</td><td>−5.9 pp</td></tr></tbody></table>
+```
+```{=html}
+<p class="s1-takeaway">ByT5 loses less accuracy under these corruptions. Its clean accuracy is slightly lower.</p>
+```
+```{=html}
+<p class="s1-source"><a href="https://arxiv.org/pdf/2105.13626#page=8">Xue et al., ByT5, Table 6 · unseen-noise column</a> · English fine-tuning, multilingual evaluation · pp = percentage points.</p>
+```
+
+::: {.notes}
+Both models have 1.23B parameters. ByT5 reads bytes; mT5 uses subwords. Noise affects premise and hypothesis. Deletion independently removes each Unicode codepoint with probability .1; repetition selects it with probability .2 and appends one to three repeats. These are accuracy changes from each model's own clean baseline, not error rates. The controlled noise protocol is broader evidence than one typo, but it does not isolate tokenization from other architectural differences or establish robustness under every real-world corruption.
+:::
+
+## Generalization and memorization can coexist {#learned-memory .s5-slide}
+
+```{=html}
+<div class="s5-two s5-memory"><div><b>GENERALIZATION</b><strong>Apply a learned regularity</strong><p>Training: “the dog is here”<br>Test: “the cat is here”</p><span>Illustrative new combination.<br>Verify that it was actually held out.</span></div><div><b>VERBATIM MEMORIZATION</b><strong>Reproduce a training passage</strong><p>Training: a distinctive passage<br>Output: the same passage</p><span>Check the output against<br>the training corpus.</span></div></div>
+```
+```{=html}
+<div class="s5-evidence"><strong>604</strong><p>unique memorized training examples verified in a GPT-2 extraction study, from 1,800 selected candidates reviewed.</p></div>
+```
+```{=html}
+<p class="s1-takeaway">Good average test performance does not rule out reproducing particular training examples.</p>
+```
+```{=html}
+<p class="s1-source"><a href="https://arxiv.org/pdf/2012.07805#page=8">Carlini et al., Extracting Training Data from Large Language Models, §6.2</a> · selected candidates, not a random sample of ordinary queries.</p>
+```
+
+::: {.notes}
+The two boxes are conceptual examples, not records from the paper. In the published study, researchers generated 600,000 samples, selected candidates with extraction strategies, and verified training matches. The 604 verified cases establish that extraction occurred; their proportion among inspected candidates is not an estimate of memorization frequency for ordinary use. Correctness on novel examples and verbatim reproduction are compatible behaviors of one model. Recall of a common fact alone is not evidence of passage memorization.
+:::
+
+## Held out from which stage? {#learned-contamination .s5-slide}
+
+```{=html}
+<p class="s1-lead">A test question can be absent from fine-tuning and still appear in pretraining.</p>
+```
+```{=html}
+<div class="s5-contamination"><div class="s5-corpus"><b>PRETRAINING CORPUS</b><span>Web documents</span><strong>Question Q + answer A</strong><span>Books and other text</span></div><div class="s5-route"><b>→ pretrain →</b><div class="s5-model">Learned weights</div><b>→ fine-tune →</b></div><div class="s5-test"><b>DOWNSTREAM SPLIT</b><span>Train: other questions</span><strong>Test: question Q</strong><span>High score may reflect exposure.</span></div></div>
+```
+```{=html}
+<div class="s5-two"><div><b>Check overlap</b><p>Search for duplicates and related passages across all training stages.</p></div><div><b>Report provenance</b><p>Document sources, dates, split rules and the overlap checks you could perform.</p></div></div>
+```
+```{=html}
+<p class="s1-takeaway">A clean fine-tuning split alone cannot establish that evaluation content is unseen.</p>
+```
+```{=html}
+<p class="s1-source">Schematic contamination example, not a claim that our SST-2 items occurred in BERT-tiny pretraining.</p>
+```
+
+::: {.notes}
+Walk left to right. The test question is reserved when constructing the small labeled fine-tuning set, but it already influenced the weights in an earlier stage. This breaks the intended interpretation of “unseen.” It need not involve intentional cheating or an explicit answer column; passages that reveal the answer can also overlap. Deduplicating fine-tuning against evaluation is useful, but is narrower than auditing the pretraining corpus. Exact-match checks miss paraphrases and related documents. Document-level or source-level splits and genuinely later data can strengthen the design when their assumptions hold.
+
+For our classroom experiment, exact normalized overlaps were removed between the sampled SST-2 training and validation texts. We do not have sufficient evidence to certify the validation examples absent from the model's complete historical pretraining. State that limit rather than treating the held-out accuracy as proof of exposure-free generalization. Avoid identifying a particular wrong or right response as memorization from its score alone.
+:::
+
+## Text prediction can inherit social associations {#learned-bias .s5-slide}
+
+```{=html}
+<p class="s1-lead">CrowS-Pairs: compare more- and less-stereotyping versions of a sentence.</p>
+```
+```{=html}
+<div class="s5-noise"><span>paired sentences</span><b>→</b><span>score unchanged words</span><b>→</b><span>compare preferences</span></div>
+```
+```{=html}
+<table class="s5-table"><thead><tr><th>Historical checkpoint</th><th>Preference for the stereotyping version</th></tr></thead><tbody><tr><th>BERT-base</th><td>60.5%</td></tr><tr><th>RoBERTa-large</th><td>64.1%</td></tr><tr><th>ALBERT-xxlarge-v2</th><td>67.0%</td></tr></tbody></table>
+```
+```{=html}
+<p class="s1-takeaway">Predictive association is not factual truth or social endorsement.</p>
+```
+```{=html}
+<p class="s1-source"><a href="https://aclanthology.org/2020.emnlp-main.154.pdf#page=5">Nangia et al., 2020, Table 2</a> · 1,508 US-focused English pairs, nine bias categories · 50% is this metric’s symmetry reference, not a fairness certificate.</p>
+```
+
+::: {.notes}
+The paper masks unchanged tokens one at a time and sums their log probabilities, conditioning on the remaining text. It compares these pseudo-log-likelihood scores between paired sentences. The percentages count pairwise preferences; they are not classification accuracy or a calibrated probability of harm. The benchmark exposes particular learned associations, not every form of bias in every culture or application. Checkpoint sizes and training differ, so this table does not isolate the cause of the differences.
+:::
+
+## From a capability claim to a training question {#learned-scale-bridge .s5-slide}
+
+```{=html}
+<div class="s4-synthesis"><span><b>INTERVENE</b> change a controlled input</span><span><b>MEASURE</b> inspect outputs and failures</span><span><b>QUALIFY</b> state what the test establishes</span></div>
+```
+```{=html}
+<div class="s5-bridge"><div class="s5-report"><b>OBSERVED BEHAVIOR</b><span>Context sensitivity</span><span>Agreement failures</span><span>Noise sensitivity</span><span>Recall and inherited bias</span></div><div class="s5-stream" aria-hidden="true"><span></span><span></span><span></span></div><div class="s5-decisions"><b>TRAINING CHOICES</b><strong>Which text?</strong><strong>How much repetition?</strong><strong>How large a model?</strong><strong>How many training tokens?</strong></div></div>
+```
+```{=html}
+<p class="bridge-question">With a fixed compute budget, what should we change to improve what the model learns?</p>
+```
+```{=html}
+<p class="s1-source">Next: modern pretraining at scale. The diagram poses design questions; it does not claim that more data or larger models automatically solve these failures.</p>
+```
+
+::: {.notes}
+Summarize the epistemic lesson: report the observation first and scope the inference to the experiment. Our small model responds to context but fails some simple tests; published studies show why robustness, training membership and social associations need separate evaluations. None is summarized adequately by one average accuracy.
+
+The moving markers connect observed behavior to choices made before and during training. They signal the next investigation, not a measured causal improvement. Ask students to propose one change to the data or budget and one evaluation that could test it. Do not teach scaling rules or the next section here. Stop for instructor review before authoring Section 6.
+:::

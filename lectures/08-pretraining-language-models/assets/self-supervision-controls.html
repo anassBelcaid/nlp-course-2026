@@ -1,0 +1,74 @@
+<script>
+(() => {
+  function init() {
+    const picker = document.getElementById('ss-source-picker');
+    const input = document.getElementById('ss-model-input');
+    const target = document.getElementById('ss-target-word');
+    const reveal = document.getElementById('ss-reveal-target');
+    if (!picker || !input || !target || !reveal) return;
+    // Same withheld-position / reveal mechanism as the preserved corpus lab.
+    // This is text construction, not a model or a random BERT corruption draw.
+    const words = ['The', 'cat', 'sat', 'on', 'the', 'mat'];
+    let selected = 5;
+    let shown = false;
+    function render() {
+      [...picker.children].forEach((button, i) => button.setAttribute('aria-pressed', String(i === selected)));
+      input.replaceChildren(...words.map((word, i) => {
+        const span = document.createElement('span');
+        span.textContent = i === selected ? '____' : word;
+        if (i === selected) span.className = 'ss-gap';
+        return span;
+      }));
+      target.textContent = shown ? words[selected] : '?';
+      reveal.textContent = shown ? 'Hide target' : 'Reveal target';
+      reveal.setAttribute('aria-pressed', String(shown));
+    }
+    words.forEach((word, i) => {
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.textContent = word;
+      button.setAttribute('aria-label', `Withhold word ${i + 1}: ${word}`);
+      button.addEventListener('click', () => {
+        selected = i; shown = false; render();
+        if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+          const gap = input.querySelector('.ss-gap');
+          gap.animate([{opacity:.35, transform:'translateY(-8px)'},{opacity:1,transform:'translateY(0)'}], {duration:300});
+        }
+      });
+      picker.append(button);
+    });
+    reveal.addEventListener('click', () => { shown = !shown; render(); });
+    render();
+
+    // Restore the first draft's enumeration + selected-pair inspector.
+    const list = document.getElementById('ss-example-list');
+    const next = document.getElementById('ss-next-example');
+    if (!list || !next) return;
+    let active = 0;
+    const pairs = words.map((word, index) => ({
+      input: words.map((w, i) => i === index ? '____' : w).join(' '),
+      target: word
+    }));
+    function select(index) {
+      active = index;
+      [...list.children].forEach((b, i) => b.setAttribute('aria-pressed', String(i === active)));
+      document.getElementById('ss-enumerated-input').textContent = pairs[active].input;
+      document.getElementById('ss-enumerated-target').textContent = pairs[active].target;
+    }
+    pairs.forEach((pair, i) => {
+      const button = document.createElement('button'); button.type = 'button';
+      const number = document.createElement('b'); number.textContent = String(i + 1);
+      const inputText = document.createElement('span'); inputText.textContent = pair.input;
+      const arrow = document.createElement('span'); arrow.textContent = '→'; arrow.setAttribute('aria-hidden', 'true');
+      const answer = document.createElement('strong'); answer.textContent = pair.target;
+      button.append(number, inputText, arrow, answer);
+      button.setAttribute('aria-label', `Example ${i+1}: input ${pair.input}; target ${pair.target}`);
+      button.addEventListener('click', () => select(i)); list.append(button);
+    });
+    next.addEventListener('click', () => select((active + 1) % pairs.length));
+    select(0);
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init, {once:true});
+  else init();
+})();
+</script>

@@ -1,0 +1,39 @@
+<script>
+(() => {
+  const recipes = {
+    encoder: {input:['the','[MASK]','sat','on','the','[MASK]'],targets:['—','cat','—','—','—','mat']},
+    decoder: {input:['〈start〉','the','cat','sat','on','the'],targets:['the','cat','sat','on','the','mat']},
+    seq2seq: {input:['〈start〉','〈S0〉','cat','〈S1〉','mat','〈S2〉'],targets:['〈S0〉','cat','〈S1〉','mat','〈S2〉','〈eos〉']}
+  };
+  let family='encoder', row=1;
+  function visibility() {
+    const r=recipes[family];
+    const table=document.createElement('table');table.className='s3-mask';
+    table.setAttribute('aria-label',family==='seq2seq'?'Decoder self-attention permissions':'Self-attention permissions');
+    table.innerHTML='<thead><tr><th>query ↓<br>key →</th>'+r.input.map(t=>'<th>'+t+'</th>').join('')+'</tr></thead>';
+    const body=document.createElement('tbody');
+    r.input.forEach((token,i)=>{
+      const tr=document.createElement('tr'); if(i===row)tr.className='active';
+      const th=document.createElement('th'),button=document.createElement('button');
+      button.textContent=(i+1)+' · '+token;button.setAttribute('aria-pressed',String(i===row));
+      button.addEventListener('click',()=>{row=i;visibility();document.querySelectorAll('.s3-mask button')[i].focus();});th.append(button);tr.append(th);
+      r.input.forEach((_,j)=>{const td=document.createElement('td'),allowed=family==='encoder'||j<=i;td.textContent=allowed?'●':'×';td.className=allowed?'allowed':'';tr.append(td);});body.append(tr);
+    });table.append(body);document.getElementById('visibility-matrix').replaceChildren(table);
+    document.getElementById('visibility-query').textContent='Input '+r.input[row]+' → '+(r.targets[row]==='—'?'no direct loss':'predict '+r.targets[row]);
+    document.getElementById('visibility-detail').innerHTML='<p><b>Visible input tokens</b><br>'+r.input.filter((_,j)=>family==='encoder'||j<=row).join(' · ')+'</p>'+(family==='seq2seq'?'<p><b>Also: all encoder memory</b><br>the 〈S0〉 sat on the 〈S1〉</p>':'<p>The mask permits these connections; attention learns how to weight them.</p>');
+    document.querySelectorAll('[data-visibility]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.visibility===family)));
+  }
+  document.querySelectorAll('[data-visibility]').forEach(b=>b.addEventListener('click',()=>{family=b.dataset.visibility;visibility();}));visibility();
+  fetch('assets/evidence/section3.json').then(r=>{if(!r.ok)throw Error('Evidence unavailable');return r.json();}).then(data=>{
+    function show(key) {
+      const r=data.records[key],tbody=document.getElementById('step-rows');tbody.replaceChildren();
+      r.rows.forEach(v=>{const tr=document.createElement('tr');[v.target,v.before.toFixed(4),v.after.toFixed(4)].forEach(value=>{const td=document.createElement('td');td.textContent=value;tr.append(td);});tbody.append(tr);});
+      document.getElementById('step-loss').textContent=r.loss_before.toFixed(3)+' → '+r.loss_after.toFixed(3);
+      document.getElementById('step-count').textContent=r.selected_count+' scored positions · '+r.parameter_count.toLocaleString()+' parameters';
+      document.getElementById('step-updated').textContent=key==='seq2seq'?'Updated: embeddings, encoder, decoder, vocabulary head.':'Updated: embeddings, '+(key==='encoder'?'bidirectional':'causal')+' stack, vocabulary head.';
+      document.querySelectorAll('[data-step-family]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.stepFamily===key)));
+    }
+    document.querySelectorAll('[data-step-family]').forEach(b=>b.addEventListener('click',()=>show(b.dataset.stepFamily)));show('encoder');document.documentElement.dataset.section3Ready='true';
+  }).catch(e=>{document.getElementById('step-loss').textContent='Recorded evidence unavailable. Serve this lecture over HTTP.';document.querySelectorAll('[data-step-family]').forEach(b=>b.disabled=true);console.error(e);});
+})();
+</script>

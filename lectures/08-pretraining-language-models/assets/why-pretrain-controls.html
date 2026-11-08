@@ -1,0 +1,25 @@
+<script>
+(() => {
+  const init = () => {
+    const prefix = document.getElementById('why-prefix');
+    const vector = document.getElementById('why-context-vector');
+    if (!prefix || !vector) return;
+    const buttons = [...document.querySelectorAll('[data-why-context]')];
+    const sentences = {money: 'She deposited money at the ', river: 'She sat beside the river '};
+    buttons.forEach(button => button.addEventListener('click', () => {
+      const context = button.dataset.whyContext;
+      prefix.textContent = sentences[context];
+      vector.classList.toggle('is-river', context === 'river');
+      vector.setAttribute('aria-label', `Illustrative contextual vector for the ${context} sentence; not measured model output`);
+      buttons.forEach(b => b.setAttribute('aria-pressed', String(b === button)));
+      if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+        const arrow = document.querySelector('.why-context-connector');
+        arrow.getAnimations().forEach(a => a.cancel());
+        arrow.animate([{transform:'translateX(-8px)',opacity:.35},{transform:'translateX(0)',opacity:1}], {duration:350});
+      }
+    }));
+  };
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init, {once:true});
+  else init();
+})();
+</script>

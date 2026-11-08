@@ -1,0 +1,138 @@
+<script>
+document.addEventListener('DOMContentLoaded', async () => {
+  const el = id => document.getElementById(id);
+  if (!el('corpus-workbench')) return;
+  const all = query => [...document.querySelectorAll(query)];
+  function pressed(query, key, value) {
+    all(query).forEach(b => b.setAttribute('aria-pressed', String(b.dataset[key] === String(value))));
+  }
+  // Schematic state changes: no model execution or measured training implied.
+  function scope(value) {
+    pressed('[data-scope]', 'scope', value);
+    all('[data-scope-block]').forEach(block => {
+      const learned = value === 'whole' || block.dataset.scopeBlock === 'lookup';
+      block.classList.toggle('is-pretrained', learned);
+      block.querySelector('span').textContent = learned ? 'learned from text' : 'random initialization';
+    });
+    el('scope-message').textContent = value === 'whole'
+      ? 'The dictionary and the contextual reader both have a head start.'
+      : 'The dictionary has a head start. The contextual reader still has to learn.';
+  }
+  all('[data-scope]').forEach(b => b.addEventListener('click', () => scope(b.dataset.scope)));
+  scope('lookup');
+
+  try {
+    const response = await fetch('assets/evidence/section1.json');
+    if (!response.ok) throw Error('Missing local evidence');
+    const data = await response.json();
+    let row = 0, position = 5, revealed = false;
+    const words = () => data.corpus[row].split(' ');
+    function showCorpus() {
+      pressed('[data-corpus-row]', 'corpusRow', row);
+      const picker = el('corpus-position-buttons');
+      // Preserve focused controls when only the selected position changes.
+      if (picker.dataset.row !== String(row)) {
+        picker.replaceChildren();
+        words().forEach((word, i) => {
+          const b = document.createElement('button');
+          b.textContent = word; b.dataset.position = i;
+          b.setAttribute('aria-label', 'Withhold position ' + (i + 1) + ': ' + word);
+          b.addEventListener('click', () => { position = i; revealed = false; showCorpus(); });
+          picker.append(b);
+        });
+        picker.dataset.row = row;
+      }
+      pressed('[data-position]', 'position', position);
+      const context = el('corpus-context'); context.replaceChildren();
+      words().forEach((word, i) => {
+        const s = document.createElement('span');
+        s.textContent = i === position ? '____' : word;
+        if (i === position) s.className = 'withheld';
+        context.append(s);
+      });
+      el('corpus-target').textContent = revealed ? words()[position] : 'Hidden for your prediction';
+      el('corpus-reveal').textContent = revealed ? 'Hide the target again' : 'Reveal the source word';
+      el('corpus-reveal').setAttribute('aria-pressed', String(revealed));
+      el('corpus-status').textContent = `Sentence ${row + 1} · position ${position + 1} withheld · original text unchanged`;
+    }
+    all('[data-corpus-row]').forEach(b => b.addEventListener('click', () => {
+      row = Number(b.dataset.corpusRow); position = 5; revealed = false; showCorpus();
+    }));
+    el('corpus-reveal').addEventListener('click', () => { revealed = !revealed; showCorpus(); });
+    showCorpus();
+
+    const matrix = el('pair-matrix');
+    function showPair(index) {
+      const r = data.examples[index];
+      el('pair-context').textContent = r.context.join(' ');
+      el('pair-target').textContent = r.target;
+      pressed('[data-pair]', 'pair', index);
+    }
+    data.corpus.forEach((_, r) => {
+      const name = document.createElement('span'); name.textContent = 'ABC'[r]; matrix.append(name);
+      data.examples.forEach((example, i) => {
+        if (example.row !== r) return;
+        const b = document.createElement('button'); b.dataset.pair = i;
+        b.textContent = 'hide ' + (example.position + 1);
+        b.setAttribute('aria-label', 'Sentence ' + 'ABC'[r] + ', hide position ' + (example.position + 1));
+        b.addEventListener('click', () => showPair(i)); matrix.append(b);
+      });
+    });
+    showPair(5);
+
+    const scale = key => Math.max(...data.records.flatMap(r => r[key].map(Math.abs)));
+    const lookupMax = scale('lookup'), contextualMax = scale('contextual');
+    function heat(id, values, max) {
+      const grid = el(id); grid.replaceChildren();
+      values.forEach((v, i) => {
+        const cell = document.createElement('i');
+        cell.style.background = `rgba(${v < 0 ? '42,102,149' : '215,102,79'},${.10 + .90 * Math.abs(v) / max})`;
+        cell.title = `dimension ${i}: ${v.toFixed(5)}`; grid.append(cell);
+      });
+      grid.setAttribute('aria-label', `128 coordinates, symmetric scale from ${(-max).toFixed(3)} to ${max.toFixed(3)}. First four: ${values.slice(0,4).map(v=>v.toFixed(3)).join(', ')}.`);
+    }
+    function context(index) {
+      pressed('[data-context]', 'context', index);
+      const r = data.records[index];
+      const text = el('context-sentence'); text.replaceChildren();
+      const [before, after] = r.sentence.split('bank');
+      const word = document.createElement('strong'); word.textContent = 'bank';
+      text.append(document.createTextNode(before), word, document.createTextNode(after));
+      heat('lookup-vector', r.lookup, lookupMax);
+      heat('context-vector', r.contextual, contextualMax);
+      el('lookup-status').textContent = `bank · ID ${r.ids[r.position]} · unchanged lookup`;
+      el('vector-status').textContent = `${r.name} context · position ${r.position} including [CLS]`;
+      el('context-cosine').textContent = 'cosine = ' + data.contextual_cosine.toFixed(3);
+    }
+    all('[data-context]').forEach(b => b.addEventListener('click', () => context(Number(b.dataset.context))));
+    context(0);
+
+    function spelling(index) {
+      pressed('[data-spelling]', 'spelling', index);
+      const r = data.spelling[index];
+      el('spelling-word').textContent = r.word;
+      el('whole-word-output').textContent = index === 0 ? r.word : '[UNK]';
+      el('whole-word-status').textContent = index === 0 ? 'One known word' : 'The toy vocabulary loses the spelling.';
+      const pieces = el('wordpiece-output'); pieces.replaceChildren();
+      r.tokens.forEach((token, i) => {
+        const tile = document.createElement('div'), name = document.createElement('strong'), id = document.createElement('span');
+        name.textContent = token; id.textContent = 'ID ' + r.ids[i]; tile.append(name, id); pieces.append(tile);
+      });
+      el('spelling-rejoined').textContent = r.tokens.join('').replaceAll('##', '');
+    }
+    all('[data-spelling]').forEach(b => b.addEventListener('click', () => spelling(Number(b.dataset.spelling))));
+    spelling(0);
+    document.documentElement.dataset.section1Ready = 'true';
+  } catch (error) {
+    for (const id of ['corpus-workbench', 'corpus-solution', 'context-lab', 'spelling-lab']) {
+      const slide = el(id);
+      slide.querySelectorAll('button').forEach(b => b.disabled = true);
+      const message = document.createElement('p'); message.className = 'lab-status';
+      message.textContent = 'Local experiment data could not load. Serve the complete rendered deck over HTTP.';
+      slide.append(message);
+    }
+    document.documentElement.dataset.section1Ready = 'false';
+    console.error('Section 1 evidence unavailable', error);
+  }
+});
+</script>

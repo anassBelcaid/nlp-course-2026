@@ -1,0 +1,44 @@
+<script>
+(() => {
+  const start = async () => {
+    const variants = {
+      mask: ['[MASK]', 'The answer disappears from this input position; context must supply evidence.'],
+      random: ['table', 'The input token is misleading. The target is still bank—not the replacement table.'],
+      unchanged: ['bank', 'The input stays bank, but this selected position still contributes to the loss. Unselected positions do not.']
+    };
+    document.querySelectorAll('[data-corruption]').forEach(button => {
+      button.addEventListener('click', () => {
+        const [token, explanation] = variants[button.dataset.corruption];
+        document.getElementById('corruption-token').textContent = token;
+        document.getElementById('corruption-cell').textContent = token;
+        document.getElementById('corruption-explanation').textContent = explanation;
+        document.querySelectorAll('[data-corruption]').forEach(b => b.setAttribute('aria-pressed', String(b === button)));
+      });
+    });
+    try {
+      const response = await fetch('assets/evidence/section2.json');
+      if (!response.ok) throw Error(`HTTP ${response.status}`);
+      const evidence = await response.json();
+      const bars = document.getElementById('mlm-bars');
+      bars.replaceChildren();
+      evidence.top5.forEach(item => {
+        const row = document.createElement('div'); row.className = 'mlm-bar-row';
+        const label = document.createElement('span'); label.textContent = item.token;
+        const track = document.createElement('div'); track.className = 'mlm-bar-track'; track.setAttribute('aria-hidden', 'true');
+        const fill = document.createElement('i'); fill.style.width = `${item.probability / .05 * 100}%`; track.append(fill);
+        const value = document.createElement('em'); value.textContent = `${(item.probability * 100).toFixed(2)}%`;
+        row.append(label, track, value); bars.append(row);
+      });
+      const axis = document.createElement('div'); axis.className = 'mlm-axis'; axis.textContent = 'Bar scale: 0–5% · full vocabulary: 30,522 tokens'; bars.append(axis);
+      document.getElementById('mlm-target-score').textContent = `p = ${(evidence.target_probability * 100).toFixed(3)}% · rank ${evidence.target_rank.toLocaleString()}`;
+      document.documentElement.dataset.section2Ready = 'true';
+    } catch (error) {
+      document.getElementById('mlm-bars').textContent = `Model evidence unavailable (${error.message}). Serve this lecture over HTTP.`;
+      document.getElementById('mlm-target-score').textContent = 'No recorded score loaded.';
+      document.documentElement.dataset.section2Ready = 'error';
+    }
+  };
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start, {once: true});
+  else start();
+})();
+</script>

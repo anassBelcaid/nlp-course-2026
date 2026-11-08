@@ -1,0 +1,177 @@
+## The answer is already in the text {#text-targets .ss-slide .ss-construction}
+
+<p class="ss-kicker">02 · TEXT SUPPLIES ITS OWN TARGETS</p>
+<p class="ss-instruction">Choose a word to withhold. The source sentence stays unchanged.</p>
+<div class="ss-source-label">SOURCE TEXT · visible to us when constructing the example</div>
+<div id="ss-source-picker" class="ss-tokens ss-source-picker" role="group" aria-label="Choose the position to withhold"></div>
+
+```{=html}
+<svg class="ss-split" viewBox="0 0 1320 105" role="img" aria-label="Construct two separate objects from the source: the model input and a target kept for comparison."><defs><marker id="ss-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10" fill="none" stroke="#17364a" stroke-width="1.5"/></marker></defs><path d="M660 5V35H400V92M660 35H1120V92" fill="none" stroke="#17364a" stroke-width="3" marker-end="url(#ss-arrow)"/><path d="M400 70V92" stroke="#17364a" stroke-width="3" marker-end="url(#ss-arrow)"/></svg>
+<div class="ss-constructed">
+<div class="ss-input"><span class="ss-label">MODEL INPUT</span><div id="ss-model-input" class="ss-tokens" aria-live="polite"></div><p>The selected word is withheld here.</p></div>
+<div class="ss-target"><span class="ss-label">TARGET · KEPT SEPARATELY</span><strong id="ss-target-word" aria-live="polite">?</strong><button id="ss-reveal-target" type="button" aria-pressed="false">Reveal target</button></div>
+</div>
+<p class="ss-principle">We construct the question.<br><strong>The observed text supplies the answer.</strong></p>
+```
+
+<p class="ss-source">Berkeley CS288, PDF pp. 4–5: turn unlabeled text into prediction examples. Adapted from our earlier corpus interaction; exact text manipulation, not model inference.</p>
+
+::: {.notes}
+TIME: 3 minutes. Connect to the preceding question: where do targets come from?
+The source is a six-word teaching sentence, using words rather than subword tokens.
+Initially position 6, mat, is selected. Read the source, then the constructed
+input. Ask for the target before pressing Reveal target. It is mat because that
+is what the source contained, not because it is the only possible completion.
+
+Click cat, then sat. Every change constructs a different input/target pair from
+unchanged source text. The selected position, not just the word type, matters.
+The target is hidden from the audience only as a teaching reveal; the training
+procedure already has it. The model receives the input, while the loss function
+also receives the retained target. The diagram separates these two routes.
+
+This standalone control reuses the original corpus demonstration's withheld-word
+and target-reveal mechanism without loading its unrelated model diagnostics.
+It is not BERT's random sampling recipe and does not imply a 15% masking rate.
+No model runs, and no optimization occurs on this slide. Transition: “With the
+same source sentence, could we ask a different kind of prediction question?”
+:::
+
+## Keep the text. Change the question. {#two-prediction-questions .ss-slide .ss-recipes}
+
+<p class="ss-source-sentence"><span>SAME SOURCE</span>The cat sat on the mat</p>
+
+```{=html}
+<div class="ss-recipe-row">
+<div class="ss-recipe-heading"><b>01</b><h3>Recover a missing word</h3><p>Left and right context</p></div>
+<div class="ss-recipe-example"><span class="ss-label">MODEL INPUT</span><div class="ss-tokens"><span>The</span><span class="ss-gap">____</span><span>sat</span><span>on</span><span>the</span><span>mat</span></div></div>
+<div class="ss-recipe-answer"><span class="ss-label">TARGET</span><strong>cat</strong></div>
+</div>
+<div class="ss-recipe-row">
+<div class="ss-recipe-heading"><b>02</b><h3>Predict the next word</h3><p>Preceding context only</p></div>
+<div class="ss-recipe-example"><span class="ss-label">MODEL INPUT</span><div class="ss-tokens"><span>The</span><span>cat</span><span>sat</span><span>on</span></div><p>The following words are not supplied.</p></div>
+<div class="ss-recipe-answer"><span class="ss-label">TARGET</span><strong>the</strong></div>
+</div>
+<p class="ss-principle">The source is the same.<br><strong>What the model can see is different.</strong></p>
+```
+
+<p class="ss-source">Adapted from Stanford CS224N, PDF pp. 12–18, and Berkeley CS288, pp. 36 and 58. Word-level teaching examples; detailed BERT and GPT recipes follow later.</p>
+
+::: {.notes}
+TIME: 3 minutes. Ask students to read each input before its target. In row 1, the
+model receives words on both sides of the missing cat. In row 2, the model
+receives only The cat sat on. It must predict the observed next word, the, and
+cannot read the later mat. The sentence on top is the experiment designer's
+source, not an extra input to the predictor.
+
+This adapts Berkeley's paired masked/causal diagrams while keeping our own fixed
+six-word example. Architectures, causal masks, training parallelism, and original
+BERT corruption percentages are deliberately deferred. The conceptual distinction
+here is the available information. The fact that The occurs earlier does not
+expose the specific next position: repeated word types are different events.
+The missing-word example is an interior gap, unlike the initial last-word gap.
+
+Ask: “Which question can use the words after the answer's position?” Then ask
+whether either target needed a human sentiment annotation. Both targets are
+observed tokens from the corpus. Transition: “Now construct the pair yourselves.”
+:::
+
+## One sentence. How many training examples? {#build-pair-pause .ss-slide .ss-count-pause}
+
+<p class="ss-source-sentence"><span>OUR ENTIRE CORPUS</span>The cat sat on the mat</p>
+
+```{=html}
+<div class="ss-count-positions" aria-label="Six word positions"><span><b>1</b>The</span><span><b>2</b>cat</span><span><b>3</b>sat</span><span><b>4</b>on</span><span><b>5</b>the</span><span><b>6</b>mat</span></div>
+<div class="ss-pause-panel"><span class="ss-pause-badge">PAUSE · 45 SECONDS</span><h3>How many different input–target pairs can we extract?</h3><p><strong>The rule:</strong> withhold exactly one word position per example.<br>Keep every other word visible. Predict the original word.</p></div>
+<div class="ss-count-task"><strong>Write two of your examples.</strong><p>Count positions—even when the same word appears more than once.</p></div>
+```
+
+<p class="ss-source">Reuses the counting activity from the preserved first draft, narrowed to one sentence. Word positions only; no punctuation, padding, or special tokens.</p>
+
+::: {.notes}
+TIME: 2 minutes including a 45-second pause. Keep the same six-word sentence from
+slides 10–11. We now fix the missing-word construction: withhold exactly one
+position and keep all other words. We are not counting subsets of masked words,
+next-token examples, or unique word types. Do not reveal the computed count here.
+
+Ask students to write two explicit input/target pairs. The numbered positions
+make the task inspectable. The repeated the belongs to different positions; we
+count examples, not dictionary entries. The solution and simulation follow on
+the next slide. This is the earlier draft's enumeration exercise, using a single
+sentence rather than the three-sentence corpus.
+:::
+
+## Six positions, six training examples {#build-pair-solution .ss-slide .ss-enumeration}
+
+<p class="ss-enumeration-lead">The cat sat on the mat <span>→ withhold one position at a time</span></p>
+
+```{=html}
+<div class="ss-enumeration-toolbar"><strong>1 sentence × 6 positions = 6 pairs</strong><button type="button" id="ss-next-example">Next example →</button></div>
+<div class="ss-example-list" id="ss-example-list" role="group" aria-label="Inspect each of the six extracted training examples"></div>
+<div class="ss-example-inspector" aria-live="polite"><div><span class="ss-label">SELECTED MODEL INPUT</span><p id="ss-enumerated-input">____ cat sat on the mat</p></div><div><span class="ss-label">TARGET TO PREDICT</span><strong id="ss-enumerated-target">The</strong></div></div>
+<p class="ss-enumeration-takeaway">No new annotation. Each target was already in the sentence.</p>
+```
+
+<p class="ss-source">Interactive enumeration adapted from the first draft's pair-matrix simulation. Exact constructed examples, not model predictions or a training run; overlapping examples are not independent observations.</p>
+
+::: {.notes}
+TIME: 4 minutes. Reveal the six generated pairs together. This restores the
+original draft's clickable enumeration and input/target inspector for one sentence.
+Click a row or use Next example to move the gap through every word position.
+The source remains fixed, the input loses one word, and that original word becomes
+the target. These are desired predictions, not outputs from an actual model.
+
+Start at position 1 and advance through all six. Pause on positions 1 and 5:
+The/the refer to distinct occurrences, so both yield a training example. The
+capitalization here comes directly from the displayed sentence. Ask students to
+compare their written pairs with the generated rows. No probability recap is
+needed; students already know that a model produces an output distribution.
+
+Six is a consequence of the stated one-hidden-position rule, not a universal
+count for every self-supervised recipe. A different construction gives different
+examples. BERT's actual sampling policy comes later. The six overlapping pairs
+reuse one observed sentence, so do not call them six independent observations.
+Transition: “Apply this construction to a corpus, and the text supplies targets
+for a whole training loop.”
+:::
+
+## Text → examples → a learning signal {#self-supervision-bridge .ss-slide .ss-training-loop}
+
+```{=html}
+<svg class="ss-loop-diagram" viewBox="0 0 1320 440" role="img" aria-label="Source text supplies an input and a separate target. The input passes through the model to a prediction. The loss compares prediction and target, then gradients update model parameters.">
+<defs><marker id="ss-loop-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0 0L10 5L0 10" fill="none" stroke="#17364a" stroke-width="1.5"/></marker></defs>
+<g font-family="sans-serif" fill="#17364a"><rect x="15" y="115" width="250" height="165" rx="12" fill="#e5e2d9"/><text x="40" y="160" font-size="27" font-weight="bold">SOURCE TEXT</text><text x="40" y="205" font-size="27">…on the shelf</text><text x="40" y="238" font-size="22">many observed</text><text x="40" y="266" font-size="22">sentences</text>
+<path d="M265 155H340V95H435M340 155V325H1000V260" fill="none" stroke="#17364a" stroke-width="3" marker-end="url(#ss-loop-arrow)"/><path d="M400 95H435" stroke="#17364a" stroke-width="3" marker-end="url(#ss-loop-arrow)"/>
+<text x="355" y="55" font-size="24">input: …on the ____</text><text x="365" y="360" font-size="27">target: shelf</text>
+<rect x="460" y="65" width="225" height="125" rx="12" fill="#d6e8e6"/><text x="572" y="116" font-size="30" text-anchor="middle" font-weight="bold">MODEL θ</text><text x="572" y="155" font-size="23" text-anchor="middle">predict</text>
+<path d="M690 125H820" stroke="#17364a" stroke-width="3" marker-end="url(#ss-loop-arrow)"/><text x="715" y="90" font-size="23">probabilities</text>
+<rect x="845" y="65" width="380" height="195" rx="12" fill="#f1dfc2"/><text x="1035" y="115" font-size="31" text-anchor="middle" font-weight="bold">LOSS</text><text x="1035" y="162" font-size="26" text-anchor="middle">compare prediction</text><text x="1035" y="202" font-size="26" text-anchor="middle">with the retained target</text>
+<path d="M1150 265V410H570V200" fill="none" stroke="#0f7881" stroke-width="4" stroke-dasharray="10 7" marker-end="url(#ss-loop-arrow)"/><text x="790" y="399" font-size="24" fill="#0f7881">gradients update θ</text></g></svg>
+<p class="ss-summary">Self-supervised learning <strong>still has targets</strong>.<br>We obtain them from the text instead of annotating each example.</p>
+<div class="ss-next"><span>NEXT · BERT</span><p>How can a model read <strong>both sides</strong> of a word<br>without seeing the answer it must predict?</p></div>
+```
+
+<p class="ss-source">Original training-flow diagram. Based on Stanford CS224N, PDF pp. 11, 18–19, and Berkeley CS288, pp. 35–36. The target enters the loss, not the predictor.</p>
+
+::: {.notes}
+TIME: 3 minutes. Trace the two routes from source text. One becomes the model
+input. The other retains shelf for the loss. Prediction probabilities and the
+observed target meet at the loss. Gradients then update the permitted model
+parameters. The dashed return route expresses a dependency; it is not a measured
+training trajectory. No inference, optimization, or timer runs in this diagram.
+
+Scale the picture conceptually: repeat this construction across many sentences,
+form batches, and repeat forward/loss/backward/update steps. The corpus supplies
+observations without a person writing a separate task label for each prediction.
+This does not remove decisions about corpus selection, preprocessing, or quality.
+We have not manufactured new independent information by extracting overlapping
+examples from the same sentence.
+
+Synthesize the section: source, input, target; control access; compare prediction
+with the retained target. The model can see a target through the loss during
+learning without receiving it as input for that prediction. At ordinary inference,
+there is no such target/loss/update loop unless we explicitly run training.
+
+End with the question about using both sides without exposing the answer. The
+next section formalizes the BERT task and its corruption choices. Stop here for
+instructor review; no BERT content is newly authored in this increment.
+:::

@@ -1,0 +1,205 @@
+## Three families: trace the attention paths {#family-architecture-map .s3-slide}
+
+<p class="s1-lead">Read bottom → top. Each square is one token state; each line is an allowed attention connection.</p>
+
+```{=html}
+<svg class="family-map" viewBox="0 0 1320 600" role="img" aria-labelledby="family-map-title family-map-desc">
+<title id="family-map-title">Token-level attention paths in three Transformer architectures</title>
+<desc id="family-map-desc">Read bottom to top. Encoder states connect to every input position. Decoder-only states connect only to current and earlier positions. The encoder–decoder has separate source and target streams: the target uses causal self-attention and cross-attention to all final encoder states.</desc>
+<defs><marker id="family-up" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto"><path d="M0 0L10 5L0 10Z" fill="#a34832"/></marker></defs>
+<rect x="0" y="0" width="340" height="574" rx="10" class="fm-panel"/>
+<rect x="360" y="0" width="340" height="574" rx="10" class="fm-panel"/>
+<rect x="720" y="0" width="600" height="574" rx="10" class="fm-panel"/>
+<text x="170" y="38" class="fm-title" text-anchor="middle">ENCODER-ONLY</text>
+<text x="170" y="70" class="fm-sub" text-anchor="middle">BERT-style</text>
+<text x="530" y="38" class="fm-title" text-anchor="middle">DECODER-ONLY</text>
+<text x="530" y="70" class="fm-sub" text-anchor="middle">GPT-style</text>
+<text x="1020" y="38" class="fm-title" text-anchor="middle">ENCODER–DECODER</text>
+<text x="1020" y="70" class="fm-sub" text-anchor="middle">T5-style</text>
+<path d="M65 462L65 348" class="fm-edge fm-full"/>
+<path d="M170 462L65 348" class="fm-edge fm-full"/>
+<path d="M275 462L65 348" class="fm-edge fm-full"/>
+<path d="M65 462L170 348" class="fm-edge fm-full"/>
+<path d="M170 462L170 348" class="fm-edge fm-full"/>
+<path d="M275 462L170 348" class="fm-edge fm-full"/>
+<path d="M65 462L275 348" class="fm-edge fm-full"/>
+<path d="M170 462L275 348" class="fm-edge fm-full"/>
+<path d="M275 462L275 348" class="fm-edge fm-full"/>
+<path d="M425 462L425 348" class="fm-edge fm-causal"/>
+<path d="M425 462L530 348" class="fm-edge fm-causal"/>
+<path d="M530 462L530 348" class="fm-edge fm-causal"/>
+<path d="M425 462L635 348" class="fm-edge fm-causal"/>
+<path d="M530 462L635 348" class="fm-edge fm-causal"/>
+<path d="M635 462L635 348" class="fm-edge fm-causal"/>
+<path d="M65 302L65 188" class="fm-edge fm-full"/>
+<path d="M170 302L65 188" class="fm-edge fm-full"/>
+<path d="M275 302L65 188" class="fm-edge fm-full"/>
+<path d="M65 302L170 188" class="fm-edge fm-full"/>
+<path d="M170 302L170 188" class="fm-edge fm-full"/>
+<path d="M275 302L170 188" class="fm-edge fm-full"/>
+<path d="M65 302L275 188" class="fm-edge fm-full"/>
+<path d="M170 302L275 188" class="fm-edge fm-full"/>
+<path d="M275 302L275 188" class="fm-edge fm-full"/>
+<path d="M425 302L425 188" class="fm-edge fm-causal"/>
+<path d="M425 302L530 188" class="fm-edge fm-causal"/>
+<path d="M530 302L530 188" class="fm-edge fm-causal"/>
+<path d="M425 302L635 188" class="fm-edge fm-causal"/>
+<path d="M530 302L635 188" class="fm-edge fm-causal"/>
+<path d="M635 302L635 188" class="fm-edge fm-causal"/>
+<rect x="35" y="462" width="60" height="46" rx="10" class="fm-node fm-encoder"/>
+<text x="65" y="493" class="fm-node-label" text-anchor="middle">the</text>
+<rect x="140" y="462" width="60" height="46" rx="10" class="fm-node fm-encoder"/>
+<text x="170" y="493" class="fm-node-label" text-anchor="middle">[M]</text>
+<rect x="245" y="462" width="60" height="46" rx="10" class="fm-node fm-encoder"/>
+<text x="275" y="493" class="fm-node-label" text-anchor="middle">sat</text>
+<rect x="395" y="462" width="60" height="46" rx="10" class="fm-node fm-decoder"/>
+<text x="425" y="493" class="fm-node-label" text-anchor="middle">〈s〉</text>
+<rect x="500" y="462" width="60" height="46" rx="10" class="fm-node fm-decoder"/>
+<text x="530" y="493" class="fm-node-label" text-anchor="middle">the</text>
+<rect x="605" y="462" width="60" height="46" rx="10" class="fm-node fm-decoder"/>
+<text x="635" y="493" class="fm-node-label" text-anchor="middle">cat</text>
+<rect x="35" y="302" width="60" height="46" rx="10" class="fm-node fm-encoder"/>
+<rect x="140" y="302" width="60" height="46" rx="10" class="fm-node fm-encoder"/>
+<rect x="245" y="302" width="60" height="46" rx="10" class="fm-node fm-encoder"/>
+<rect x="395" y="302" width="60" height="46" rx="10" class="fm-node fm-decoder"/>
+<rect x="500" y="302" width="60" height="46" rx="10" class="fm-node fm-decoder"/>
+<rect x="605" y="302" width="60" height="46" rx="10" class="fm-node fm-decoder"/>
+<rect x="35" y="142" width="60" height="46" rx="10" class="fm-node fm-encoder"/>
+<rect x="140" y="142" width="60" height="46" rx="10" class="fm-node fm-encoder"/>
+<rect x="245" y="142" width="60" height="46" rx="10" class="fm-node fm-encoder"/>
+<rect x="395" y="142" width="60" height="46" rx="10" class="fm-node fm-decoder"/>
+<rect x="500" y="142" width="60" height="46" rx="10" class="fm-node fm-decoder"/>
+<rect x="605" y="142" width="60" height="46" rx="10" class="fm-node fm-decoder"/>
+<text x="65" y="125" class="fm-output" text-anchor="middle">h₁</text>
+<text x="170" y="125" class="fm-output" text-anchor="middle">h₂</text>
+<text x="275" y="125" class="fm-output" text-anchor="middle">h₃</text>
+<path d="M425 140V128" class="fm-predict"/>
+<text x="425" y="113" class="fm-output" text-anchor="middle">the</text>
+<path d="M530 140V128" class="fm-predict"/>
+<text x="530" y="113" class="fm-output" text-anchor="middle">cat</text>
+<path d="M635 140V128" class="fm-predict"/>
+<text x="635" y="113" class="fm-output" text-anchor="middle">sat</text>
+<text x="170" y="535" class="fm-caption" text-anchor="middle">All input positions are visible.</text>
+<text x="530" y="535" class="fm-caption" text-anchor="middle">No path from a future token.</text>
+<path d="M775 462L775 388" class="fm-edge fm-full"/>
+<path d="M850 462L775 388" class="fm-edge fm-full"/>
+<path d="M925 462L775 388" class="fm-edge fm-full"/>
+<path d="M775 462L850 388" class="fm-edge fm-full"/>
+<path d="M850 462L850 388" class="fm-edge fm-full"/>
+<path d="M925 462L850 388" class="fm-edge fm-full"/>
+<path d="M775 462L925 388" class="fm-edge fm-full"/>
+<path d="M850 462L925 388" class="fm-edge fm-full"/>
+<path d="M925 462L925 388" class="fm-edge fm-full"/>
+<path d="M775 342L775 268" class="fm-edge fm-full"/>
+<path d="M850 342L775 268" class="fm-edge fm-full"/>
+<path d="M925 342L775 268" class="fm-edge fm-full"/>
+<path d="M775 342L850 268" class="fm-edge fm-full"/>
+<path d="M850 342L850 268" class="fm-edge fm-full"/>
+<path d="M925 342L850 268" class="fm-edge fm-full"/>
+<path d="M775 342L925 268" class="fm-edge fm-full"/>
+<path d="M850 342L925 268" class="fm-edge fm-full"/>
+<path d="M925 342L925 268" class="fm-edge fm-full"/>
+<path d="M1085 462L1085 388" class="fm-edge fm-causal"/>
+<path d="M1085 462L1225 388" class="fm-edge fm-causal"/>
+<path d="M1225 462L1225 388" class="fm-edge fm-causal"/>
+<path d="M775 222L1085 188" class="fm-edge fm-cross"/>
+<path d="M850 222L1085 188" class="fm-edge fm-cross"/>
+<path d="M925 222L1085 188" class="fm-edge fm-cross"/>
+<path d="M775 222L1225 188" class="fm-edge fm-cross"/>
+<path d="M850 222L1225 188" class="fm-edge fm-cross"/>
+<path d="M925 222L1225 188" class="fm-edge fm-cross"/>
+<path d="M1085 342V188" class="fm-edge fm-target-stream"/>
+<path d="M1225 342V188" class="fm-edge fm-target-stream"/>
+<rect x="745" y="462" width="60" height="46" rx="10" class="fm-node fm-encoder"/>
+<text x="775" y="493" class="fm-node-label" text-anchor="middle">x₁</text>
+<rect x="820" y="462" width="60" height="46" rx="10" class="fm-node fm-encoder"/>
+<text x="850" y="493" class="fm-node-label" text-anchor="middle">x₂</text>
+<rect x="895" y="462" width="60" height="46" rx="10" class="fm-node fm-encoder"/>
+<text x="925" y="493" class="fm-node-label" text-anchor="middle">x₃</text>
+<rect x="745" y="342" width="60" height="46" rx="10" class="fm-node fm-encoder"/>
+<rect x="820" y="342" width="60" height="46" rx="10" class="fm-node fm-encoder"/>
+<rect x="895" y="342" width="60" height="46" rx="10" class="fm-node fm-encoder"/>
+<rect x="745" y="222" width="60" height="46" rx="10" class="fm-node fm-encoder"/>
+<rect x="820" y="222" width="60" height="46" rx="10" class="fm-node fm-encoder"/>
+<rect x="895" y="222" width="60" height="46" rx="10" class="fm-node fm-encoder"/>
+<rect x="1055" y="462" width="60" height="46" rx="10" class="fm-node fm-decoder"/>
+<text x="1085" y="493" class="fm-node-label" text-anchor="middle">〈s〉</text>
+<rect x="1195" y="462" width="60" height="46" rx="10" class="fm-node fm-decoder"/>
+<text x="1225" y="493" class="fm-node-label" text-anchor="middle">y₁</text>
+<rect x="1055" y="342" width="60" height="46" rx="10" class="fm-node fm-decoder"/>
+<rect x="1195" y="342" width="60" height="46" rx="10" class="fm-node fm-decoder"/>
+<rect x="1055" y="142" width="60" height="46" rx="10" class="fm-node fm-decoder"/>
+<rect x="1195" y="142" width="60" height="46" rx="10" class="fm-node fm-decoder"/>
+<path d="M1085 140V128" class="fm-predict"/>
+<text x="1085" y="113" class="fm-output" text-anchor="middle">y₁</text>
+<path d="M1225 140V128" class="fm-predict"/>
+<text x="1225" y="113" class="fm-output" text-anchor="middle">y₂</text>
+<text x="850" y="535" class="fm-caption" text-anchor="middle">Source tokens</text>
+<text x="1155" y="535" class="fm-caption" text-anchor="middle">Shifted target tokens</text>
+<text x="850" y="205" class="fm-small" text-anchor="middle">Encoder states</text>
+<text x="1155" y="310" class="fm-small" text-anchor="middle">causal self-attention</text>
+<text x="1110" y="225" class="fm-cross-label" text-anchor="middle">cross-attention</text>
+<text x="850" y="570" class="fm-key" text-anchor="middle">x = supplied source</text>
+<text x="1155" y="570" class="fm-key" text-anchor="middle">y = generated target</text>
+<text x="170" y="570" class="fm-key" text-anchor="middle">[M] = masked token</text>
+<text x="530" y="570" class="fm-key" text-anchor="middle">〈s〉 = start token</text>
+</svg>
+```
+
+<div class="family-map-legend"><span><i class="fm-legend-full"></i>Full visibility</span><span><i class="fm-legend-causal"></i>Causal visibility</span><span><i class="fm-legend-cross"></i>Cross-attention to encoder states</span></div>
+<p class="s1-takeaway">Trace the middle position: where can its information come from?</p>
+<p class="s1-source">Original drawing using the visual convention of <a href="https://arxiv.org/pdf/1910.10683#page=17">Raffel et al., T5, Fig. 4, p. 17</a> and <a href="https://web.stanford.edu/class/cs224n/slides_w26/cs224n-2026-lecture07-pretraining.pdf#page=24">Stanford CS224N</a>. Connections show permission, not measured weights. Feed-forward, residual and normalization operations omitted.</p>
+
+::: {.notes}
+TIME: 2 minutes. This is an orientation map before BERT; defer detailed training recipes.
+
+This is a token-state architecture drawing, not a pipeline of opaque labeled boxes. Read bottom to top. Every square represents a vector at a sequence position, not a neuron or an entire layer. The same colored row belongs to one stage of a Transformer stack. Edges show allowed attention dependencies across stages, not the numerical attention weights. Fully visible does not mean all positions receive equal weight. Line colors and shapes distinguish full, causal, and cross-attention connections.
+
+Begin with the encoder's middle square. Trace all three incoming lines to the lower row: it can use left, self, and right context. Repeat in the next layer. Its supplied input is “the [M] sat”; the original masked word is not available along any path. Top h1/h2/h3 are contextual states, not predicted words. A vocabulary head for masked-token recovery will appear in the recipe slide.
+
+Move to the decoder-only middle square. It has only two incoming lines: from the first and second positions. The rightmost lower state has no path to it. This restriction repeats at every layer. Read the bottom input “start, the, cat” against the top next-token targets “the, cat, sat”. The current input token may be read because the prediction target is shifted. Thin coral arrows at the top abbreviate a vocabulary prediction head. Targets are labels/prediction positions, not guaranteed model outputs. All positions can be computed together during teacher-forced training.
+
+The encoder–decoder panel separates source and target streams. Source x1/x2/x3 pass through fully visible encoder layers on the left. The decoder receives “start, y1” at the bottom right and produces distributions for y1/y2 at the top. First trace the causal self-attention connections. Then trace the dashed coral connections from all final encoder states into each decoder position: these are cross-attention. The vertical target-stream lines carry the decoder's own state into that cross-attention stage; they do not indicate target self-attention becoming bidirectional. Decoder queries attend to encoder keys and values. Cross-attention occurs in each actual decoder block; only one such block's two attention stages are expanded here. The encoder drawing shows two illustrative layers and the decoder shows two distinct attention sublayers, so row counts are not a depth comparison.
+
+The T5 paper's Figure 4 compares encoder–decoder, causal language model, and prefix language model. We borrow its token-state drawing convention but retain our lecture's encoder-only, decoder-only, and encoder–decoder categories. Do not call the paper's prefix LM an encoder-only model. Here x is any supplied source (including corrupted text for T5 pretraining); the following recipe slide gives exact sentinels and reconstruction targets. The encoder and decoder-only panels use tiny word examples to make the attention permissions inspectable; the third uses x/y to distinguish the two sequences. End by tracing an individual state, then advance to the training recipes.
+:::
+
+## Start here: read both sides {#before-bert .ss-slide}
+
+<p class="ss-instruction">Our running sentence: <strong>The cat sat on the mat.</strong></p>
+
+```{=html}
+<svg viewBox="0 0 1320 490" style="width:100%;height:490px;display:block" role="img" aria-label="The masked word in The MASK sat on the mat receives left and right context through an encoder. BERT is the encoder-only family we study first.">
+<defs><marker id="bridge-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10Z" fill="#0f7881"/></marker></defs>
+<g font-family="sans-serif" fill="#17364a" text-anchor="middle">
+<rect x="55" y="40" width="1210" height="90" rx="12" fill="#eaf1ef"/>
+<text x="175" y="98" font-size="40">The</text><text x="425" y="98" font-size="40" fill="#a34832">[MASK]</text><text x="870" y="98" font-size="40">sat on the mat</text>
+<path d="M175 140V200L425 260M425 140V260M870 140V200L425 260" fill="none" stroke="#0f7881" stroke-width="4" marker-end="url(#bridge-arrow)"/>
+<text x="180" y="235" font-size="25">left context</text><text x="900" y="235" font-size="25">right context</text>
+<rect x="240" y="275" width="370" height="125" rx="12" fill="#d4e6dc" stroke="#0f7881" stroke-width="2"/>
+<text x="425" y="325" font-size="34" font-weight="bold">ENCODER</text><text x="425" y="368" font-size="27">state at the hidden position</text>
+<path d="M625 335H800" stroke="#0f7881" stroke-width="4" marker-end="url(#bridge-arrow)"/>
+<text x="1030" y="315" font-size="28">Recover the original token</text><text x="1030" y="375" font-size="48" fill="#a34832">cat</text>
+<text x="660" y="465" font-size="29">BERT · Bidirectional Encoder Representations from Transformers</text>
+</g></svg>
+<div class="ss-next"><span>NEXT · BERT</span><p>How do we train this encoder to use both sides without giving away the answer?</p></div>
+<p class="ss-source">Schematic information flow, not measured attention or a model prediction. The original word is the training target. Architecture overview adapted from the preserved lecture draft.</p>
+```
+
+::: {.notes}
+TIME: 1 minute. Together with the preceding map, this is the three-minute
+architecture orientation inside the planned 30-minute BERT block.
+
+Return from the three-token diagram to our full running sentence. Point to The
+and sat on the mat: both can contribute to the encoder state at the masked position.
+The word cat is shown to the class as the retained target, not supplied to the
+encoder. The outgoing arrow abbreviates a prediction head; it does not claim the
+model already predicts cat correctly. Students already know output probabilities,
+so do not revisit their calculation.
+
+BERT is our first representative model. The architecture describes information
+access; a training objective specifies what to predict. These are related choices,
+not a claim that each architecture permits only one task. GPT and T5 will follow.
+Stop here for instructor review. Masking rates, corruption choices, loss, special
+tokens, and next-sentence prediction belong to the next requested increment.
+:::

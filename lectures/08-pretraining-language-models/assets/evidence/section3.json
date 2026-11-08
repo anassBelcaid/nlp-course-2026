@@ -1,0 +1,272 @@
+{
+  "torch": "2.13.0+cpu",
+  "seed": 351,
+  "device": "CPU",
+  "source": "the cat sat on the mat",
+  "vocabulary": [
+    "<start>",
+    "<eos>",
+    "[MASK]",
+    "<S0>",
+    "<S1>",
+    "<S2>",
+    "the",
+    "cat",
+    "sat",
+    "on",
+    "mat"
+  ],
+  "config": {
+    "width": 24,
+    "heads": 2,
+    "feedforward": 48,
+    "layers_per_stack": 1,
+    "dropout": 0,
+    "optimizer": "SGD",
+    "learning_rate": 0.05
+  },
+  "protocol": "Separate randomly initialized teaching models; one step on one word-tokenized example. Same example before/after, no held-out data. Not checkpoints, not learning curves, not an architecture ranking.",
+  "records": {
+    "encoder": {
+      "input": [
+        "the",
+        "[MASK]",
+        "sat",
+        "on",
+        "the",
+        "[MASK]"
+      ],
+      "decoder_input": null,
+      "targets": [
+        "-",
+        "cat",
+        "-",
+        "-",
+        "-",
+        "mat"
+      ],
+      "selected_count": 2,
+      "rows": [
+        {
+          "position": 1,
+          "target": "cat",
+          "before": 0.132248193025589,
+          "after": 0.26335927844047546
+        },
+        {
+          "position": 5,
+          "target": "mat",
+          "before": 0.06460106372833252,
+          "after": 0.13466696441173553
+        }
+      ],
+      "loss_before": 2.3812994956970215,
+      "loss_after": 1.669593334197998,
+      "gradient_norm": 3.893312876549895,
+      "parameter_count": 5795,
+      "parameter_update_norms": {
+        "word.weight": 0.018328480422496796,
+        "position.weight": 0.01858275569975376,
+        "encoder.layers.0.self_attn.in_proj_weight": 0.027495823800563812,
+        "encoder.layers.0.self_attn.in_proj_bias": 0.008184786885976791,
+        "encoder.layers.0.self_attn.out_proj.weight": 0.030563097447156906,
+        "encoder.layers.0.self_attn.out_proj.bias": 0.01653190143406391,
+        "encoder.layers.0.linear1.weight": 0.04476097971200943,
+        "encoder.layers.0.linear1.bias": 0.008602248504757881,
+        "encoder.layers.0.linear2.weight": 0.05302368104457855,
+        "encoder.layers.0.linear2.bias": 0.017503421753644943,
+        "encoder.layers.0.norm1.weight": 0.018707038834691048,
+        "encoder.layers.0.norm1.bias": 0.017955174669623375,
+        "encoder.layers.0.norm2.weight": 0.019735705107450485,
+        "encoder.layers.0.norm2.bias": 0.019299566745758057,
+        "head.weight": 0.1656273454427719,
+        "head.bias": 0.03347976505756378
+      }
+    },
+    "decoder": {
+      "input": [
+        "<start>",
+        "the",
+        "cat",
+        "sat",
+        "on",
+        "the"
+      ],
+      "decoder_input": null,
+      "targets": [
+        "the",
+        "cat",
+        "sat",
+        "on",
+        "the",
+        "mat"
+      ],
+      "selected_count": 6,
+      "rows": [
+        {
+          "position": 0,
+          "target": "the",
+          "before": 0.07705588638782501,
+          "after": 0.10738247632980347
+        },
+        {
+          "position": 1,
+          "target": "cat",
+          "before": 0.10460194200277328,
+          "after": 0.13392777740955353
+        },
+        {
+          "position": 2,
+          "target": "sat",
+          "before": 0.08270952850580215,
+          "after": 0.10891981422901154
+        },
+        {
+          "position": 3,
+          "target": "on",
+          "before": 0.033689290285110474,
+          "after": 0.046641141176223755
+        },
+        {
+          "position": 4,
+          "target": "the",
+          "before": 0.07764572650194168,
+          "after": 0.10826151072978973
+        },
+        {
+          "position": 5,
+          "target": "mat",
+          "before": 0.05310358479619026,
+          "after": 0.06867794692516327
+        }
+      ],
+      "loss_before": 2.6991539001464844,
+      "loss_after": 2.4042935371398926,
+      "gradient_norm": 2.457313946242855,
+      "parameter_count": 5795,
+      "parameter_update_norms": {
+        "word.weight": 0.007744561415165663,
+        "position.weight": 0.00800186675041914,
+        "encoder.layers.0.self_attn.in_proj_weight": 0.027428533881902695,
+        "encoder.layers.0.self_attn.in_proj_bias": 0.005128636956214905,
+        "encoder.layers.0.self_attn.out_proj.weight": 0.027525369077920914,
+        "encoder.layers.0.self_attn.out_proj.bias": 0.008675755932927132,
+        "encoder.layers.0.linear1.weight": 0.023995161056518555,
+        "encoder.layers.0.linear1.bias": 0.0056228600442409515,
+        "encoder.layers.0.linear2.weight": 0.03467436507344246,
+        "encoder.layers.0.linear2.bias": 0.011660418473184109,
+        "encoder.layers.0.norm1.weight": 0.011323060840368271,
+        "encoder.layers.0.norm1.bias": 0.012949601747095585,
+        "encoder.layers.0.norm2.weight": 0.013768999837338924,
+        "encoder.layers.0.norm2.bias": 0.012217923067510128,
+        "head.weight": 0.10184050351381302,
+        "head.bias": 0.02021183632314205
+      }
+    },
+    "seq2seq": {
+      "input": [
+        "the",
+        "<S0>",
+        "sat",
+        "on",
+        "the",
+        "<S1>"
+      ],
+      "decoder_input": [
+        "<start>",
+        "<S0>",
+        "cat",
+        "<S1>",
+        "mat",
+        "<S2>"
+      ],
+      "targets": [
+        "<S0>",
+        "cat",
+        "<S1>",
+        "mat",
+        "<S2>",
+        "<eos>"
+      ],
+      "selected_count": 6,
+      "rows": [
+        {
+          "position": 0,
+          "target": "<S0>",
+          "before": 0.06194049119949341,
+          "after": 0.08286447823047638
+        },
+        {
+          "position": 1,
+          "target": "cat",
+          "before": 0.1663270741701126,
+          "after": 0.20306256413459778
+        },
+        {
+          "position": 2,
+          "target": "<S1>",
+          "before": 0.03359830379486084,
+          "after": 0.04503578692674637
+        },
+        {
+          "position": 3,
+          "target": "mat",
+          "before": 0.05325432866811752,
+          "after": 0.0704844743013382
+        },
+        {
+          "position": 4,
+          "target": "<S2>",
+          "before": 0.1706949770450592,
+          "after": 0.2142203450202942
+        },
+        {
+          "position": 5,
+          "target": "<eos>",
+          "before": 0.021528856828808784,
+          "after": 0.029324140399694443
+        }
+      ],
+      "loss_before": 2.7512624263763428,
+      "loss_after": 2.484590768814087,
+      "gradient_norm": 2.3321476206476466,
+      "parameter_count": 13115,
+      "parameter_update_norms": {
+        "word.weight": 0.007055441848933697,
+        "position.weight": 0.007068044040352106,
+        "encoder.layers.0.self_attn.in_proj_weight": 0.005677979439496994,
+        "encoder.layers.0.self_attn.in_proj_bias": 0.0010980425868183374,
+        "encoder.layers.0.self_attn.out_proj.weight": 0.004368196707218885,
+        "encoder.layers.0.self_attn.out_proj.bias": 0.0019292400684207678,
+        "encoder.layers.0.linear1.weight": 0.0028983603697270155,
+        "encoder.layers.0.linear1.bias": 0.0008733897702768445,
+        "encoder.layers.0.linear2.weight": 0.00642054807394743,
+        "encoder.layers.0.linear2.bias": 0.0029819528572261333,
+        "encoder.layers.0.norm1.weight": 0.0016065570525825024,
+        "encoder.layers.0.norm1.bias": 0.002860937500372529,
+        "encoder.layers.0.norm2.weight": 0.0018390979385003448,
+        "encoder.layers.0.norm2.bias": 0.0030791782774031162,
+        "decoder.layers.0.self_attn.in_proj_weight": 0.025213753804564476,
+        "decoder.layers.0.self_attn.in_proj_bias": 0.003968698903918266,
+        "decoder.layers.0.self_attn.out_proj.weight": 0.022822638973593712,
+        "decoder.layers.0.self_attn.out_proj.bias": 0.005950123071670532,
+        "decoder.layers.0.multihead_attn.in_proj_weight": 0.014296973124146461,
+        "decoder.layers.0.multihead_attn.in_proj_bias": 0.005048124585300684,
+        "decoder.layers.0.multihead_attn.out_proj.weight": 0.014150313101708889,
+        "decoder.layers.0.multihead_attn.out_proj.bias": 0.008520364761352539,
+        "decoder.layers.0.linear1.weight": 0.019664844498038292,
+        "decoder.layers.0.linear1.bias": 0.003946230746805668,
+        "decoder.layers.0.linear2.weight": 0.03325190022587776,
+        "decoder.layers.0.linear2.bias": 0.008829008787870407,
+        "decoder.layers.0.norm1.weight": 0.007960310205817223,
+        "decoder.layers.0.norm1.bias": 0.00849438738077879,
+        "decoder.layers.0.norm2.weight": 0.008185403421521187,
+        "decoder.layers.0.norm2.bias": 0.00882604531943798,
+        "decoder.layers.0.norm3.weight": 0.012131715193390846,
+        "decoder.layers.0.norm3.bias": 0.010372242890298367,
+        "head.weight": 0.09621070325374603,
+        "head.bias": 0.01644117757678032
+      }
+    }
+  }
+}

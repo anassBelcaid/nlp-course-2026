@@ -13,6 +13,9 @@
 
 ## Slide space and legibility
 
+- Vary the form of the scientific argument: use diagrams for structure, controlled demonstrations for mechanisms, equations for precise rules, and published figures or benchmark tables for evidence. Approval of one component is not a request to repeat it on every slide. Keep a consistent visual identity without imposing one layout or interaction pattern on the lecture.
+- Choose research evidence when it serves the question, not to fill a media checklist. Label illustrative numbers and measured outputs clearly, cite primary sources, and state the evaluation setting for benchmark comparisons.
+
 - Use the available slide canvas deliberately. Content should normally occupy most of the usable height instead of clustering in the upper three quarters and leaving a large inactive lower area.
 - Improve space usage primarily by increasing the size and visibility of meaningful content: type, equations, matrices, examples, diagrams, and spacing between related elements.
 - Give cards and boxes deliberate dimensions, then keep their text at a readable presentation size and allow it to wrap naturally across as many lines as needed. Never shrink box text or force it onto one line merely to preserve a horizontal layout.

@@ -1,0 +1,115 @@
+---
+title: "Pretraining Language Models"
+subtitle: "Learn from text. Reuse the model."
+author: "Dr. A. Belcaid · CS 351"
+image: images/pretraining-overview.png
+title-slide-attributes:
+  data-visibility: hidden
+format:
+  revealjs:
+    theme: [default, theme.scss]
+    css: [slides.css, opening.css, why-pretrain.css, self-supervision.css]
+    include-after-body:
+      - assets/why-pretrain-controls.html
+      - assets/self-supervision-controls.html
+    slide-number: c/t
+    progress: true
+    controls: true
+    transition: fade
+    background-transition: fade
+    width: 1440
+    height: 900
+    margin: 0.06
+    center: false
+    auto-stretch: false
+    footer: "CS 351 · Pretraining Language Models"
+execute:
+  enabled: false
+---
+
+## Pretraining Language Models {.opening-title}
+
+<p class="lecture-kicker">LECTURE 08 · TWO SESSIONS · TWO HOURS EACH</p>
+<p class="opening-subtitle">Learn from text.<br>Reuse the model.</p>
+<div class="opening-sequence"><span>RAW TEXT</span><b>→</b><span>PRETRAINED WEIGHTS</span><b>→</b><span>NEW TASKS</span></div>
+<p class="opening-author">Dr. A. Belcaid · CS 351 · 2026–2027</p>
+
+::: {.notes}
+Opening and Session 1’s first two 15-minute sections, prepared for instructor review. The existing
+57-slide draft is preserved in previous-draft.qmd with its original controls,
+figures, evidence, and speaker notes. Reuse its effective demonstrations as each
+section is rebuilt; especially the BERT masking and conditional 80/10/10 controls.
+
+The previous lecture explained the Transformer architecture. These two sessions
+ask how its weights are learned from text and how those weights support new tasks.
+The second session does not replace Lecture 09's instruction tuning and efficient
+adaptation. Calendar dates and any resulting timetable adjustment remain to be set.
+:::
+
+## From text to a reusable model {#overview .overview-slide .two-session-overview}
+
+![](images/pretraining-overview.png){.overview-image fig-alt="Original conceptual overview: documents become tokens, which branch into missing-token and next-token prediction tasks. Both feed a model with a learning loop. The learned model connects to downstream applications represented by classification groups, document search, and conversation."}
+
+<div class="session-overview-route">
+<div><span class="session-tag">SESSION 1 · LEARN</span><strong>Text → prediction → learned weights</strong><p>Build training targets. Compare BERT, GPT, and T5.</p></div>
+<div><span class="session-tag">SESSION 2 · REUSE</span><strong>Learned weights → useful tasks</strong><p>Fine-tune with labels, or prompt with fixed weights.</p></div>
+</div>
+<p class="overview-caption">Conceptual illustration · applications can require further adaptation; pretraining alone does not produce an assistant.</p>
+
+::: {.notes}
+Trace the image from left to right. The documents supply observed text. The upper
+branch suggests a missing token; the lower branch suggests the next token. The
+loop changes model parameters. Session 1 opens this learning process and also
+introduces T5's missing-span recipe, which is not separately drawn in the image.
+
+Then point to the applications. They are examples of possible uses, not immediate
+capabilities guaranteed by pretraining. Session 2 follows the learned weights into
+classification, token labeling, question answering, and prompted generation.
+Document search is shown as an application in the overview, but its full pipeline
+belongs to the later RAG lecture. This artwork is schematic, not measured evidence.
+:::
+
+## Session 1 · How does pretraining work? {#session-1 .session-contents}
+
+<p class="session-lead">How can raw text supply both the questions and the answers?</p>
+<div class="session-agenda">
+<div><b>01</b><strong>Why pretrain?</strong><span>From word embeddings to a contextual model.</span><em>15 min</em></div>
+<div><b>02</b><strong>Text supplies its own targets</strong><span>Construct prediction examples without manual labels.</span><em>15 min</em></div>
+<div><b>03</b><strong>BERT: recover hidden tokens</strong><span>Masking, 80/10/10 corruption, and one worked loss.</span><em>30 min</em></div>
+<div><b>04</b><strong>GPT: predict what comes next</strong><span>Causal context; training versus generation.</span><em>20 min</em></div>
+<div><b>05</b><strong>T5: reconstruct missing spans</strong><span>Read a corrupted source; generate its gaps.</span><em>15 min</em></div>
+<div><b>06</b><strong>One sentence, three recipes</strong><span>Build and compare the inputs and targets together.</span><em>15 min</em></div>
+</div>
+<p class="session-budget">110 minutes of teaching and activities + 10 minutes for questions or a break.</p>
+<p class="route-question">We trained a word predictor. How can it become a sentiment classifier?</p>
+
+::: {.notes}
+These times are a pacing proposal, including short student questions and one
+numerical exercise; do not add activities on top of the 110-minute plan.
+
+Use Stanford's PDF pages 10–11 for embedding-only versus whole-model pretraining,
+and page 19 for the complete pretrain/fine-tune workflow. Use Berkeley PDF pages
+36 and 58 as a matched visual pair for masked and causal prediction. Stanford
+PDF page 36 and Berkeley page 66 supply the T5 span-corruption illustrations.
+Page references are PDF viewer pages, not Stanford's printed slide numbers.
+
+Keep one small example visible when introducing each rule. The original BERT
+recipe selects 15% of eligible positions; the 80/10/10 probabilities apply within
+that selected set. Reuse previous-draft.qmd#bert-corruption and the separate
+PAUSE/solution pair at #bert-loss-pause and #bert-loss-solution. No arithmetic
+answer should appear on its prompt slide. Mention NSP briefly as historical context.
+
+End the completed session with a visual bridge from pretrained weights to a new
+sentiment task. This contents slide previews that question; it is not the final
+session-ending visual. The first two 15-minute sections follow; stop at the
+architecture overview and BERT bridge before rebuilding the BERT training section.
+:::
+
+{{< include _why-pretrain.qmd >}}
+
+{{< include _self-supervision.qmd >}}
+
+{{< include _architecture-transition.qmd >}}
+
+<!-- Continue Session 1 content and its closing bridge here. Only then include
+_session2-plan.qmd to open Session 2; it must not appear in the opening sequence. -->
