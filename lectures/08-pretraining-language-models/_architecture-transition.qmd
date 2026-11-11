@@ -200,6 +200,6 @@ so do not revisit their calculation.
 BERT is our first representative model. The architecture describes information
 access; a training objective specifies what to predict. These are related choices,
 not a claim that each architecture permits only one task. GPT and T5 will follow.
-Stop here for instructor review. Masking rates, corruption choices, loss, special
-tokens, and next-sentence prediction belong to the next requested increment.
+The approved transition ends here. Continue into the BERT increment: inputs,
+corruption choices, loss, and brief next-sentence prediction context.
 :::

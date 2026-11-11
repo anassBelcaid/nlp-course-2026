@@ -1,0 +1,54 @@
+/* T5 increment: preserve readable text and the approved earlier sections. */
+.reveal .t5-slide h2 { font-size: 46px; line-height: 1.12; margin: 0 0 25px; }
+.reveal .t5-lead { font-size: 32px; line-height: 1.35; margin: 0 0 22px; }
+.reveal .t5-caption { font-size: 27px; line-height: 1.35; color: #526873; margin: 22px 0; }
+.t5-gap-a { background: #f4dfb8; color: #17364a; padding: 3px 9px; border-radius: 5px; }
+.t5-gap-b { background: #d6e6ef; color: #17364a; padding: 3px 9px; border-radius: 5px; }
+.reveal .t5-slide > p:has(.t5-paper-figure) { margin: 28px 0; }
+.reveal .t5-paper-figure { width: 100%; height: 355px; object-fit: contain; max-height: none; margin: 0; }
+.reveal .t5-takeaway { font-size: 31px; line-height: 1.35; padding: 17px 25px; border-left: 5px solid var(--gold); margin: 24px 0; }
+.t5-toolbar { margin: 20px 0 25px; }
+.t5-original { padding: 20px 26px; background: #f0eee6; margin: 15px 0 25px; }
+.reveal .t5-original p { font-size: 36px; margin: 10px 0 0; }
+.t5-original .lab-label { margin-bottom: 14px; }
+.t5-stream { padding: 22px 26px; margin: 18px 0; border-left: 5px solid #0f7881; background: #e7eee8; }
+.t5-target-stream { background: #e8edf2; border-color: #496e87; }
+.t5-stream .lab-label { margin-bottom: 16px; }
+.t5-token-row { display: flex; flex-wrap: wrap; gap: 14px; }
+.t5-token-row span { display: inline-block; font-size: 32px; padding: 10px 19px; line-height: 1.15; border-radius: 8px; background: #fffdf8; }
+.t5-token-row .t5-sentinel { background: #f4dfb8; font-weight: 700; color: #8e432a; }
+.t5-token-row .t5-eos { background: #17364a; color: white; }
+.reveal .t5-token-key { font-size: 24px; line-height: 1.5; margin: 18px 0; }
+.t5-token-key code { font-size: 21px; }
+.reveal .t5-fixed-source { font-size: 33px; background: #e7eee8; padding: 18px 23px; margin: 0 0 23px; }
+.t5-fixed-source span { display: block; font-size: 19px; letter-spacing: .06em; color: #526873; margin-bottom: 12px; }
+.reveal .t5-loss-table { width: 100%; font-size: 30px; margin: 25px 0; table-layout: fixed; }
+.reveal .t5-loss-table th { font-size: 25px; width: 205px; }
+.reveal .t5-loss-table th, .reveal .t5-loss-table td { padding: 18px 12px; border-color: #bccfca; }
+.t5-scored { background: #e6eee7; }
+.t5-gradient-diagram { width: 100%; height: 235px; display: block; }
+.t5-gradient { fill: none; stroke: #a34832; stroke-width: 3; stroke-dasharray: 9 6; marker-end: url(#t5-back); }
+.t5-objective { font-size: 34px; text-align: center; }
+.t5-objective p { margin: 15px 0; }
+.reveal .t5-task-table { width: 100%; table-layout: fixed; font-size: 29px; margin: 32px 0; }
+.reveal .t5-task-table th, .reveal .t5-task-table td { padding: 24px 20px; vertical-align: middle; border-color: #b6c9c8; line-height: 1.35; }
+.reveal .t5-task-table thead { background: #17364a; color: white; }
+.reveal .t5-task-table th:first-child { width: 23%; }
+.reveal .t5-task-table th:nth-child(2) { width: 45%; }
+.reveal .t5-task-table tbody th { font-size: 27px; }
+.t5-transfer-route { display: grid; grid-template-columns: 1fr 70px 1fr; gap: 25px; align-items: center; margin: 30px 0; }
+.t5-transfer-route > div { padding: 23px; background: #e7eee8; border-top: 4px solid #0f7881; }
+.t5-transfer-route span { display: block; font-size: 20px; letter-spacing: .04em; margin-bottom: 16px; }
+.t5-transfer-route strong { display: block; font-size: 29px; line-height: 1.3; }
+.t5-transfer-route > b { font-size: 45px; text-align: center; color: #0f7881; }
+.t5-bridge-diagram { width: 100%; height: 480px; display: block; margin: 25px 0; }
+.t5-bridge-flow { fill: none; stroke: #0f7881; stroke-width: 4; stroke-dasharray: 10 7; marker-end: url(#t5-bridge-arrow); }
+.present .t5-bridge-flow { animation: t5-flow 2.5s linear infinite; }
+@keyframes t5-flow { to { stroke-dashoffset: -68; } }
+.reveal .t5-question { font-size: 36px; line-height: 1.35; border-left: 5px solid var(--gold); padding: 18px 25px; margin: 25px 0; }
+@media (prefers-reduced-motion: reduce) { .present .t5-bridge-flow { animation: none; } }
+
+/* Keep the fixed source on one readable line; reserve space for the loss. */
+#t5-loss .t5-fixed-source span { display: inline-block; margin: 0 25px 0 0; vertical-align: middle; }
+#t5-loss .t5-loss-table { margin: 18px 0; }
+#t5-loss .t5-takeaway { margin: 18px 0; }

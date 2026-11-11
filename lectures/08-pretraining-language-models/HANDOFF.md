@@ -1,5 +1,124 @@
 # Pretraining lecture — resume here
 
+## Latest checkpoint — Session 1 ending, 11 November 2026
+
+T5 was accepted (“excellent”). The instructor approved and requested the final
+15-minute synthesis. **Slides 35–39 are now authored for review**; Session 1 has
+all planned content. Start at `#/synthesis-pause`. Stop at `#/session-1-closing`.
+Session 2's plan is preserved but is NOT included or newly authored yet.
+
+New files: `_synthesis.qmd` and `synthesis.css`. Five slides: PAUSE construction
+activity (4 min), worked solution (3), context/parameter comparison (2), weights
+versus states and targets (3), and animated sentiment-adaptation bridge (3).
+The exercise fixes its corruption and boundary conventions, with no solution on
+the prompt slide. GPT uses the existing no-START, five-target window; T5 retains
+the paper-style final sentinel, source EOS, target EOS, and decoder START.
+
+The ending combines pretrained parameters with new labeled examples, leaving
+adaptation unresolved. It does not teach the Session 2 head or update equations.
+The deck now has 39 slides and a Session 1 budget of 102 minutes of material plus
+18 minutes of margin. The 15-minute synthesis includes the closing bridge.
+
+Keep the established focus on pretraining and reuse. Attention, prediction,
+and AR decoding mechanics have already been taught. Both reference PDFs remain
+in `tmp/`, and the old draft is preserved. Do not delete the PDFs during cleanup.
+Next: instructor review of the ending, then discuss the first Session 2 increment.
+
+Validation: Quarto rendered 39 slides. Chromium at 1440×1000 found no content
+overflow, missing images, or JavaScript errors. The PAUSE is immediately followed
+by its solution; the final slide is the sentiment bridge, and Session 2 is absent.
+All five new slides were visually inspected. Comparison-card whitespace was
+reduced without shrinking text. `git diff --check` passed.
+
+---
+
+## Previous checkpoint — T5 increment, 11 November 2026
+
+GPT is complete. The instructor approved the 15-minute T5 outline and requested
+its implementation. **T5 slides 30–34 are now authored for review**, not yet
+approved. Review at `#/t5-spans`. Stop before the Session 1 synthesis.
+
+Files: `_t5.qmd`, `t5.css`, `assets/t5-controls.html`, and the locally saved
+`images/sources/t5-span-construction.png`. Five slides: span construction (3 min),
+interactive source/target inspector (4), reconstruction loss and gradient paths
+(4), text-to-text reuse (3), and a visual synthesis bridge (1). Total 15 minutes.
+Reuse remains a preview; detailed adaptation is still reserved for Session 2.
+
+The instructor's emphasis remains pretraining. Prediction mechanics, attention,
+and autoregressive decoding are assumed knowledge. The preserved cat/mat example
+and its cat-sat extension are reused. The control constructs examples, not model
+outputs. Sentinels and EOS are distinct; all non-padding target tokens receive
+loss. Encoder parameters learn through decoder cross-attention dependencies.
+
+Both full reference PDFs remain in `tmp/`; do not remove them during cleanup.
+The older draft is unchanged. Only the 15-minute three-recipe synthesis remains
+in Session 1, including its final visual bridge to sentiment adaptation. The
+session budget stays 102 minutes of material plus 18 minutes of margin.
+
+Validation: Quarto rendered 34 slides. Chromium at 1440×1000 found no content
+overflow, missing images, or JavaScript errors. Both span selections were checked
+against their expected source/target token sequences, including sentinels and EOS.
+The new slides were visually inspected; the loss slide spacing and gradient path
+were refined. `git diff --check` passed.
+
+---
+
+## Previous checkpoint — GPT pretraining increment, 11 November 2026
+
+BERT was accepted (“that's good”). The instructor then requested GPT and agreed
+that its focus must be **pretraining**, because prediction mechanics and AR LMs
+have already been taught. Do not restart those explanations.
+
+New slides 26–29 in `_gpt.qmd` are authored for review: corpus → reusable weights
+(3 min), supervision comparison (4), checkpoint use/weight updates (3), and a
+visual T5 bridge (2). Total 12 minutes, replacing the original 20-minute block.
+Session 1 now has 102 minutes of planned material plus 18 minutes of margin.
+`gpt.css` and `assets/gpt-controls.html` provide scoped styling and the small
+weight-lifecycle switch. No new model outputs are claimed. The preserved draft
+is unchanged. Both reference PDFs remain in `tmp/` and MUST be retained.
+
+Validation: rendered 29 slides; Chromium at 1440×1000 found no overflow,
+missing images, or JavaScript errors. Both weight-lifecycle modes were checked.
+The four new slides were visually inspected; the comparison slide’s spacing
+was corrected without reducing text size.
+
+Review starts at `#/gpt-pretraining`. Stop before authoring T5. Its planned
+15 minutes and the 15-minute session synthesis remain to be developed.
+
+---
+
+## BERT checkpoint — 11 November 2026
+
+The approved 16-slide opening is followed by a newly authored **nine-slide BERT
+increment (slides 17–25), awaiting instructor review**. Do not treat it as approved
+or continue with GPT automatically. Start review at `#/bert-mlm`.
+
+`_bert.qmd`, `bert.css`, and `assets/bert-controls.html` contain this increment.
+Timings: MLM connection 2 min; inputs 4; selection 3; corruption inspector 5;
+loss PAUSE 2 and solution 3; NSP 3; task-head preview 3; GPT bridge 2 = 27 min.
+Together with the approved architecture orientation, BERT occupies 30 minutes.
+The preserved branch inspector and loss exercise were reused; the inspector now
+uses the running cat sentence. Its standalone script omits the old deck's
+unrelated model-evidence fetch. The earlier draft remains unchanged.
+
+Validation: Quarto rendered 25 slides; Chromium at 1440×1000 found no content
+overflow across all slides, no missing images, and no JavaScript errors. All
+three corruption branches were clicked and confirmed to retain cat as the
+target. The nine new slides were visually inspected after transitions settled.
+
+The two source PDFs were restored by the instructor after a cleanup removed
+them. Both are present in `tmp/` (Stanford 56 pages; Berkeley 114 pages).
+**Retain these reference PDFs during future proposal-file cleanup.** Extracted
+figures remain local and the slide deck does not require the PDFs to render.
+
+The 8 November checkpoint below is historical. Its 16-slide approval still
+applies, but BERT is now authored for review. The previous checkpoint and student
+project updates were pushed to origin/main; this new increment is not committed.
+
+---
+
+## Previous checkpoint
+
 Checkpoint: 8 November 2026. Instructor approved the current sequence and asked
 to stop after the architecture transition. This file records decisions, not
 permission to author the rest of the lecture automatically.

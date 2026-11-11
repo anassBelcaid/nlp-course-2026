@@ -1,0 +1,161 @@
+## GPT: use language modeling to learn reusable weights {#gpt-pretraining .gpt-slide}
+
+<p class="gpt-lead">The autoregressive objective is familiar. Its role here is to <strong>prepare a model for reuse</strong>.</p>
+
+```{=html}
+<svg class="gpt-corpus-flow" viewBox="0 0 1320 450" role="img" aria-label="Unlabeled corpus passages are tokenized into training windows. Familiar causal language modeling updates embeddings, decoder blocks, and vocabulary head. Save these learned weights as a pretrained checkpoint that can be reused for continuation or later task adaptation.">
+<defs><marker id="gp-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10Z" fill="#0f7881"/></marker></defs>
+<g font-family="sans-serif" fill="#17364a">
+<rect x="15" y="45" width="330" height="245" rx="12" fill="#e8e6dc"/><text x="40" y="90" font-size="27" font-weight="bold">CORPUS PASSAGES</text><text x="40" y="145" font-size="28">“the cat sat on the mat”</text><text x="40" y="192" font-size="28">“the train arrived late”</text><text x="40" y="239" font-size="28">“the film was moving”</text>
+<path d="M350 170H460" stroke="#0f7881" stroke-width="4" marker-end="url(#gp-arrow)"/>
+<rect x="475" y="45" width="365" height="245" rx="12" fill="#dfece6"/><text x="657" y="91" font-size="27" text-anchor="middle" font-weight="bold">CAUSAL LM TRAINING</text><text x="657" y="144" font-size="28" text-anchor="middle">next-token loss</text><text x="657" y="194" font-size="28" text-anchor="middle">gradients + updates</text><text x="657" y="244" font-size="25" text-anchor="middle">many text windows, batches</text>
+<path d="M845 170H955" stroke="#0f7881" stroke-width="4" marker-end="url(#gp-arrow)"/>
+<rect x="970" y="45" width="335" height="245" rx="12" fill="#17364a"/><text x="1137" y="91" font-size="27" text-anchor="middle" fill="white" font-weight="bold">SAVE CHECKPOINT θ*</text><text x="1137" y="147" font-size="27" text-anchor="middle" fill="white">embeddings</text><text x="1137" y="194" font-size="27" text-anchor="middle" fill="white">decoder blocks</text><text x="1137" y="241" font-size="27" text-anchor="middle" fill="white">vocabulary head</text>
+<text x="180" y="340" font-size="24" text-anchor="middle">No task labels required</text><text x="657" y="340" font-size="24" text-anchor="middle">All model parameters learn</text><path d="M1137 300V365H660" stroke="#0f7881" stroke-width="3" fill="none" marker-end="url(#gp-arrow)"/><text x="880" y="420" font-size="28" text-anchor="middle">Reuse for continuation or later task adaptation</text>
+</g></svg>
+```
+
+<p class="gpt-takeaway">Transfer the <strong>learned parameters</strong>, together with the model’s tokenizer and configuration.</p>
+<p class="gpt-caption">The corpus supplies the supervision. Corpus selection and preprocessing shape what the model can learn.</p>
+<p class="s1-source">Original teaching diagram. Berkeley CS288, PDF pp. 57–59; <a href="https://cdn.openai.com/research-covers/language-unsupervised/language_understanding_paper.pdf">Radford et al. (2018), §3</a>. Authored corpus excerpts; no training run is shown.</p>
+
+::: {.notes}
+TIME: 3 minutes. The instructor explicitly confirmed that prediction, causal
+attention, and AR generation have already been taught. Do not rederive them.
+The new point is the role of the learning stage: train on general text, then reuse
+its weights rather than initialize every downstream model from scratch.
+
+Trace the three passages into training windows. These are authored illustrations,
+not a sample of a measured training corpus. Actual windows can contain multiple
+sentences and are bounded by the model's context length; segmentation, document
+boundaries, tokenization, filtering, and deduplication are data decisions. We will
+study data and scale in Session 2. Corpus size alone does not define pretraining.
+
+The familiar loss updates the token/position embeddings, decoder stack, and
+vocabulary prediction mapping; tied parameters are shared rather than separately
+counted. Save learned weights and keep their matching tokenizer/configuration.
+A checkpoint is not a list of contextual vectors for these three sentences, nor
+an explicit database of answers. Learned parameters can nevertheless memorize
+training text. Do not imply that saving weights prevents memorization.
+
+The original 2018 GPT work explicitly followed LM pretraining with supervised
+adaptation. Thus decoder pretraining is relevant to understanding tasks as well
+as continuation. Pretraining describes a stage in a reuse workflow; autoregressive
+describes a prediction structure. Transition: “With the same text, how does this
+recipe's supervision differ from BERT's?”
+:::
+
+## Same corpus. A different distribution of supervision. {#gpt-supervision .gpt-slide}
+
+<p class="gpt-source"><span>ONE SOURCE WINDOW</span>the cat sat on the mat</p>
+<div class="gpt-comparison">
+<div><h3>BERT · selected recovery</h3><span class="lab-label">SUPPLIED INPUT</span><p class="gpt-example">the <b>[MASK]</b> sat on the <b>[MASK]</b></p><span class="lab-label">DIRECT LOSS TARGETS</span><p class="gpt-targets">cat · mat</p><p>Each selected prediction can use both sides of the corrupted input.</p></div>
+<div><h3>GPT · causal language modeling</h3><span class="lab-label">SUPPLIED INPUT</span><p class="gpt-example">the cat sat on the</p><span class="lab-label">ALIGNED LOSS TARGETS</span><p class="gpt-targets">cat · sat · on · the · mat</p><p>Each prediction uses its observed prefix. Score each eligible next-token target.</p></div>
+</div>
+<div class="gpt-objective">
+
+$$\mathcal{L}_{\mathrm{AR}}(\theta)=-\frac{1}{5}\sum_{t=2}^{6}\log p_\theta(x_t\mid x_{<t})$$
+
+</div>
+<p class="gpt-caption">Familiar loss, shown for this window. Same corpus does not mean the same learning signal—or a guaranteed winner.</p>
+<p class="s1-source">Example-based adaptation of Berkeley’s matched MLM/causal diagrams, PDF pp. 36 and 58; Stanford CS224N, PDF p. 31. Two BERT targets are illustrative, not a 15% sample. Boundary tokens omitted; the first word is supplied as context.</p>
+
+::: {.notes}
+TIME: 4 minutes. Keep the purpose on pretraining supervision. Read the targets,
+not another token-by-token generation trace. BERT's MLM part has selected loss
+positions; GPT scores each eligible next-token target in its training window.
+Here there is no start token: the first word is context, so there are five scored
+targets. The final source token mat is the last label and needs no extra input
+position for this example. Boundary/padding conventions affect actual counts.
+
+The displayed GPT input is processed with the already familiar causal mask.
+Although the complete prefix row is available to the training computation, a
+prediction cannot access later input positions. Do not reopen the attention
+matrix or the parallelism derivation. The equation is the known cross-entropy
+objective averaged over five targets; x2 is cat and x6 is mat. There is no new
+arithmetic task, and no new probability factorization to derive.
+
+BERT's unselected context states can still receive gradients; no direct loss
+at a position does not mean its representation is frozen. Selected-but-unchanged
+and randomly replaced positions also contribute to BERT's MLM loss, even though
+this illustration uses MASK for both. NSP is omitted to isolate the token-level
+comparison, not silently removed from the historical BERT recipe.
+
+More scored positions does not establish better representations. The available
+context and task difficulty also differ; fair comparisons need controlled data,
+model size, compute, and downstream evaluation. This slide reports no benchmark.
+Transition: “After the optimization stage, what does the saved base model give us?”
+:::
+
+## A pretrained checkpoint is the result of learning {#gpt-base-model .gpt-slide .s1-slide}
+
+<p class="gpt-lead">Follow the <strong>weights</strong> across the boundary between pretraining and use.</p>
+<div class="lab-toolbar gpt-mode-buttons" role="group" aria-label="Inspect the weight lifecycle"><button type="button" data-gpt-mode="train" aria-pressed="true">Pretrain on text</button><button type="button" data-gpt-mode="use" aria-pressed="false">Use saved checkpoint</button></div>
+<div class="gpt-lifecycle" aria-live="polite"><div><span class="lab-label">TEXT</span><p id="gpt-stage-text">Corpus window: the cat sat on the mat</p><span class="lab-label">SUPERVISION / OUTPUT</span><p id="gpt-stage-target">Observed next tokens supply the training targets.</p></div><div class="gpt-weight-panel"><span class="lab-label">PARAMETERS</span><strong id="gpt-weight-status">Weights change</strong><p id="gpt-stage-operation">Loss → gradients → optimizer update</p><p id="gpt-stage-result">Save the trained checkpoint for reuse.</p></div></div>
+<p class="gpt-takeaway">A base model learns text continuation. Pretraining alone does not establish reliable instruction following.</p>
+<p class="gpt-caption">Later task adaptation can update these weights again. Ordinary decoding does not.</p>
+<p class="s1-source">Reuses the preserved training/generation example, narrowed to the weight lifecycle. The continuation is authored, not a measured prediction. Stanford CS224N, PDF p. 31; Berkeley CS288, PDF pp. 57–59. Adaptation and prompting are developed in Session 2.</p>
+
+::: {.notes}
+TIME: 3 minutes. Use the control once in each mode. This adapts the old deck's
+#training-generation example: corpus prefix the cat → observed sat versus an
+illustrative emitted continuation the cat sleeps. The earlier presentation's
+comparison was static; this lightweight switch makes the weight status explicit.
+It executes no model, training, random sampling, or optimizer. Do not turn it into
+a second generation tutorial: the only teaching question is “Are weights changing?”
+
+During pretraining, corpus targets enter the loss, and the optimizer updates the
+parameters. At ordinary use, the saved model produces continuation probabilities
+with fixed weights. A different input changes the activations and outputs, not
+the stored weights. The displayed sleeps continuation is illustrative; it does
+not claim a particular checkpoint would produce it. No ground-truth answer is
+supplied to a loss in this ordinary decoding example.
+
+A base model is the product of the pretraining stage, before whatever later task
+adaptation or post-training we may choose. It can sometimes respond to instructions,
+but the pretraining objective by itself does not ensure that it reliably behaves
+as a helpful assistant. Do not assert an absolute inability. Likewise, the original
+GPT transfer story involved supervised task adaptation, not just prompting.
+Leave prompting examples, fine-tuning mechanics, and instruction tuning to their
+agreed later sections. Transition: “Both recipes reuse text supervision. Must the
+supplied text and the generated text occupy the same sequence?”
+:::
+
+## Read a source. Generate its missing spans. {#gpt-to-t5 .gpt-slide}
+
+<div class="gpt-summary"><p><b>GPT PRETRAINING</b>Corpus next-token targets → reusable causal-model weights</p><p><b>OPEN QUESTION</b>Can reconstruction use a separate output sequence?</p></div>
+
+```{=html}
+<svg class="gpt-span-bridge" viewBox="0 0 1320 450" role="img" aria-label="A complete corrupted source, the gap A sat on the gap B, enters an unresolved model. A separate output contains the missing spans cat and mat. Animated paths show source information feeding reconstruction, with the architecture and exact target format left for T5.">
+<defs><marker id="gt-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10Z" fill="#0f7881"/></marker></defs>
+<g font-family="sans-serif" fill="#17364a" text-anchor="middle">
+<text x="660" y="38" font-size="25">SUPPLIED SOURCE · both sides of each gap are available</text>
+<rect x="135" y="67" width="1050" height="80" rx="12" fill="#e4ece6"/><text x="660" y="119" font-size="37">the [gap A] sat on the [gap B]</text>
+<path class="gpt-bridge-path" d="M660 155V208"/>
+<rect x="390" y="220" width="540" height="100" rx="12" fill="#17364a"/><text x="660" y="282" font-size="37" fill="white">How should we train this?</text>
+<path class="gpt-bridge-path" d="M660 328V370"/>
+<text x="280" y="421" font-size="25">SEPARATE OUTPUT</text><rect x="460" y="380" width="500" height="65" rx="10" fill="#f5e4c6"/><text x="710" y="423" font-size="33">gap A: cat · gap B: mat</text>
+</g></svg>
+```
+
+<p class="gpt-question">How can we read the whole corrupted source while generating only what is missing?</p>
+<p class="s1-source">Conceptual bridge to T5, not its exact sentinel-token format. Gap labels and outputs are authored targets. Stanford CS224N, PDF p. 36; Berkeley CS288, PDF p. 66.</p>
+
+::: {.notes}
+TIME: 2 minutes. Synthesize the pretraining idea: an existing AR objective can
+learn weights from corpus text, and those weights become reusable. We compared
+the supervision rather than relearning the prediction machinery.
+
+Return to the fixed cat sentence. All uncorrupted source words should remain
+available to the reader, including words after a gap. The desired output is a
+separate sequence of missing pieces. Point to the two streams: source and output.
+The animated paths show information flow, not actual attention values or inference.
+Gap A/B are explanatory placeholders, not T5's real sentinel strings. The output
+labels are a conceptual request, not the exact training target serialization.
+
+The unresolved box deliberately withholds T5's encoder–decoder training recipe.
+Do not claim a decoder-only model could never implement conditional reconstruction;
+we are motivating a useful alternative, not proving an exclusive capability.
+No T5 equations, sentinel construction, or detailed architecture are taught here.
+End with the displayed question and stop for instructor review.
+:::

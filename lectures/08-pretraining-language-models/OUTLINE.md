@@ -5,14 +5,14 @@ and stop for instructor review after each requested section.
 
 ## Current review stage
 
-Read `HANDOFF.md` first when resuming. The instructor approved the current
-16-slide preview: opening (1–3), “Why pretrain?” (4–9), “Text supplies its own
-targets” (10–14), and the architecture transition (15–16). The detailed BERT
-section is next, not yet authored in the rebuilt deck.
+Read `HANDOFF.md` first when resuming. Opening, BERT, GPT, and T5 have been
+reviewed. The final synthesis and Session 1 closing bridge (slides 35–39) are
+now authored for review. All planned Session 1 content is present; stop at
+`#/session-1-closing`. Do not start Session 2 automatically.
 
 The Session 2 plan is preserved in `_session2-plan.qmd` and must appear only
-AFTER all Session 1 content and its closing bridge. It is not included yet.
-The schedule links to this in-progress preview and the preserved earlier draft.
+AFTER Session 1's closing bridge when that next increment is requested. It is
+not included yet. The schedule links to the preview and preserved earlier draft.
 
 ## Session 1 — How does pretraining work?
 
@@ -21,10 +21,10 @@ The schedule links to this in-progress preview and the preserved earlier draft.
 | Why pretrain? Static embeddings, contextual models, and the full reuse workflow | 15 |
 | Text supplies its own targets: build self-supervised examples | 15 |
 | Architecture orientation + BERT: masked prediction, 15% selection, conditional 80/10/10, one worked loss | 30 |
-| GPT: causal prediction, shifted targets, training versus generation | 20 |
+| GPT: familiar AR objective as pretraining, supervision comparison, checkpoint reuse | 12 |
 | T5: missing-span reconstruction | 15 |
 | Synthesis: construct three recipes from the same sentence | 15 |
-| Questions / break / pacing margin | 10 |
+| Questions / break / pacing margin | 18 |
 
 End with a visual bridge: how does a pretrained word predictor become a sentiment
 classifier? Introduce abstractions through a visible example. Keep the first
@@ -92,8 +92,8 @@ Controls and vector colors in the contextual comparison are schematic; they do
 not report inference or measured semantic similarity. Source image provenance
 is in `images/sources/README.md`. Each slide includes timed teaching notes.
 
-Only the architecture transition has been added after these sections. The BERT masking/80–10–10 controls remain in
-the preserved draft for reuse when that section is requested.
+The approved architecture transition is followed by the BERT increment described
+below. Its masking/80–10–10 control reuses the preserved draft’s interaction.
 
 ## Second section implementation
 
@@ -112,3 +112,62 @@ No numerical loss calculation or BERT corruption recipe is introduced yet.
 Two slides, three minutes within the BERT block: restored three-family attention-path
 map (2) and a large masked-position information-flow bridge into BERT (1).
 Stop before the detailed BERT training section.
+
+## BERT increment — authored for review, 11 November 2026
+
+Nine slides in `_bert.qmd` add the remaining 27 minutes of the BERT block:
+MLM connection (2), input embeddings (4), selection (3), reused corruption
+inspector (5), PAUSE loss exercise (2), worked solution (3), historical NSP (3),
+task-head preview (3), and a visual bridge to GPT (2). The existing two-slide
+architecture orientation supplies the first 3 minutes.
+
+Keep detailed fine-tuning in Session 2. At this BERT checkpoint, GPT, T5, and Session 1 synthesis remained
+unwritten. The GPT update below supersedes that status. New interactions are schematic, and loss values
+are illustrative. No new model run or benchmark claim is introduced.
+
+## GPT increment — revised scope, 11 November 2026
+
+The instructor emphasized that predictions, Transformers, and AR language models
+are already covered. Do not reteach causal attention, shifted-target mechanics,
+probability factorization, or sequential decoding. The accepted revision is
+12 minutes instead of 20; keep the saved 8 minutes as margin (18 total).
+
+Four slides in `_gpt.qmd`: corpus → reusable weights (3 min); compare BERT/GPT
+supervision with the same sentence and familiar AR loss (4); inspect weight
+updates during pretraining versus fixed weights at ordinary use (3); bridge to
+separate-source span reconstruction (2). The old #training-generation example
+is reused only as a weight-lifecycle control, not a generation lesson. This old
+example was static; the new mode switch is a lightweight teaching interaction,
+not a model simulation. All displayed continuations are authored.
+
+Remaining: T5 (15 min) and Session 1 synthesis (15 min), after instructor review.
+Session 2 remains unchanged. Sources: Berkeley PDF pp. 36, 57–59; Stanford p. 31;
+Radford et al. (2018), §3 for the original pretraining/transfer workflow.
+
+## T5 increment — authored for review, 11 November 2026
+
+Five slides in `_t5.qmd`, 15 minutes: introduce span construction (3), inspect
+source and target with one-word/multiword gaps (4), trace loss and encoder/decoder
+updates (4), preview text-to-text reuse (3), and bridge to the final comparison
+(1). Uses the preserved cat/mat recipe and multiword extension, plus the T5
+paper figure from Berkeley p. 66, also shown in Stanford p. 36.
+
+No new prediction tutorial or numerical loss exercise. The interactive control
+is deterministic example construction. Exact teaching sequences use the paper's
+final-sentinel convention, explicit EOS, and aliases for special tokens; they
+are not claimed to be a production tokenizer trace. The original draft and
+reference PDFs remain intact. Next: the 15-minute Session 1 synthesis, after review.
+
+## Final synthesis — authored for review, 11 November 2026
+
+Five slides in `_synthesis.qmd`: a PAUSE construction activity (4 min), its worked
+solution (3), the visibility/parameter comparison (2), weights versus contextual
+states and target labels (3), and the purposeful sentiment-adaptation bridge (3).
+Total 15 minutes, including the ending. The first solution appears on the next
+slide, with no hidden answers or new model measurements on the prompt.
+
+The comparison reuses earlier examples and preserves this lecture's exact
+boundary choices. No new model, attention tutorial, or numerical loss exercise
+is introduced. Session 1 is now fully authored at 39 slides, 102 minutes of
+material plus 18 minutes of margin. Session 2 remains unstarted in the rebuilt
+deck; its stored outline remains the next discussion reference.

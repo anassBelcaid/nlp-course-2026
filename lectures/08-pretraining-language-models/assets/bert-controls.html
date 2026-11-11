@@ -1,0 +1,22 @@
+<script>
+(() => {
+  const start = () => {
+    const variants = {
+      mask: ['[MASK]', 'The answer disappears from this input position; context must supply evidence.'],
+      random: ['table', 'The input token is misleading. The target is still cat—not the replacement table.'],
+      unchanged: ['cat', 'The input stays cat, but this selected position still contributes to the loss. Unselected positions do not.']
+    };
+    document.querySelectorAll('[data-corruption]').forEach(button => {
+      button.addEventListener('click', () => {
+        const [token, explanation] = variants[button.dataset.corruption];
+        document.getElementById('corruption-token').textContent = token;
+        document.getElementById('corruption-cell').textContent = token;
+        document.getElementById('corruption-explanation').textContent = explanation;
+        document.querySelectorAll('[data-corruption]').forEach(b => b.setAttribute('aria-pressed', String(b === button)));
+      });
+    });
+  };
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start, {once: true});
+  else start();
+})();
+</script>

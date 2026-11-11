@@ -37,3 +37,34 @@ legend, and annotations are unchanged. The paper caption is replaced by an
 editable attribution and explanation in the slide. The figure varies labeled
 **task** training data, not language-model pretraining data. No evaluation split
 is named in the figure caption; the slide does not invent one.
+
+## BERT increment — 11 November 2026
+
+`berkeley-mlm.png`: diagram cropped from the instructor-supplied Berkeley
+CS288 Spring 2026 pretraining lecture, PDF viewer page 36. At page width 2200 px,
+extract x=455, y=535, width=1220, height=605 with `pdftoppm`. The crop preserves
+the input, bidirectional encoder, target labels, and loss markers; it removes
+the slide's prose. Original BERT attribution: Devlin et al. (2019), §3.1.
+Labels above the encoder are targets, not recorded model predictions.
+
+The new input-embedding, task-head, and generation-bridge SVGs are editable in
+`../../_bert.qmd`. They are original teaching adaptations of BERT Fig. 2,
+Stanford PDF pp. 27–28, and Berkeley PDF pp. 43–46. The corruption explanation
+uses Stanford p. 27 and Berkeley p. 38. No new model measurements are claimed.
+Both full source PDFs have been restored in `tmp/`; preserve them.
+
+## T5 increment — 11 November 2026
+
+`t5-span-construction.png` crops the original/input/target example from Berkeley
+CS288 Spring 2026, PDF p. 66 (page width 2400 px; x=1070, y=690, w=1135, h=380).
+The underlying image is Raffel et al. (2020), T5 Figure 2. It also appears in
+Stanford CS224N PDF p. 36, alongside a source/target network diagram. The crop
+preserves Berkeley's encoder/decoder labels but omits the generic architecture
+and overbroad capability claims. Source and target EOS are omitted in this
+published illustration; our explicit teaching sequences show them.
+
+The editable loss-flow and synthesis-bridge SVGs in `_t5.qmd` are original.
+The span control reuses the previous draft's cat/mat construction and multiword
+extension. It performs deterministic text manipulation, not tokenizer/model
+inference. The final-sentinel convention follows T5 Figure 2; visible S₀/S₁/S₂
+are aliases for the extra_id vocabulary tokens.

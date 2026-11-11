@@ -1,0 +1,19 @@
+<script>
+(() => {
+  function start() {
+    const modes = {
+      train: ['Corpus window: the cat sat on the mat', 'Observed next tokens supply the training targets.', 'Weights change', 'Loss → gradients → optimizer update', 'Save the trained checkpoint for reuse.'],
+      use: ['Prompt: the cat', 'Illustrative continuation: sleeps …', 'Weights stay fixed', 'Forward computation → continuation', 'A new prompt changes activations, not stored parameters.']
+    };
+    const ids = ['gpt-stage-text', 'gpt-stage-target', 'gpt-weight-status', 'gpt-stage-operation', 'gpt-stage-result'];
+    document.querySelectorAll('[data-gpt-mode]').forEach(button => {
+      button.addEventListener('click', () => {
+        modes[button.dataset.gptMode].forEach((text, i) => { document.getElementById(ids[i]).textContent = text; });
+        document.querySelectorAll('[data-gpt-mode]').forEach(b => b.setAttribute('aria-pressed', String(b === button)));
+      });
+    });
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start, {once: true});
+  else start();
+})();
+</script>

@@ -1,0 +1,48 @@
+/* BERT increment: scoped styles preserve the approved opening and old draft. */
+.reveal .bert-slide h2 { font-size: 46px; line-height: 1.12; margin-bottom: 22px; }
+.reveal .bert-lead { font-size: 30px; line-height: 1.3; margin: 0 0 20px; }
+.reveal .bert-caption { font-size: 24px; line-height: 1.35; color: #526873; margin: 18px 0; }
+.reveal .bert-takeaway { font-size: 30px; line-height: 1.35; padding: 18px 24px; margin: 24px 0 18px; border-left: 5px solid var(--gold); }
+.reveal .bert-slide > p:has(.bert-source-figure) { margin: 0; }
+.reveal .bert-source-figure { width: 100%; height: 410px; max-height: none; object-fit: contain; margin: 0; }
+.bert-input-diagram { width: 100%; height: 455px; display: block; }
+.bert-input-key { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; border-top: 2px solid #bfd0ce; margin-top: 20px; }
+.reveal .bert-input-key p { font-size: 27px; line-height: 1.35; margin: 18px 0 0; }
+.bert-selection-layout { display: grid; grid-template-columns: 1fr 1fr; gap: 65px; align-items: center; margin: 35px 0 25px; }
+.bert-position-grid { display: grid; grid-template-columns: repeat(10, 1fr); gap: 9px; }
+.bert-position-grid span { display: flex; align-items: center; justify-content: center; height: 28px; border: 1px solid #bccccc; border-radius: 5px; color: #526873; font-size: 21px; }
+.bert-position-grid .chosen { background: #0f7881; color: white; border-color: #0f7881; }
+.bert-grid-key { display: flex; justify-content: space-between; margin-top: 20px; font-size: 23px; }
+.bert-grid-key span:first-child { color: #0f7881; font-weight: bold; }
+.bert-branches { display: grid; gap: 22px; }
+.bert-branches > div { display: grid; grid-template-columns: 110px 1fr; gap: 25px; align-items: center; border-left: 5px solid #0f7881; background: #e8efea; padding: 25px; min-height: 120px; box-sizing: border-box; }
+.bert-branches > div:nth-child(2) { border-color: #a34832; background: #f5e9dd; }
+.bert-branches > div:nth-child(3) { border-color: #b18b26; background: #f4efd9; }
+.bert-branches b { font-size: 47px; }
+.reveal .bert-branches p { font-size: 28px; line-height: 1.3; margin: 0; }
+.bert-slide .s2-policy { grid-template-columns: 1fr 35px 1.2fr; }
+.bert-slide .s2-policy b { font-size: 43px; }
+.bert-slide .s2-corruption-line { padding: 24px 0; font-size: 45px; }
+.bert-slide .s2-inspector { margin: 12px 0 25px; }
+.bert-slide .s2-policy-note { min-height: 80px; }
+.bert-slide .s2-loss-table { margin: 20px 0; }
+.bert-slide .s2-loss-table td { padding: 14px 24px; }
+.bert-slide .s2-cloze { margin: 20px 0; }
+.reveal .bert-slide .s1-pause { padding: 20px 26px; }
+.reveal .bert-slide .s2-math-hint { margin: 18px 0; }
+.bert-slide .s2-worked { margin: 35px 0 25px; }
+.bert-slide .s2-formula { font-size: 37px; padding: 12px 0; }
+.bert-slide .s2-formula p { margin: 15px 0; }
+.bert-slide .s2-notation { gap: 25px; }
+.bert-slide .s2-nsp-pairs { margin: 24px 0; }
+.bert-slide .s2-document { padding: 18px 26px; }
+.bert-reuse-diagram { display: block; width: 100%; height: 470px; margin: 25px 0; }
+.bert-recap { display: grid; grid-template-columns: repeat(3, 1fr); gap: 40px; border-bottom: 2px solid #b9cdca; padding: 18px 0 28px; }
+.bert-recap span { font-size: 28px; line-height: 1.35; }
+.bert-recap b { display: block; font-size: 21px; color: #0f7881; margin-bottom: 14px; letter-spacing: .06em; }
+.bert-generation-bridge { display: block; width: 100%; height: 420px; margin: 18px 0; }
+.bert-flow { fill: none; stroke: #0f7881; stroke-width: 4; stroke-dasharray: 10 7; marker-end: url(#bg-arrow); }
+.present .bert-flow { animation: bert-flow 2.5s linear infinite; }
+@keyframes bert-flow { to { stroke-dashoffset: -68; } }
+.reveal .bert-question { font-size: 36px; line-height: 1.3; border-left: 5px solid var(--gold); padding: 12px 25px; margin: 18px 0; }
+@media (prefers-reduced-motion: reduce) { .present .bert-flow { animation: none; } }

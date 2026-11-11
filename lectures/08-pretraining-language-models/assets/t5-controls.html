@@ -1,0 +1,28 @@
+<script>
+(() => {
+  function start() {
+    const cases = {
+      single: {original: 'the <mark class="t5-gap-a">cat</mark> sat on the <mark class="t5-gap-b">mat</mark>', source: ['the','S₀','sat','on','the','S₁','EOS'], target: ['S₀','cat','S₁','mat','S₂','EOS'], note: 'S₀ marks the first gap; S₁ the second. S₂ closes the final span.'},
+      long: {original: 'the <mark class="t5-gap-a">cat sat</mark> on the <mark class="t5-gap-b">mat</mark>', source: ['the','S₀','on','the','S₁','EOS'], target: ['S₀','cat','sat','S₁','mat','S₂','EOS'], note: 'The first gap grows to cat sat. It still uses one S₀ sentinel.'}
+    };
+    function show(key) {
+      const item = cases[key];
+      document.getElementById('t5-original').innerHTML = item.original;
+      for (const field of ['source','target']) {
+        const row = document.getElementById('t5-'+field+'-tokens');
+        row.replaceChildren(...item[field].map(token => {
+          const el = document.createElement('span'); el.textContent = token;
+          el.className = token.startsWith('S') ? 't5-sentinel' : token==='EOS' ? 't5-eos' : 't5-word';
+          return el;
+        }));
+      }
+      document.getElementById('t5-construction-note').textContent = item.note;
+      document.querySelectorAll('[data-t5-spans]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.t5Spans===key)));
+    }
+    document.querySelectorAll('[data-t5-spans]').forEach(b => b.addEventListener('click', () => show(b.dataset.t5Spans)));
+    show('single');
+  }
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', start, {once:true});
+  else start();
+})();
+</script>

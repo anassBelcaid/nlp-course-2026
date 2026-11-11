@@ -8,10 +8,13 @@ title-slide-attributes:
 format:
   revealjs:
     theme: [default, theme.scss]
-    css: [slides.css, opening.css, why-pretrain.css, self-supervision.css]
+    css: [slides.css, opening.css, why-pretrain.css, self-supervision.css, bert.css, gpt.css, t5.css, synthesis.css]
     include-after-body:
       - assets/why-pretrain-controls.html
       - assets/self-supervision-controls.html
+      - assets/bert-controls.html
+      - assets/gpt-controls.html
+      - assets/t5-controls.html
     slide-number: c/t
     progress: true
     controls: true
@@ -35,7 +38,7 @@ execute:
 <p class="opening-author">Dr. A. Belcaid · CS 351 · 2026–2027</p>
 
 ::: {.notes}
-Opening and Session 1’s first two 15-minute sections, prepared for instructor review. The existing
+Approved opening and first two sections, followed by the BERT increment for instructor review. The existing
 57-slide draft is preserved in previous-draft.qmd with its original controls,
 figures, evidence, and speaker notes. Reuse its effective demonstrations as each
 section is rebuilt; especially the BERT masking and conditional 80/10/10 controls.
@@ -76,16 +79,16 @@ belongs to the later RAG lecture. This artwork is schematic, not measured eviden
 <div><b>01</b><strong>Why pretrain?</strong><span>From word embeddings to a contextual model.</span><em>15 min</em></div>
 <div><b>02</b><strong>Text supplies its own targets</strong><span>Construct prediction examples without manual labels.</span><em>15 min</em></div>
 <div><b>03</b><strong>BERT: recover hidden tokens</strong><span>Masking, 80/10/10 corruption, and one worked loss.</span><em>30 min</em></div>
-<div><b>04</b><strong>GPT: predict what comes next</strong><span>Causal context; training versus generation.</span><em>20 min</em></div>
+<div><b>04</b><strong>GPT: pretrain a causal LM</strong><span>Familiar AR objective → reusable weights; compare supervision.</span><em>12 min</em></div>
 <div><b>05</b><strong>T5: reconstruct missing spans</strong><span>Read a corrupted source; generate its gaps.</span><em>15 min</em></div>
 <div><b>06</b><strong>One sentence, three recipes</strong><span>Build and compare the inputs and targets together.</span><em>15 min</em></div>
 </div>
-<p class="session-budget">110 minutes of teaching and activities + 10 minutes for questions or a break.</p>
+<p class="session-budget">102 minutes of teaching and activities + 18 minutes for questions or a break.</p>
 <p class="route-question">We trained a word predictor. How can it become a sentiment classifier?</p>
 
 ::: {.notes}
 These times are a pacing proposal, including short student questions and one
-numerical exercise; do not add activities on top of the 110-minute plan.
+numerical exercise; do not add activities on top of the revised 102-minute plan.
 
 Use Stanford's PDF pages 10–11 for embedding-only versus whole-model pretraining,
 and page 19 for the complete pretrain/fine-tune workflow. Use Berkeley PDF pages
@@ -101,8 +104,8 @@ answer should appear on its prompt slide. Mention NSP briefly as historical cont
 
 End the completed session with a visual bridge from pretrained weights to a new
 sentiment task. This contents slide previews that question; it is not the final
-session-ending visual. The first two 15-minute sections follow; stop at the
-architecture overview and BERT bridge before rebuilding the BERT training section.
+session-ending visual. The approved first two sections and architecture orientation are followed by
+the BERT section and a focused GPT pretraining increment. T5 and the synthesis now complete Session 1; stop at the sentiment-adaptation bridge.
 :::
 
 {{< include _why-pretrain.qmd >}}
@@ -111,5 +114,13 @@ architecture overview and BERT bridge before rebuilding the BERT training sectio
 
 {{< include _architecture-transition.qmd >}}
 
-<!-- Continue Session 1 content and its closing bridge here. Only then include
-_session2-plan.qmd to open Session 2; it must not appear in the opening sequence. -->
+{{< include _bert.qmd >}}
+
+{{< include _gpt.qmd >}}
+
+{{< include _t5.qmd >}}
+
+{{< include _synthesis.qmd >}}
+
+<!-- Session 1 ends here. After instructor review, include _session2-plan.qmd
+to open Session 2; it must not appear in the opening sequence. -->

@@ -1,0 +1,178 @@
+## One sentence. Build three pretraining examples. {#synthesis-pause .syn-slide}
+
+<p class="syn-source"><span>GIVEN · WORD POSITIONS FOR THIS EXERCISE</span>1 the · 2 cat · 3 sat · 4 on · 5 the · 6 mat</p>
+<div class="syn-pause-panel"><span class="syn-pause-badge">PAUSE · WORK IN PAIRS · 2 MINUTES</span><h3>Write the model input(s) and the loss targets for each recipe.</h3><p>Mark which positions receive a direct loss. Keep the target separate from the input that predicts it.</p></div>
+<div class="syn-rules"><div><b>BERT</b><p>Select positions <strong>2 and 6</strong>; use the <strong>[MASK]</strong> branch for both. Omit [CLS] and [SEP].</p></div><div><b>GPT</b><p>Use <strong>the</strong> as initial context. Score the remaining observed words. No START or EOS in this window.</p></div><div><b>T5</b><p>Remove <strong>cat</strong> and <strong>mat</strong> as separate spans. Include source, decoder input, and decoder target.</p></div></div>
+<p class="syn-conventions"><strong>T5 conventions:</strong> S₀/S₁ identify the gaps; S₂ closes the last span. Append EOS to source and target. Shift the decoder input using START.</p>
+<p class="s1-source">Fixed teaching choices, not random sampling or literal corruption-rate estimates. Use the same boundary conventions as the preceding GPT and T5 examples. Solution on the following slide.</p>
+
+::: {.notes}
+TIME: 4 minutes: introduce the fixed conventions (1), paired work (2), collect
+initial answers without displaying the solution (1). This is a synthesis activity,
+not a new prediction lesson or loss arithmetic exercise. Students have all the
+mechanisms; ask them to construct the training objects precisely.
+
+Read the source positions, emphasizing that the two occurrences of the are distinct.
+The corruption choices are supplied, so there is no ambiguity over which tokens
+are selected or whether a BERT selected token remains unchanged. We isolate BERT's
+MLM part; NSP is outside this token-construction exercise. Its special tokens are
+omitted for readability, not forgotten in the real recipe.
+
+GPT follows our new section's no-START finite-window convention, rather than the
+old preserved draft's extra start-token example. T5 follows the current paper-style
+final-sentinel and explicit EOS convention. START is a decoder input initialization
+symbol, not an extra target. No output rows, target counts, or solutions are shown
+on this prompt slide, even as fragments. Let students write them before advancing.
+
+Ask groups to check whether any target has accidentally been supplied to its own
+prediction. Do not reject T5 source EOS merely because it has no loss of its own;
+inputs and scored labels have different roles. Transition: “Compare your constructed
+objects with these three worked examples.”
+:::
+
+## Same text, three worked constructions {#synthesis-solution .syn-slide}
+
+<p class="syn-source syn-source-compact"><span>UNCHANGED SOURCE</span>the cat sat on the mat</p>
+<table class="syn-recipe-table"><thead><tr><th>Recipe</th><th>Model input(s)</th><th>Direct loss targets</th></tr></thead><tbody><tr><th>BERT<br><small>MLM only</small></th><td>the <b>[MASK]</b> sat on the <b>[MASK]</b></td><td><b>cat</b> at position 2<br><b>mat</b> at position 6<br><small>Other positions: no direct MLM term</small></td></tr><tr><th>GPT</th><td>the cat sat on the</td><td>cat · sat · on · the · mat<br><small>Aligned to the five input positions</small></td></tr><tr><th>T5</th><td><span class="syn-row-label">ENCODER</span>the S₀ sat on the S₁ EOS<br><span class="syn-row-label">DECODER</span>START S₀ cat S₁ mat S₂</td><td>S₀ · cat · S₁ · mat · S₂ · EOS<br><small>Sentinels and EOS are targets too</small></td></tr></tbody></table>
+<p class="syn-takeaway">Targets come from the same text; the <strong>supervised positions and available context differ</strong>.</p>
+<p class="s1-source">Reuses the preserved three-recipe comparison, updated to this lecture's GPT boundary convention. S₀/S₁/S₂ are sentinel aliases. Constructed examples, not model outputs.</p>
+
+::: {.notes}
+TIME: 3 minutes, within the five-minute comparison block. Compare each row with
+students' answers. BERT has two selected output positions: cat and mat. The output
+positions of the encoder stay aligned with input positions; there is no causal
+shift in this MLM construction. The other context states still affect the loss
+and can receive gradients even though they have no direct MLM term.
+
+GPT has five predictions, because the first the supplies context and no separate
+START token is included. Its row is a sequence of observed inputs processed under
+the familiar causal restriction. The target cat belongs to the first input column,
+sat to the second, and mat to the last. Do not introduce an extra next word after
+mat or count the first the as a target in this specified window.
+
+T5 has a source stream and shifted decoder stream. The target is the ordered
+missing spans with sentinel delimiters and EOS. There are six target tokens in
+this word-level example, including three sentinels and EOS. The source EOS has
+no separate loss term. The final sentinel closes the paper-style target and is
+not a third gap. These explicit teaching boundaries need not match every data
+pipeline implementation.
+
+Ask students to correct one discrepancy in their own construction. The numbers
+of scored targets do not rank model quality. Each objective sees different context
+and solves a different prediction problem. Transition: “What does each training
+signal act on, and which contextual information is permitted?”
+:::
+
+## Compare the supervision and the parameters it trains {#synthesis-comparison .syn-slide}
+
+<div class="syn-family-cards"><div><h3>BERT</h3><span class="syn-label">CONTEXT FOR A TARGET</span><p>Both sides of the <strong>corrupted input</strong></p><span class="syn-label">PARAMETERS LEARNED</span><p>Embeddings, encoder, and pretraining heads</p><span class="syn-family-foot">Original recipe also included NSP.</span></div><div><h3>GPT</h3><span class="syn-label">CONTEXT FOR A TARGET</span><p>The observed <strong>prefix</strong></p><span class="syn-label">PARAMETERS LEARNED</span><p>Embeddings, causal decoder, and vocabulary head</p><span class="syn-family-foot">No task labels needed for corpus LM training.</span></div><div><h3>T5</h3><span class="syn-label">CONTEXT FOR A TARGET</span><p>The <strong>corrupted source</strong> and earlier target tokens</p><span class="syn-label">PARAMETERS LEARNED</span><p>Embeddings, encoder, decoder, and vocabulary head</p><span class="syn-family-foot">Decoder loss also trains the encoder.</span></div></div>
+<p class="syn-takeaway">Architecture controls information access. The objective chooses the supervision. <strong>Pretraining changes weights.</strong></p>
+<p class="syn-caption">More targets—or a smaller loss under a different objective—does not establish a better pretrained model.</p>
+<p class="s1-source">Synthesis of the preceding BERT, GPT, and T5 sections. Representative recipes, not exclusive capabilities. Shared/tied embeddings remain shared parameters.</p>
+
+::: {.notes}
+TIME: 2 minutes, completing the five-minute comparison block. This is a recall
+check, not a repeat of the attention diagrams. Ask one group to name the context
+for a BERT target, another for GPT, another for T5. A BERT MASK token has access
+to both sides of the supplied corrupted input, not the original removed word.
+T5 sees all of its corrupted source through encoder memory and only the previous
+targets on the decoder side. Future output targets are never provided to their
+own predictions in the causal branches.
+
+Then ask what is learned. During pretraining, both T5 stacks learn even though
+its direct target loss is on the decoder. BERT's context-only input states can
+also receive gradients through selected outputs. The original NSP head belongs
+to original BERT's pretraining recipe; it is not a downstream sentiment head.
+Some pretraining heads will be replaced or adapted later, while the learned
+backbone supplies initialization for a new task.
+
+Keep architecture, objective, and training stage distinct. A decoder can be
+adapted for classification; an encoder–decoder can output a class label. These
+are not exclusive task lists. Losses with different targets, tokenizations,
+and conditioning are not a controlled downstream benchmark. Transition: “Which
+objects survive as a reusable model after this training process?”
+:::
+
+## We reuse weights. We compute new representations. {#synthesis-weights .syn-slide}
+
+```{=html}
+<svg class="syn-weights-diagram" viewBox="0 0 1320 370" role="img" aria-label="A saved checkpoint contains learned weights. Supplying a new sentence to those weights computes new contextual states. Those states are outputs for that input, while the saved parameters can be reused again.">
+<defs><marker id="sw-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10Z" fill="#0f7881"/></marker></defs>
+<g font-family="sans-serif" fill="#17364a" text-anchor="middle"><rect x="35" y="140" width="365" height="145" rx="12" fill="#17364a"/><text x="217" y="192" font-size="28" fill="white" font-weight="bold">SAVED CHECKPOINT θ*</text><text x="217" y="243" font-size="27" fill="white">learned parameter arrays</text>
+<rect x="485" y="20" width="515" height="75" rx="12" fill="#f0e6d4"/><text x="742" y="68" font-size="32">“I loved this film.”</text><path d="M742 105V158" stroke="#0f7881" stroke-width="3" marker-end="url(#sw-arrow)"/>
+<path d="M410 210H555" stroke="#0f7881" stroke-width="3" marker-end="url(#sw-arrow)"/><rect x="570" y="170" width="340" height="115" rx="12" fill="#dfece6"/><text x="740" y="218" font-size="29">Forward computation</text><text x="740" y="257" font-size="25">uses the saved weights</text>
+<path d="M920 225H1025" stroke="#0f7881" stroke-width="3" marker-end="url(#sw-arrow)"/><rect x="1040" y="170" width="250" height="115" rx="12" fill="#dde8f0"/><text x="1165" y="217" font-size="32">h₁, h₂, …</text><text x="1165" y="259" font-size="24">contextual states</text>
+<text x="217" y="345" font-size="26">Reusable across inputs</text><text x="1040" y="345" font-size="26">Computed for this input</text></g></svg>
+```
+
+<div class="syn-target-sources"><div><span class="syn-label">PRETRAINING TARGET</span><strong>cat</strong><p>Retained from the observed corpus text.</p></div><div><span class="syn-label">DOWNSTREAM TASK LABEL</span><strong>positive</strong><p>A sentiment annotation for this review.</p></div></div>
+<p class="syn-takeaway">The checkpoint provides a learned starting point. A new task still needs a defined output and appropriate supervision or use strategy.</p>
+<p class="s1-source">Conceptual distinction between parameters, activations, and labels. The review label is authored; no model prediction is shown. Keep the matching tokenizer and configuration with the weights.</p>
+
+::: {.notes}
+TIME: 3 minutes. Students often conflate weights, contextual vectors, and targets.
+Trace the saved parameter arrays into the computation; the same arrays can process
+another sentence and produce different contextual states. At ordinary inference,
+the changed input changes the activations, not the stored weights. Further training
+can of course update those weights; Session 2 will distinguish the choices.
+
+The saved checkpoint is not a list of all possible contextual vectors or all task
+labels. It contains parameter arrays, and its matching tokenizer/configuration
+are needed to use it correctly. Learned weights can memorize some training text;
+this distinction is not a claim that memorization is impossible.
+
+Below the diagram, cat and positive are different kinds of target. The former
+came from the observed corpus under our corruption rule. The latter comes from
+a sentiment annotation for I loved this film. Neither is a hidden-state vector.
+Nor should positive be taken as the output of the displayed forward computation:
+we have not yet defined the task-specific prediction mapping on this slide.
+
+The diagram uses generic contextual states to illustrate the parameter/output
+distinction; it does not prescribe the same readout for all three architectures.
+Pretraining alone does not guarantee success on the new task. Prompted use may
+keep weights fixed, while supervised adaptation may change them; reserve those
+mechanisms for Session 2. Transition: “What must connect these pretrained states
+to the new sentiment decision?”
+:::
+
+## From word prediction to sentiment {#session-1-closing .syn-slide .syn-ending data-background-color="#17364a"}
+
+<p class="syn-ending-kicker">END OF SESSION 1 · NEXT: REUSE THE MODEL</p>
+
+```{=html}
+<svg class="syn-closing-diagram" viewBox="0 0 1320 510" role="img" aria-label="A pretrained model and labeled review examples flow toward an unresolved adaptation step. That step must produce a sentiment decision. Animated paths reveal the two ingredients, while the adaptation mechanism remains a question for Session 2.">
+<defs><marker id="sc-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10Z" fill="#e3c578"/></marker></defs>
+<g font-family="sans-serif" text-anchor="middle"><rect x="40" y="35" width="435" height="135" rx="15" fill="#dfece6"/><text x="257" y="87" font-size="29" fill="#17364a" font-weight="bold">PRETRAINED MODEL</text><text x="257" y="135" font-size="30" fill="#17364a">learned from corpus text</text>
+<rect x="40" y="290" width="435" height="175" rx="15" fill="#f2e6cf"/><text x="257" y="334" font-size="25" fill="#17364a" font-weight="bold">NEW LABELED EXAMPLES</text><text x="257" y="385" font-size="28" fill="#17364a">“I loved this film.”</text><text x="257" y="431" font-size="31" fill="#a34832">positive</text>
+<path class="syn-closing-flow" d="M485 102H570V235H655"/><path class="syn-closing-flow" d="M485 378H570V255H655"/>
+<rect x="670" y="155" width="300" height="180" rx="15" fill="none" stroke="#e3c578" stroke-width="4" stroke-dasharray="10 8"/><text x="820" y="225" font-size="29" fill="#fbfaf6">ADAPTATION</text><text x="820" y="300" font-size="65" fill="#e3c578">?</text>
+<path class="syn-closing-flow" d="M980 245H1070"/><text x="1190" y="213" font-size="27" fill="#fbfaf6">SENTIMENT</text><text x="1190" y="255" font-size="27" fill="#fbfaf6">DECISION</text><text x="1190" y="305" font-size="26" fill="#e3c578">positive / negative</text>
+</g></svg>
+```
+
+<p class="syn-final-question">We trained a word predictor.<br>How can it become a sentiment classifier?</p>
+<p class="syn-ending-caption">Next session: define the task output, decide which weights change, and evaluate on new examples.</p>
+
+::: {.notes}
+TIME: 3 minutes. This is the actual visual ending of Session 1. The three-model
+comparison is complete; do not add Session 2's contents slide or teach its head
+or update equations before review. Keep the intellectual gap in the middle box.
+
+Trace the upper path: corpus pretraining supplied learned parameters. Trace the
+lower path: a new task supplies labeled examples, with positive as an annotation
+for this review. These ingredients meet at adaptation, whose mechanism remains
+open. The diagram does not claim that every adaptation strategy must update all
+weights, or that labels are needed for every possible form of pretrained-model
+use. It previews our next concrete supervised sentiment example.
+
+Ask students to suggest what must be specified: an output space, a connection
+from the learned representation to that output, and a learning/use procedure.
+Collect suggestions without giving the full solution. Save the distinctions
+between a new head, frozen features, full fine-tuning, and prompting for Session 2.
+The rightmost words name the allowed labels, not measured predictions. Motion
+represents dependency flow, not a running training algorithm.
+
+Conclude with the exact displayed question. Students should leave with the causal
+story: text supplies targets; an objective trains parameters; those parameters
+are reusable, but a new task requires a defined way to use them. Stop here.
+:::
