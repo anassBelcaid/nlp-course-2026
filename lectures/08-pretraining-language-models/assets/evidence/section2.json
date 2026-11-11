@@ -1,0 +1,75 @@
+{
+  "model": "prajjwal1/bert-tiny",
+  "revision": "6f75de8b60a9f8a2fdf7b69cbd86d9e64bcb3837",
+  "weight_sha256": "dab2c2bddcfb48ea430ef63fd76d46d67d704487844d967256a50dd7d7fd0a66",
+  "torch": "2.13.0+cpu",
+  "transformers": "4.57.6",
+  "mode": "CPU; eval; no training",
+  "source": "she put money in the bank yesterday.",
+  "input": "she put money in the [MASK] yesterday.",
+  "tokens": [
+    "[CLS]",
+    "she",
+    "put",
+    "money",
+    "in",
+    "the",
+    "[MASK]",
+    "yesterday",
+    ".",
+    "[SEP]"
+  ],
+  "ids": [
+    101,
+    2016,
+    2404,
+    2769,
+    1999,
+    1996,
+    103,
+    7483,
+    1012,
+    102
+  ],
+  "position": 6,
+  "target": "bank",
+  "target_id": 2924,
+  "vocabulary_size": 30522,
+  "top5": [
+    {
+      "token": "house",
+      "probability": 0.029837168753147125
+    },
+    {
+      "token": "hotel",
+      "probability": 0.0212169848382473
+    },
+    {
+      "token": "money",
+      "probability": 0.019510764628648758
+    },
+    {
+      "token": "world",
+      "probability": 0.01813165657222271
+    },
+    {
+      "token": "morning",
+      "probability": 0.018032586202025414
+    }
+  ],
+  "target_probability": 0.0014350024284794927,
+  "target_nll": 6.546588897705078,
+  "target_rank": 105,
+  "loading_info": {
+    "missing_keys": [],
+    "unexpected_keys": [
+      "bert.pooler.dense.bias",
+      "bert.pooler.dense.weight",
+      "cls.seq_relationship.bias",
+      "cls.seq_relationship.weight"
+    ],
+    "mismatched_keys": [],
+    "error_msgs": []
+  },
+  "protocol": "Reuse the section-1 closing sentence; retain all top-five outputs, including failure. Full-vocabulary softmax, no renormalization over displayed candidates."
+}

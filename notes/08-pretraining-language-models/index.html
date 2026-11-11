@@ -1,0 +1,1389 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.10.18">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="author" content="Dr.&nbsp;A. Belcaid">
+<meta name="description" content="Detailed notes on contextual representations, self-supervised targets, BERT, GPT, T5, their losses and gradients, and the distinction between pretrained parameters and downstream supervision.">
+
+<title>Pretraining Language Models – CS 351 · NLP</title>
+<style>
+/* Default styles provided by pandoc.
+** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+*/
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: 1.5em;}
+div.column{flex: auto;}
+@media screen {
+div.columns{gap: min(4vw, 1.5em);}
+div.column{overflow-x: auto;}
+}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for citations */
+div.csl-bib-body { }
+div.csl-entry {
+  clear: both;
+}
+.hanging-indent div.csl-entry {
+  margin-left:2em;
+  text-indent:-2em;
+}
+div.csl-left-margin {
+  min-width:2em;
+  float:left;
+}
+div.csl-right-inline {
+  margin-left:2em;
+  padding-left:1em;
+}
+div.csl-indent {
+  margin-left: 2em;
+}</style>
+
+
+<script src="../../site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="../../site_libs/clipboard/clipboard.min.js"></script>
+<script src="../../site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="../../site_libs/quarto-search/fuse.min.js"></script>
+<script src="../../site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="../../">
+<script src="../../site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="../../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="../../site_libs/quarto-html/popper.min.js"></script>
+<script src="../../site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="../../site_libs/quarto-html/anchor.min.js"></script>
+<link href="../../site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="../../site_libs/quarto-html/quarto-syntax-highlighting-095245003bb80bd2beb305de39928752.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="../../site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="../../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="../../site_libs/bootstrap/bootstrap-bae81809e9689276853494912f89ea28.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<script id="quarto-search-options" type="application/json">{
+  "location": "navbar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "end",
+  "type": "overlay",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script>
+<style>html{ scroll-behavior: smooth; }</style>
+
+  <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
+  <script defer="" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-chtml.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN" && texText && texText.data) {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script>
+
+<link rel="stylesheet" href="../../styles.css">
+</head>
+
+<body class="floating nav-fixed quarto-light">
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+    <nav class="navbar navbar-expand-lg " data-bs-theme="dark">
+      <div class="navbar-container container-fluid">
+      <div class="navbar-brand-container mx-auto">
+    <a class="navbar-brand" href="../../index.html">
+    <span class="navbar-title">CS 351 · NLP</span>
+    </a>
+  </div>
+            <div id="quarto-search" class="" title="Search"></div>
+          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse" aria-controls="navbarCollapse" role="menu" aria-expanded="false" aria-label="Toggle navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+  <span class="navbar-toggler-icon"></span>
+</button>
+          <div class="collapse navbar-collapse" id="navbarCollapse">
+            <ul class="navbar-nav navbar-nav-scroll me-auto">
+  <li class="nav-item">
+    <a class="nav-link" href="../../index.html"> 
+<span class="menu-text">Home</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../../logistics.html"> 
+<span class="menu-text">Logistics</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../../schedule.html"> 
+<span class="menu-text">Schedule</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../../coding-projects.html"> 
+<span class="menu-text">Coding Projects</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../../student-projects.html"> 
+<span class="menu-text">Student Projects</span></a>
+  </li>  
+</ul>
+            <ul class="navbar-nav navbar-nav-scroll ms-auto">
+  <li class="nav-item compact">
+    <a class="nav-link" href="https://github.com/anassBelcaid"> <i class="bi bi-github" role="img" aria-label="Instructor GitHub profile">
+</i> 
+<span class="menu-text"></span></a>
+  </li>  
+</ul>
+          </div> <!-- /navcollapse -->
+            <div class="quarto-navbar-tools">
+</div>
+      </div> <!-- /container-fluid -->
+    </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
+<!-- sidebar -->
+  <nav id="quarto-sidebar" class="sidebar collapse collapse-horizontal quarto-sidebar-collapse-item sidebar-navigation floating overflow-auto">
+    <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">On this page</h2>
+   
+  <ul>
+  <li><a href="#from-pretrained-embeddings-to-a-pretrained-model" id="toc-from-pretrained-embeddings-to-a-pretrained-model" class="nav-link active" data-scroll-target="#from-pretrained-embeddings-to-a-pretrained-model"><span class="header-section-number">1</span> From pretrained embeddings to a pretrained model</a>
+  <ul class="collapse">
+  <li><a href="#static-lookup-and-contextual-computation" id="toc-static-lookup-and-contextual-computation" class="nav-link" data-scroll-target="#static-lookup-and-contextual-computation"><span class="header-section-number">1.1</span> Static lookup and contextual computation</a></li>
+  <li><a href="#elmo-as-a-historical-bridge" id="toc-elmo-as-a-historical-bridge" class="nav-link" data-scroll-target="#elmo-as-a-historical-bridge"><span class="header-section-number">1.2</span> ELMo as a historical bridge</a></li>
+  </ul></li>
+  <li><a href="#text-supplies-a-supervised-learning-signal" id="toc-text-supplies-a-supervised-learning-signal" class="nav-link" data-scroll-target="#text-supplies-a-supervised-learning-signal"><span class="header-section-number">2</span> Text supplies a supervised learning signal</a>
+  <ul class="collapse">
+  <li><a href="#fix-the-notation-before-constructing-examples" id="toc-fix-the-notation-before-constructing-examples" class="nav-link" data-scroll-target="#fix-the-notation-before-constructing-examples"><span class="header-section-number">2.1</span> Fix the notation before constructing examples</a></li>
+  <li><a href="#one-sentence-can-provide-several-training-questions" id="toc-one-sentence-can-provide-several-training-questions" class="nav-link" data-scroll-target="#one-sentence-can-provide-several-training-questions"><span class="header-section-number">2.2</span> One sentence can provide several training questions</a></li>
+  <li><a href="#the-population-objective-includes-example-construction" id="toc-the-population-objective-includes-example-construction" class="nav-link" data-scroll-target="#the-population-objective-includes-example-construction"><span class="header-section-number">2.3</span> The population objective includes example construction</a></li>
+  </ul></li>
+  <li><a href="#cross-entropy-from-a-retained-token-to-parameter-updates" id="toc-cross-entropy-from-a-retained-token-to-parameter-updates" class="nav-link" data-scroll-target="#cross-entropy-from-a-retained-token-to-parameter-updates"><span class="header-section-number">3</span> Cross-entropy: from a retained token to parameter updates</a>
+  <ul class="collapse">
+  <li><a href="#the-target-is-an-index-in-a-vocabulary" id="toc-the-target-is-an-index-in-a-vocabulary" class="nav-link" data-scroll-target="#the-target-is-an-index-in-a-vocabulary"><span class="header-section-number">3.1</span> The target is an index in a vocabulary</a></li>
+  <li><a href="#why-the-error-reaches-the-backbone" id="toc-why-the-error-reaches-the-backbone" class="nav-link" data-scroll-target="#why-the-error-reaches-the-backbone"><span class="header-section-number">3.2</span> Why the error reaches the backbone</a></li>
+  <li><a href="#normalization-is-part-of-the-convention" id="toc-normalization-is-part-of-the-convention" class="nav-link" data-scroll-target="#normalization-is-part-of-the-convention"><span class="header-section-number">3.3</span> Normalization is part of the convention</a></li>
+  </ul></li>
+  <li><a href="#bert-recover-selected-original-tokens" id="toc-bert-recover-selected-original-tokens" class="nav-link" data-scroll-target="#bert-recover-selected-original-tokens"><span class="header-section-number">4</span> BERT: recover selected original tokens</a>
+  <ul class="collapse">
+  <li><a href="#input-vectors-and-bidirectional-states" id="toc-input-vectors-and-bidirectional-states" class="nav-link" data-scroll-target="#input-vectors-and-bidirectional-states"><span class="header-section-number">4.1</span> Input vectors and bidirectional states</a></li>
+  <li><a href="#selection-and-corruption-are-separate-random-choices" id="toc-selection-and-corruption-are-separate-random-choices" class="nav-link" data-scroll-target="#selection-and-corruption-are-separate-random-choices"><span class="header-section-number">4.2</span> Selection and corruption are separate random choices</a></li>
+  <li><a href="#the-mlm-objective" id="toc-the-mlm-objective" class="nav-link" data-scroll-target="#the-mlm-objective"><span class="header-section-number">4.3</span> The MLM objective</a></li>
+  <li><a href="#no-direct-loss-does-not-mean-no-gradient" id="toc-no-direct-loss-does-not-mean-no-gradient" class="nav-link" data-scroll-target="#no-direct-loss-does-not-mean-no-gradient"><span class="header-section-number">4.4</span> No direct loss does not mean no gradient</a></li>
+  <li><a href="#original-berts-sentence-pair-objective" id="toc-original-berts-sentence-pair-objective" class="nav-link" data-scroll-target="#original-berts-sentence-pair-objective"><span class="header-section-number">4.5</span> Original BERT’s sentence-pair objective</a></li>
+  </ul></li>
+  <li><a href="#gpt-the-familiar-ar-objective-used-for-pretraining" id="toc-gpt-the-familiar-ar-objective-used-for-pretraining" class="nav-link" data-scroll-target="#gpt-the-familiar-ar-objective-used-for-pretraining"><span class="header-section-number">5</span> GPT: the familiar AR objective used for pretraining</a>
+  <ul class="collapse">
+  <li><a href="#the-mechanism-is-familiar-the-training-stage-is-the-focus" id="toc-the-mechanism-is-familiar-the-training-stage-is-the-focus" class="nav-link" data-scroll-target="#the-mechanism-is-familiar-the-training-stage-is-the-focus"><span class="header-section-number">5.1</span> The mechanism is familiar; the training stage is the focus</a></li>
+  <li><a href="#what-the-objective-changes" id="toc-what-the-objective-changes" class="nav-link" data-scroll-target="#what-the-objective-changes"><span class="header-section-number">5.2</span> What the objective changes</a></li>
+  <li><a href="#at-ordinary-use-the-checkpoint-is-fixed" id="toc-at-ordinary-use-the-checkpoint-is-fixed" class="nav-link" data-scroll-target="#at-ordinary-use-the-checkpoint-is-fixed"><span class="header-section-number">5.3</span> At ordinary use, the checkpoint is fixed</a></li>
+  </ul></li>
+  <li><a href="#t5-learn-by-reconstructing-missing-spans" id="toc-t5-learn-by-reconstructing-missing-spans" class="nav-link" data-scroll-target="#t5-learn-by-reconstructing-missing-spans"><span class="header-section-number">6</span> T5: learn by reconstructing missing spans</a>
+  <ul class="collapse">
+  <li><a href="#source-and-target-are-separate-sequences" id="toc-source-and-target-are-separate-sequences" class="nav-link" data-scroll-target="#source-and-target-are-separate-sequences"><span class="header-section-number">6.1</span> Source and target are separate sequences</a></li>
+  <li><a href="#one-sentinel-can-replace-several-tokens" id="toc-one-sentinel-can-replace-several-tokens" class="nav-link" data-scroll-target="#one-sentinel-can-replace-several-tokens"><span class="header-section-number">6.2</span> One sentinel can replace several tokens</a></li>
+  <li><a href="#align-the-decoder-input-and-target" id="toc-align-the-decoder-input-and-target" class="nav-link" data-scroll-target="#align-the-decoder-input-and-target"><span class="header-section-number">6.3</span> Align the decoder input and target</a></li>
+  <li><a href="#conditional-cross-entropy-and-the-encoders-gradient" id="toc-conditional-cross-entropy-and-the-encoders-gradient" class="nav-link" data-scroll-target="#conditional-cross-entropy-and-the-encoders-gradient"><span class="header-section-number">6.4</span> Conditional cross-entropy and the encoder’s gradient</a></li>
+  <li><a href="#the-same-interface-can-support-a-different-supervision-source" id="toc-the-same-interface-can-support-a-different-supervision-source" class="nav-link" data-scroll-target="#the-same-interface-can-support-a-different-supervision-source"><span class="header-section-number">6.5</span> The same interface can support a different supervision source</a></li>
+  </ul></li>
+  <li><a href="#compare-the-recipes-without-conflating-their-losses" id="toc-compare-the-recipes-without-conflating-their-losses" class="nav-link" data-scroll-target="#compare-the-recipes-without-conflating-their-losses"><span class="header-section-number">7</span> Compare the recipes without conflating their losses</a></li>
+  <li><a href="#what-is-saved-and-what-remains-to-be-learned" id="toc-what-is-saved-and-what-remains-to-be-learned" class="nav-link" data-scroll-target="#what-is-saved-and-what-remains-to-be-learned"><span class="header-section-number">8</span> What is saved, and what remains to be learned?</a></li>
+  <li><a href="#study-exercises-and-worked-answers" id="toc-study-exercises-and-worked-answers" class="nav-link" data-scroll-target="#study-exercises-and-worked-answers"><span class="header-section-number">9</span> Study exercises and worked answers</a>
+  <ul class="collapse">
+  <li><a href="#exercises" id="toc-exercises" class="nav-link" data-scroll-target="#exercises"><span class="header-section-number">9.1</span> Exercises</a></li>
+  <li><a href="#worked-answers" id="toc-worked-answers" class="nav-link" data-scroll-target="#worked-answers"><span class="header-section-number">9.2</span> Worked answers</a></li>
+  </ul></li>
+  <li><a href="#a-guided-route-through-the-literature" id="toc-a-guided-route-through-the-literature" class="nav-link" data-scroll-target="#a-guided-route-through-the-literature"><span class="header-section-number">10</span> A guided route through the literature</a></li>
+  <li><a href="#references" id="toc-references" class="nav-link" data-scroll-target="#references">References</a></li>
+  </ul>
+<div class="quarto-alternate-formats"><h2>Other Formats</h2><ul><li><a href="index.pdf"><i class="bi bi-file-pdf"></i>PDF</a></li></ul></div></nav>
+</nav>
+<div id="quarto-sidebar-glass" class="quarto-sidebar-collapse-item" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item"></div>
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar zindex-bottom">
+    </div>
+<!-- main -->
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title">Pretraining Language Models</h1>
+<p class="subtitle lead">Chapter 8 · Session 1: learning reusable parameters from text</p>
+</div>
+
+<div>
+  <div class="description">
+    Detailed notes on contextual representations, self-supervised targets, BERT, GPT, T5, their losses and gradients, and the distinction between pretrained parameters and downstream supervision.
+  </div>
+</div>
+
+
+<div class="quarto-title-meta">
+
+    <div>
+    <div class="quarto-title-meta-heading">Author</div>
+    <div class="quarto-title-meta-contents">
+             <p>Dr.&nbsp;A. Belcaid </p>
+          </div>
+  </div>
+    
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<p><img src="../../images/uae-logo.png" class="img-fluid"></p>
+<p>CS 351 · Introduction to Natural Language Processing<br> Chapter 8 · Pretraining language models · Session 1</p>
+<p><a href="index.pdf" class="btn btn-primary">Download the PDF</a></p>
+<p>A Transformer architecture specifies how representations are computed. It does not, by itself, supply useful parameter values. <strong>Pretraining</strong> uses a broadly available learning signal to obtain parameters that can later be reused. In this chapter, that signal comes from observed text.</p>
+<p>These notes accompany the completed first session. They assume that attention, Transformer blocks, autoregressive prediction, and basic cross-entropy have already been studied. The aim is to explain what changes when those mechanisms become <strong>pretraining recipes</strong>: the training objects, the conditioning information, the scored positions, and the parameters that learn. Detailed task heads, fine-tuning, and prompting belong to Session 2.</p>
+<p>The exposition follows the Stanford and Berkeley lectures used in class <span class="citation" data-cites="yang2026pretraining berkeley2026pretraining">(<a href="#ref-yang2026pretraining" role="doc-biblioref">Yang 2026</a>; <a href="#ref-berkeley2026pretraining" role="doc-biblioref">UC Berkeley CS 288 2026</a>)</span>. Exact recipes and historical claims are attributed to the original ELMo, BERT, GPT, and T5 papers. Diagrams are static, and all toy numbers below are explicitly illustrative.</p>
+<div class="callout callout-style-simple callout-note callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>Questions to keep in view
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>For every recipe, identify (1) the original text, (2) the supplied input, (3) the target retained for comparison, (4) the information available to that prediction, and (5) the parameters updated by the loss. Finally ask what the resulting checkpoint can contribute to a new task.</p>
+</div>
+</div>
+<section id="from-pretrained-embeddings-to-a-pretrained-model" class="level1" data-number="1">
+<h1 data-number="1"><span class="header-section-number">1</span> From pretrained embeddings to a pretrained model</h1>
+<section id="static-lookup-and-contextual-computation" class="level2" data-number="1.1">
+<h2 data-number="1.1" class="anchored" data-anchor-id="static-lookup-and-contextual-computation"><span class="header-section-number">1.1</span> Static lookup and contextual computation</h2>
+<p>Consider <em>bank</em> in “she deposited money at the bank” and “they rested beside the river bank.” A static embedding table <span class="math inline">\(E\in\mathbb{R}^{V\times d}\)</span> supplies the same vector <span class="math inline">\(E_{\mathrm{bank},:}\)</span> in both sentences. This does not mean that a later network cannot distinguish the senses; it means that <strong>the lookup itself does not depend on the context</strong>. Word2Vec and GloVe illustrate influential ways of learning such reusable lexical representations <span class="citation" data-cites="mikolov2013distributed pennington2014glove">(<a href="#ref-mikolov2013distributed" role="doc-biblioref">Mikolov et al. 2013</a>; <a href="#ref-pennington2014glove" role="doc-biblioref">Pennington et al. 2014</a>)</span>.</p>
+<p>A contextual model instead computes</p>
+<p><span id="eq-contextual-state"><span class="math display">\[
+h_i=f_\theta(x_{1:n})_i\in\mathbb{R}^{d}.
+\tag{1}\]</span></span></p>
+<p>Here <span class="math inline">\(x_i\)</span> is a token occurrence, <span class="math inline">\(f_\theta\)</span> is a parameterized sequence model, and <span class="math inline">\(h_i\)</span> is the state computed for position <span class="math inline">\(i\)</span>. Two occurrences of <em>bank</em> can have different states because their surrounding inputs differ. The saved parameters <span class="math inline">\(\theta\)</span> can remain identical across these two forward computations. A changed representation is not evidence that the model updated its weights.</p>
+<p>The distinction matters for transfer. Reusing only <span class="math inline">\(E\)</span> transfers a lexical lookup. Reusing a pretrained contextual backbone transfers both lexical information and the learned transformations that combine context. The Transformer supplies one such backbone <span class="citation" data-cites="vaswani2017attention">(<a href="#ref-vaswani2017attention" role="doc-biblioref">Vaswani et al. 2017</a>)</span>, but contextual pretraining did not begin with Transformers.</p>
+</section>
+<section id="elmo-as-a-historical-bridge" class="level2" data-number="1.2">
+<h2 data-number="1.2" class="anchored" data-anchor-id="elmo-as-a-historical-bridge"><span class="header-section-number">1.2</span> ELMo as a historical bridge</h2>
+<p>ELMo builds contextual representations from a pretrained bidirectional language model with recurrent layers. Its left-to-right and right-to-left language models read different directional contexts; their states are combined for downstream use. This is different from BERT’s joint bidirectional encoder computation <span class="citation" data-cites="peters2018elmo devlin2019bert">(<a href="#ref-peters2018elmo" role="doc-biblioref">Peters et al. 2018</a>; <a href="#ref-devlin2019bert" role="doc-biblioref">Devlin et al. 2019</a>)</span>.</p>
+<p>One useful way to understand ELMo’s downstream representation is its learned layer mixture:</p>
+<p><span id="eq-elmo-mixture"><span class="math display">\[
+\operatorname{ELMo}^{\mathrm{task}}_i
+=\gamma^{\mathrm{task}}\sum_{j=0}^{L}s_j^{\mathrm{task}}h_{i,j}^{\mathrm{LM}},
+\qquad
+s_j^{\mathrm{task}}=\frac{\exp(a_j)}{\sum_{k=0}^{L}\exp(a_k)}.
+\tag{2}\]</span></span></p>
+<p>The vector <span class="math inline">\(h_{i,j}^{\mathrm{LM}}\)</span> denotes the token representation from level <span class="math inline">\(j\)</span> of the pretrained language model; the contextual levels combine directional states. The task-specific coefficients <span class="math inline">\(s_j\)</span> form a normalized mixture, and <span class="math inline">\(\gamma\)</span> adjusts its scale. They allow a downstream task to emphasize different levels without treating the final layer as the only useful representation. This formula is included to clarify what is reused, not to introduce a new recurrent-network derivation; see <span class="citation" data-cites="peters2018elmo">Peters et al. (<a href="#ref-peters2018elmo" role="doc-biblioref">2018</a>)</span>, §§3.1–3.2.</p>
+<p>Whole-model pretraining extends the reuse story: a task can initialize its backbone from pretrained weights and subsequently update that backbone. Whether the backbone is frozen or updated is an <strong>adaptation choice</strong>, not part of the definition of a contextual vector.</p>
+</section>
+</section>
+<section id="text-supplies-a-supervised-learning-signal" class="level1" data-number="2">
+<h1 data-number="2"><span class="header-section-number">2</span> Text supplies a supervised learning signal</h1>
+<section id="fix-the-notation-before-constructing-examples" class="level2" data-number="2.1">
+<h2 data-number="2.1" class="anchored" data-anchor-id="fix-the-notation-before-constructing-examples"><span class="header-section-number">2.1</span> Fix the notation before constructing examples</h2>
+<p>Throughout the worked examples, use</p>
+<p><span class="math display">\[
+x=(x_1,\ldots,x_6)=(\text{the},\text{cat},\text{sat},\text{on},\text{the},\text{mat}).
+\]</span></p>
+<p>These are word-level teaching units. Real BERT, GPT, and T5 use model-specific subword tokenization and boundary conventions. In particular, T5’s text processing uses SentencePiece; the distinction between words and subword tokens must be preserved when implementing the recipes <span class="citation" data-cites="kudo2018sentencepiece raffel2020t5">(<a href="#ref-kudo2018sentencepiece" role="doc-biblioref">Kudo and Richardson 2018</a>; <a href="#ref-raffel2020t5" role="doc-biblioref">Raffel et al. 2020</a>)</span>.</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 50%">
+<col style="width: 50%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Symbol</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><span class="math inline">\(x\)</span></td>
+<td>Original token sequence retained by the data-construction procedure</td>
+</tr>
+<tr class="even">
+<td><span class="math inline">\(\widetilde{x}\)</span></td>
+<td>Corrupted source supplied to a reconstruction model</td>
+</tr>
+<tr class="odd">
+<td><span class="math inline">\(M\)</span></td>
+<td>Selected token positions for BERT’s MLM loss</td>
+</tr>
+<tr class="even">
+<td><span class="math inline">\(y\)</span></td>
+<td>Decoder target sequence in the T5 example</td>
+</tr>
+<tr class="odd">
+<td><span class="math inline">\(\theta\)</span></td>
+<td>Trainable parameter arrays</td>
+</tr>
+<tr class="even">
+<td><span class="math inline">\(h_i\)</span></td>
+<td>Contextual state computed for a particular input position</td>
+</tr>
+<tr class="odd">
+<td><span class="math inline">\(z_i\in\mathbb{R}^{V}\)</span></td>
+<td>Vocabulary logits for a prediction</td>
+</tr>
+<tr class="even">
+<td><span class="math inline">\(p_\theta\)</span></td>
+<td>Conditional distribution obtained from the model</td>
+</tr>
+</tbody>
+</table>
+<p>The input and target are different roles, even when both are derived from the same text. Constructing a target does not mean supplying it to the prediction that is supposed to recover it.</p>
+</section>
+<section id="one-sentence-can-provide-several-training-questions" class="level2" data-number="2.2">
+<h2 data-number="2.2" class="anchored" data-anchor-id="one-sentence-can-provide-several-training-questions"><span class="header-section-number">2.2</span> One sentence can provide several training questions</h2>
+<p>Under the rule “withhold exactly one position and predict its original token,” the sentence yields the following six examples.</p>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>Supplied input</th>
+<th>Retained target</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>[MASK] cat sat on the mat</code></td>
+<td><code>the</code> at position 1</td>
+</tr>
+<tr class="even">
+<td><code>the [MASK] sat on the mat</code></td>
+<td><code>cat</code> at position 2</td>
+</tr>
+<tr class="odd">
+<td><code>the cat [MASK] on the mat</code></td>
+<td><code>sat</code> at position 3</td>
+</tr>
+<tr class="even">
+<td><code>the cat sat [MASK] the mat</code></td>
+<td><code>on</code> at position 4</td>
+</tr>
+<tr class="odd">
+<td><code>the cat sat on [MASK] mat</code></td>
+<td><code>the</code> at position 5</td>
+</tr>
+<tr class="even">
+<td><code>the cat sat on the [MASK]</code></td>
+<td><code>mat</code> at position 6</td>
+</tr>
+</tbody>
+</table>
+<p>The two occurrences of <code>the</code> are different positions. We count constructed examples, not unique word types. These examples overlap heavily; they are not six independent corpus observations. Nor is this exhaustive enumeration BERT’s actual sampling procedure. It isolates the principle that text already contains candidate targets.</p>
+<div id="fig-training-flow" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-training-flow-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="images/training-flow.png" class="img-fluid figure-img" style="width:100.0%">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-training-flow-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;1: The source supplies both a model input and a separately retained target. A loss compares a prediction with that target; gradients update parameters. The diagram’s shelf example illustrates the same construction as the running cat sentence.
+</figcaption>
+</figure>
+</div>
+</section>
+<section id="the-population-objective-includes-example-construction" class="level2" data-number="2.3">
+<h2 data-number="2.3" class="anchored" data-anchor-id="the-population-objective-includes-example-construction"><span class="header-section-number">2.3</span> The population objective includes example construction</h2>
+<p>Let <span class="math inline">\(\mathcal{D}\)</span> be a corpus distribution and <span class="math inline">\(q(c\mid x)\)</span> a distribution over training constructions, such as selected positions and corruption choices. The training objective can be written schematically as</p>
+<p><span id="eq-pretraining-expectation"><span class="math display">\[
+J(\theta)=\mathbb{E}_{x\sim\mathcal{D}}\,
+\mathbb{E}_{c\sim q(\cdot\mid x)}
+\left[\ell\bigl(\theta;\operatorname{input}(x,c),\operatorname{target}(x,c)\bigr)\right].
+\tag{3}\]</span></span></p>
+<p>This expression separates three decisions: which text is sampled, how a learning problem is constructed, and how prediction errors are scored. A practical implementation approximates the expectation using finite data, batches, and sampled constructions. For a batch of <span class="math inline">\(B\)</span> examples, one simple convention is</p>
+<p><span id="eq-update"><span class="math display">\[
+\widehat{J}_B(\theta)=\frac{1}{B}\sum_{b=1}^{B}\ell_b(\theta),
+\qquad
+\theta^{(k+1)}=\theta^{(k)}-\eta\nabla_\theta\widehat{J}_B(\theta^{(k)}).
+\tag{4}\]</span></span></p>
+<p>The second expression is an illustrative SGD update; it is not a claim that every original model used plain SGD. The reusable product is the learned parameter state after training. Changing the input during inference changes the computed activations; it does not perform <a href="#eq-update" class="quarto-xref">Equation&nbsp;4</a>.</p>
+<p>Self-supervision removes the requirement to annotate a separate task label for each constructed prediction. It does not remove decisions about data quality, sampling, leakage, vocabulary, or evaluation.</p>
+</section>
+</section>
+<section id="cross-entropy-from-a-retained-token-to-parameter-updates" class="level1" data-number="3">
+<h1 data-number="3"><span class="header-section-number">3</span> Cross-entropy: from a retained token to parameter updates</h1>
+<section id="the-target-is-an-index-in-a-vocabulary" class="level2" data-number="3.1">
+<h2 data-number="3.1" class="anchored" data-anchor-id="the-target-is-an-index-in-a-vocabulary"><span class="header-section-number">3.1</span> The target is an index in a vocabulary</h2>
+<p>For a vocabulary of size <span class="math inline">\(V\)</span>, let <span class="math inline">\(z_v\)</span> be the logit for token <span class="math inline">\(v\)</span>. The predicted probability is</p>
+<p><span class="math display">\[
+p_v=\frac{\exp(z_v)}{\sum_{u=1}^{V}\exp(z_u)}.
+\]</span></p>
+<p>If the observed target is token <span class="math inline">\(a\)</span>, its one-hot target distribution is <span class="math inline">\(q_v=\mathbf{1}[v=a]\)</span>. Cross-entropy becomes</p>
+<p><span id="eq-token-ce"><span class="math display">\[
+\ell(z,a)=-\sum_{v=1}^{V}q_v\log p_v
+=-\log p_a
+=-z_a+\log\sum_{v=1}^{V}\exp(z_v).
+\tag{5}\]</span></span></p>
+<p>The loss rewards probability assigned to the <strong>observed target</strong>, not a binary judgment that a completion sounds plausible. Other completions may be linguistically acceptable while receiving no target mass in this example. This is a property of the observed-token training objective.</p>
+<p>For numerical computation, log-softmax or a cross-entropy routine evaluates the log-sum-exp stably. Subtracting <span class="math inline">\(m=\max_v z_v\)</span> gives</p>
+<p><span class="math display">\[
+\log\sum_v e^{z_v}=m+\log\sum_v e^{z_v-m},
+\]</span></p>
+<p>without changing the result. This avoids exponentiating unnecessarily large logits.</p>
+</section>
+<section id="why-the-error-reaches-the-backbone" class="level2" data-number="3.2">
+<h2 data-number="3.2" class="anchored" data-anchor-id="why-the-error-reaches-the-backbone"><span class="header-section-number">3.2</span> Why the error reaches the backbone</h2>
+<p>Differentiating <a href="#eq-token-ce" class="quarto-xref">Equation&nbsp;5</a> gives</p>
+<p><span id="eq-logit-gradient"><span class="math display">\[
+\frac{\partial\ell}{\partial z_v}=p_v-\mathbf{1}[v=a].
+\tag{6}\]</span></span></p>
+<p>For a simple output mapping <span class="math inline">\(z=Wh+b\)</span>, with <span class="math inline">\(W\in\mathbb{R}^{V\times d}\)</span> and <span class="math inline">\(h\in\mathbb{R}^{d}\)</span>,</p>
+<p><span id="eq-head-gradients"><span class="math display">\[
+\nabla_h\ell=W^\top(p-q),\qquad
+\nabla_W\ell=(p-q)h^\top,\qquad
+\nabla_b\ell=p-q.
+\tag{7}\]</span></span></p>
+<p>These are the gradients for this illustrative linear head. Actual pretraining heads may include additional transformations, normalization, or tied embeddings. The same chain-rule principle sends the error into the contextual backbone: if <span class="math inline">\(h=f_\theta(\cdot)\)</span>, then its parameter gradient contains <span class="math inline">\((\partial h/\partial\theta)^\top\nabla_h\ell\)</span>.</p>
+<p>Suppose a toy vocabulary distribution is <span class="math inline">\((0.25,0.50,0.25)\)</span> and the first token is the target. The logit gradient is <span class="math inline">\((-0.75,0.50,0.25)\)</span>. A gradient-descent step on independently adjustable logits would increase the target logit and decrease the others. A neural model instead updates shared parameters, so the resulting changes across examples are coupled. This calculation explains the local learning signal; it is not a measured BERT update.</p>
+</section>
+<section id="normalization-is-part-of-the-convention" class="level2" data-number="3.3">
+<h2 data-number="3.3" class="anchored" data-anchor-id="normalization-is-part-of-the-convention"><span class="header-section-number">3.3</span> Normalization is part of the convention</h2>
+<p>For variable-length examples, averaging example means and averaging all valid target tokens are different choices:</p>
+<p><span class="math display">\[
+\mathcal{L}_{\mathrm{example}}
+=\frac{1}{B}\sum_{b=1}^{B}\frac{1}{N_b}\sum_{t\in I_b}\ell_{b,t},
+\qquad
+\mathcal{L}_{\mathrm{token}}
+=\frac{\sum_b\sum_{t\in I_b}\ell_{b,t}}{\sum_b N_b}.
+\]</span></p>
+<p>Here <span class="math inline">\(I_b\)</span> is the set of scored positions and <span class="math inline">\(N_b=|I_b|&gt;0\)</span>. The first gives each example equal weight; the second gives each scored token equal weight. If all <span class="math inline">\(N_b\)</span> are equal, they coincide. Our one-example exercises use the mean over that example’s valid targets. Padding labels are excluded, and an implementation must handle or avoid examples with zero valid targets.</p>
+</section>
+</section>
+<section id="bert-recover-selected-original-tokens" class="level1" data-number="4">
+<h1 data-number="4"><span class="header-section-number">4</span> BERT: recover selected original tokens</h1>
+<section id="input-vectors-and-bidirectional-states" class="level2" data-number="4.1">
+<h2 data-number="4.1" class="anchored" data-anchor-id="input-vectors-and-bidirectional-states"><span class="header-section-number">4.1</span> Input vectors and bidirectional states</h2>
+<p>In the original BERT input representation, a position receives the sum of token, position, and segment embeddings <span class="citation" data-cites="devlin2019bert">(<a href="#ref-devlin2019bert" role="doc-biblioref">Devlin et al. 2019, sec. 3</a> and Fig. 2)</span>:</p>
+<p><span id="eq-bert-input"><span class="math display">\[
+e_i=E_{\mathrm{tok}}[\widetilde{x}_i]+E_{\mathrm{pos}}[i]+E_{\mathrm{seg}}[s_i],
+\qquad
+H=\operatorname{Encoder}_\theta(e_{1:n}).
+\tag{8}\]</span></span></p>
+<p>The three terms have the same hidden dimension <span class="math inline">\(d\)</span>, so they are added coordinate by coordinate. They are not concatenated. BERT’s position embeddings are learned. Segment IDs distinguish the two text segments in a paired input.</p>
+<div id="fig-bert-input" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-bert-input-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="images/bert-inputs.png" class="img-fluid figure-img" style="width:100.0%">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-bert-input-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;2: The running BERT example with special tokens. Each vector combines token identity, position, and segment identity. One contextual state is produced at each position.
+</figcaption>
+</figure>
+</div>
+<p><code>[CLS]</code> supplies a contextual state used by sequence-level prediction heads; it is not an arithmetic mean of token states. <code>[SEP]</code> marks a separator or end boundary. In the single-segment figure, all segment IDs are A. In a paired example, the second segment uses B. Padding, if present, has its own attention/loss handling.</p>
+<p>At a masked position, the token lookup uses the <code>[MASK]</code> ID. The original target is not secretly inserted as its embedding. The encoder can use both sides of the <strong>supplied corrupted input</strong>, but cannot recover the hidden word merely by reading an unavailable original token.</p>
+</section>
+<section id="selection-and-corruption-are-separate-random-choices" class="level2" data-number="4.2">
+<h2 data-number="4.2" class="anchored" data-anchor-id="selection-and-corruption-are-separate-random-choices"><span class="header-section-number">4.2</span> Selection and corruption are separate random choices</h2>
+<p>Let <span class="math inline">\(M\)</span> be the positions selected as MLM targets. Original BERT selects approximately 15% of eligible positions and applies a conditional corruption choice to each selected position <span class="citation" data-cites="devlin2019bert">(<a href="#ref-devlin2019bert" role="doc-biblioref">Devlin et al. 2019, sec. 3.1</a>)</span>. In schematic notation,</p>
+<p><span class="math display">\[
+\widetilde{x}_i=
+\begin{cases}
+x_i, &amp; i\notin M,\\
+\texttt{[MASK]}, &amp; i\in M\text{ and mask branch},\\
+r_i, &amp; i\in M\text{ and random-token branch},\\
+x_i, &amp; i\in M\text{ and unchanged branch}.
+\end{cases}
+\]</span></p>
+<p>Within <span class="math inline">\(M\)</span>, the branch probabilities are 0.80, 0.10, and 0.10. The retained label remains <span class="math inline">\(x_i\)</span> in every branch. Special boundary and padding positions are not targets in our construction.</p>
+<p>For the selected word <code>cat</code>, the three inputs and targets are:</p>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>Branch</th>
+<th>Input at the selected position</th>
+<th>Retained target</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Mask</td>
+<td><code>[MASK]</code></td>
+<td><code>cat</code></td>
+</tr>
+<tr class="even">
+<td>Random replacement</td>
+<td><code>table</code> in this fixed illustration</td>
+<td><code>cat</code></td>
+</tr>
+<tr class="odd">
+<td>Unchanged</td>
+<td><code>cat</code></td>
+<td><code>cat</code></td>
+</tr>
+</tbody>
+</table>
+<p>The random branch draws a vocabulary token, not a purposeful misspelling. An unchanged selected position still has a loss term. An unselected unchanged position does not. The model is not given a separate selected-position flag; the data/loss procedure retains the selection set.</p>
+<p>Multiplying probabilities gives approximate population proportions: <span class="math inline">\(0.15\times0.80=0.12\)</span> for the mask branch, and <span class="math inline">\(0.15\times0.10=0.015\)</span> for each other selected branch, with 0.85 unselected. These describe branch membership, not guaranteed proportions in each short sequence. A random replacement can also happen to equal the original token. Mixing branches reduces reliance on the artificial mask marker; it does not eliminate the pretraining/downstream mismatch or make every selected target equally difficult.</p>
+</section>
+<section id="the-mlm-objective" class="level2" data-number="4.3">
+<h2 data-number="4.3" class="anchored" data-anchor-id="the-mlm-objective"><span class="header-section-number">4.3</span> The MLM objective</h2>
+<p>For a nonempty selected set <span class="math inline">\(M\)</span>, define</p>
+<p><span id="eq-mlm"><span class="math display">\[
+\mathcal{L}_{\mathrm{MLM}}(\theta;x,M,\widetilde{x})
+=-\frac{1}{|M|}\sum_{i\in M}\log p_\theta(x_i\mid\widetilde{x}).
+\tag{9}\]</span></span></p>
+<p>Each distribution is read at the corresponding selected position. The original token <span class="math inline">\(x_i\)</span> appears in the target, while <span class="math inline">\(\widetilde{x}\)</span> supplies the encoder input. The notation abbreviates the position-specific vocabulary distribution. All selected positions count, including random and unchanged branches.</p>
+<div class="callout callout-style-simple callout-important callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Important</span>Worked example: two simultaneous masks
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>Original: <code>the cat sat on the mat</code><br>
+Input: <code>the [MASK] sat on the [MASK]</code><br>
+Selected positions: <span class="math inline">\(M=\{2,6\}\)</span>.</p>
+<p>Suppose the model assigns illustrative probabilities <span class="math inline">\(p(x_2=\text{cat}\mid\widetilde{x})=0.25\)</span> and <span class="math inline">\(p(x_6=\text{mat}\mid\widetilde{x})=0.50\)</span>. Then</p>
+<p><span class="math display">\[
+\ell_2=-\ln(0.25)=\ln 4\approx1.3863,\qquad
+\ell_6=-\ln(0.50)=\ln 2\approx0.6931,
+\]</span></p>
+<p><span class="math display">\[
+\mathcal{L}_{\mathrm{MLM}}=\frac{\ell_2+\ell_6}{2}
+\approx1.0397\text{ nats}.
+\]</span></p>
+<p>Average over the two selected positions, not all six words. Both probabilities condition on the same input with both masks present. The lower probability for <code>cat</code> contributes the larger penalty.</p>
+</div>
+</div>
+<p>Unlike the causal chain rule, this sum is <strong>not</strong> a left-to-right factorization of the probability of the full original sentence. It is a reconstruction objective conditioned on a corrupted observation. Exponentiating this MLM mean is not directly comparable to ordinary causal-language-model perplexity on a different target set.</p>
+</section>
+<section id="no-direct-loss-does-not-mean-no-gradient" class="level2" data-number="4.4">
+<h2 data-number="4.4" class="anchored" data-anchor-id="no-direct-loss-does-not-mean-no-gradient"><span class="header-section-number">4.4</span> No direct loss does not mean no gradient</h2>
+<p>Let <span class="math inline">\(z_i\)</span> be the logits for a selected output and <span class="math inline">\(e_j\)</span> the embedding at any supplied input position. The chain rule gives</p>
+<p><span id="eq-context-gradient"><span class="math display">\[
+\frac{\partial\mathcal{L}_{\mathrm{MLM}}}{\partial e_j}
+=\frac{1}{|M|}\sum_{i\in M}
+\left(\frac{\partial z_i}{\partial e_j}\right)^\top(p_i-q_i).
+\tag{10}\]</span></span></p>
+<p>Even if <span class="math inline">\(j\notin M\)</span>, its representation may influence a selected output through attention and later layers. Therefore the corresponding Jacobian need not be zero. This explains why unselected context tokens can help train the model without receiving their own direct MLM terms.</p>
+<p>During pretraining, embeddings, encoder layers, and the prediction head learn together. BERT’s MLM head has details beyond the simple linear-head illustration; consult its paper and implementation when reproducing the exact architecture. The principle in <a href="#eq-context-gradient" class="quarto-xref">Equation&nbsp;10</a> does not require those details to be identical.</p>
+</section>
+<section id="original-berts-sentence-pair-objective" class="level2" data-number="4.5">
+<h2 data-number="4.5" class="anchored" data-anchor-id="original-berts-sentence-pair-objective"><span class="header-section-number">4.5</span> Original BERT’s sentence-pair objective</h2>
+<p>Original BERT also trained next-sentence prediction (NSP). A pair is encoded as <code>[CLS] A [SEP] B [SEP]</code>. In the training construction, B is an actual continuation half the time and a randomly sampled alternative half the time. Segments can contain more than one grammatical sentence. The binary label comes from document order and sampling <span class="citation" data-cites="devlin2019bert">(<a href="#ref-devlin2019bert" role="doc-biblioref">Devlin et al. 2019, sec. 3.1</a>)</span>.</p>
+<p>Let <span class="math inline">\(r\in\{0,1\}\)</span> be that label and <span class="math inline">\(\pi_\theta(A,B)\)</span> the classifier’s probability of the continuation label. Its binary cross-entropy is</p>
+<p><span class="math display">\[
+\mathcal{L}_{\mathrm{NSP}}
+=-r\log\pi_\theta-(1-r)\log(1-\pi_\theta).
+\]</span></p>
+<p>The original training combines the MLM and NSP losses. NSP is not a truth detector: a randomly sampled passage can sound plausible. It is also not the definition of every encoder pretraining recipe. Here it provides historical context rather than a second extended loss exercise.</p>
+</section>
+</section>
+<section id="gpt-the-familiar-ar-objective-used-for-pretraining" class="level1" data-number="5">
+<h1 data-number="5"><span class="header-section-number">5</span> GPT: the familiar AR objective used for pretraining</h1>
+<section id="the-mechanism-is-familiar-the-training-stage-is-the-focus" class="level2" data-number="5.1">
+<h2 data-number="5.1" class="anchored" data-anchor-id="the-mechanism-is-familiar-the-training-stage-is-the-focus"><span class="header-section-number">5.1</span> The mechanism is familiar; the training stage is the focus</h2>
+<p>The autoregressive language-model objective has already been derived in earlier chapters. Generative pretraining uses that familiar signal over corpus text to learn reusable parameters. The original GPT work explicitly followed language-model pretraining with supervised task adaptation <span class="citation" data-cites="radford2018generative">(<a href="#ref-radford2018generative" role="doc-biblioref">Radford et al. 2018, sec. 3</a>)</span>. A causal decoder is therefore not restricted to continuation as its only downstream use.</p>
+<p>For a source window <span class="math inline">\(x_{1:n}\)</span>, the probability of a continuation conditional on its initial context follows the chain rule:</p>
+<p><span id="eq-causal-pretraining"><span class="math display">\[
+p_\theta(x_{2:n}\mid x_1)
+=\prod_{t=2}^{n}p_\theta(x_t\mid x_{&lt;t}),
+\qquad
+\mathcal{L}_{\mathrm{AR}}
+=-\frac{1}{n-1}\sum_{t=2}^{n}\log p_\theta(x_t\mid x_{&lt;t}).
+\tag{11}\]</span></span></p>
+<p>The conditioning convention is deliberate: our classroom window supplies the first <code>the</code> as context, without a separate START token. A formulation with a start symbol can also score the first word, but would be a different boundary convention.</p>
+<p>For the running example:</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 40%">
+<col style="width: 30%">
+<col style="width: 30%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: right;">Position in the supplied row</th>
+<th>Input token</th>
+<th>Aligned next-token target</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: right;">1</td>
+<td><code>the</code></td>
+<td><code>cat</code></td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">2</td>
+<td><code>cat</code></td>
+<td><code>sat</code></td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">3</td>
+<td><code>sat</code></td>
+<td><code>on</code></td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">4</td>
+<td><code>on</code></td>
+<td><code>the</code></td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">5</td>
+<td><code>the</code></td>
+<td><code>mat</code></td>
+</tr>
+</tbody>
+</table>
+<p>Thus the denominator is five. The causal restriction prevents a prediction from using later input positions even though training can process the observed row together. There is no separate target after <code>mat</code> in this finite window, and no EOS target is included in this example.</p>
+</section>
+<section id="what-the-objective-changes" class="level2" data-number="5.2">
+<h2 data-number="5.2" class="anchored" data-anchor-id="what-the-objective-changes"><span class="header-section-number">5.2</span> What the objective changes</h2>
+<p>Compared with BERT’s selected reconstruction targets, this recipe scores every eligible next-token target in the window. It uses the observed prefix rather than both sides of a corrupted sequence. These choices change the learning signal; they do not establish that one recipe is universally better.</p>
+<p>Corpus preprocessing determines which token windows are sampled and how document boundaries are handled. Training updates embeddings, the causal stack, and the vocabulary prediction mapping. The saved checkpoint contains these learned arrays, with their matching tokenizer and configuration. Some output weights may be tied to embedding weights; tied use does not create independent copies of the parameters.</p>
+<p>The architectural name <em>autoregressive</em> describes the conditional structure. <em>Pretraining</em> describes the stage’s role in a reuse workflow. Increasing corpus size is not a new kind of gradient descent, and size alone is not the defining property of pretraining.</p>
+</section>
+<section id="at-ordinary-use-the-checkpoint-is-fixed" class="level2" data-number="5.3">
+<h2 data-number="5.3" class="anchored" data-anchor-id="at-ordinary-use-the-checkpoint-is-fixed"><span class="header-section-number">5.3</span> At ordinary use, the checkpoint is fixed</h2>
+<p>In corpus pretraining, observed next tokens provide labels for a loss and optimizer updates. During ordinary continuation, an input prompt produces probabilities using a saved parameter state. The subsequent text can change the next computation’s input, while the parameter arrays remain fixed. This is the distinction needed here; decoding and sampling mechanisms were covered earlier.</p>
+<p>A model trained for text continuation may display useful behavior on prompts, but its objective alone does not guarantee reliable instruction following. The existence of a pretrained checkpoint should not be conflated with a completed assistant-training pipeline. Session 2 and the following lecture will study these reuse and adaptation questions separately.</p>
+</section>
+</section>
+<section id="t5-learn-by-reconstructing-missing-spans" class="level1" data-number="6">
+<h1 data-number="6"><span class="header-section-number">6</span> T5: learn by reconstructing missing spans</h1>
+<section id="source-and-target-are-separate-sequences" class="level2" data-number="6.1">
+<h2 data-number="6.1" class="anchored" data-anchor-id="source-and-target-are-separate-sequences"><span class="header-section-number">6.1</span> Source and target are separate sequences</h2>
+<p>T5 uses an encoder–decoder text-to-text interface. In span-corruption pretraining, removed spans become an output sequence, while the remaining text becomes a corrupted source. The paper’s construction replaces each removed span with a distinct sentinel and uses those sentinels to delimit the target spans, including a final sentinel <span class="citation" data-cites="raffel2020t5">(<a href="#ref-raffel2020t5" role="doc-biblioref">Raffel et al. 2020, fig. 2</a>)</span>.</p>
+<p>For the running sentence, remove <code>cat</code> and <code>mat</code> as two one-word spans. Write <span class="math inline">\(S_0,S_1,S_2\)</span> as readable aliases for distinct extra-ID sentinel tokens. Under the paper-style convention used in the lecture,</p>
+<p><span class="math display">\[
+\widetilde{x}=(\text{the},S_0,\text{sat},\text{on},\text{the},S_1,\mathrm{EOS}),
+\]</span></p>
+<p><span id="eq-t5-target"><span class="math display">\[
+y=(S_0,\text{cat},S_1,\text{mat},S_2,\mathrm{EOS}).
+\tag{12}\]</span></span></p>
+<p>The source’s <span class="math inline">\(S_0\)</span> marks the first missing span; the target’s <span class="math inline">\(S_0\)</span> introduces its content. The same relationship holds for <span class="math inline">\(S_1\)</span>. The final <span class="math inline">\(S_2\)</span> closes the last span; it is not evidence of a third source gap. EOS terminates a sequence and is distinct from a sentinel.</p>
+<p>The visible aliases correspond to tokens such as <code>&lt;extra_id_0&gt;</code>, not ordinary character strings that the example asks students to split. Our words are pedagogical units, not an exact SentencePiece tokenizer trace. The final-sentinel convention follows the paper illustration; a real data pipeline’s boundary behavior should be checked rather than inferred from a six-word schematic.</p>
+</section>
+<section id="one-sentinel-can-replace-several-tokens" class="level2" data-number="6.2">
+<h2 data-number="6.2" class="anchored" data-anchor-id="one-sentinel-can-replace-several-tokens"><span class="header-section-number">6.2</span> One sentinel can replace several tokens</h2>
+<p>Extending the first removed span from <code>cat</code> to <code>cat sat</code> changes the pair to</p>
+<p><span class="math display">\[
+\widetilde{x}'=(\text{the},S_0,\text{on},\text{the},S_1,\mathrm{EOS}),
+\]</span></p>
+<p><span class="math display">\[
+y'=(S_0,\text{cat},\text{sat},S_1,\text{mat},S_2,\mathrm{EOS}).
+\]</span></p>
+<p>The first gap grows but still has a single sentinel. The output contains removed content and boundary markers rather than a copy of every uncorrupted source token. On long sequences with a modest noise fraction, this can shorten the reconstruction target compared with reconstructing the whole input. On a tiny example, marker overhead may eliminate that saving.</p>
+<p>The selected T5 recipe uses a noise density of 15% and mean span length 3; these are recipe-level settings over tokenized sequences <span class="citation" data-cites="raffel2020t5">(<a href="#ref-raffel2020t5" role="doc-biblioref">Raffel et al. 2020, secs. 3.3.3–3.3.4</a>)</span>. Our handpicked gaps deliberately prioritize inspectability and do not satisfy those statistics. A short example should not be used to estimate the production masking rate.</p>
+</section>
+<section id="align-the-decoder-input-and-target" class="level2" data-number="6.3">
+<h2 data-number="6.3" class="anchored" data-anchor-id="align-the-decoder-input-and-target"><span class="header-section-number">6.3</span> Align the decoder input and target</h2>
+<p>For the one-word-span example in <a href="#eq-t5-target" class="quarto-xref">Equation&nbsp;12</a>:</p>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>Decoder input</th>
+<th>START</th>
+<th><span class="math inline">\(S_0\)</span></th>
+<th>cat</th>
+<th><span class="math inline">\(S_1\)</span></th>
+<th>mat</th>
+<th><span class="math inline">\(S_2\)</span></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Target</td>
+<td><span class="math inline">\(S_0\)</span></td>
+<td>cat</td>
+<td><span class="math inline">\(S_1\)</span></td>
+<td>mat</td>
+<td><span class="math inline">\(S_2\)</span></td>
+<td>EOS</td>
+</tr>
+</tbody>
+</table>
+<p>START is an input initialization symbol, not an additional target. Original T5 uses its configured pad-token ID in this role. This does not make the first target a padded label: the role of a decoder-start input and the role of loss-ignored padding are different.</p>
+<p>The decoder conditions on the corrupted source through encoder memory and on previous target tokens during training. It does not receive the missing current target as part of its own prefix. The source’s EOS is an encoder input, not a separate decoder reconstruction target at that position.</p>
+</section>
+<section id="conditional-cross-entropy-and-the-encoders-gradient" class="level2" data-number="6.4">
+<h2 data-number="6.4" class="anchored" data-anchor-id="conditional-cross-entropy-and-the-encoders-gradient"><span class="header-section-number">6.4</span> Conditional cross-entropy and the encoder’s gradient</h2>
+<p>For <span class="math inline">\(m=|y|\)</span> non-padding target tokens,</p>
+<p><span id="eq-t5-loss"><span class="math display">\[
+\mathcal{L}_{\mathrm{T5}}(\theta)
+=-\frac{1}{m}\sum_{t=1}^{m}
+\log p_\theta(y_t\mid y_{&lt;t},\widetilde{x}).
+\tag{13}\]</span></span></p>
+<p>In the displayed example, <span class="math inline">\(m=6\)</span>: three sentinels, two content tokens, and EOS. Sentinels and EOS are valid vocabulary targets and contribute loss. No numerical probabilities are supplied here because the important new issue is the source/target construction, not another cross-entropy calculation.</p>
+<div id="fig-t5-gradients" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-t5-gradients-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="images/t5-gradients.png" class="img-fluid figure-img" style="width:100.0%">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-t5-gradients-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;3: The decoder reconstruction loss trains its vocabulary mapping and decoder stack. Its dependence on encoder memory sends gradients into the encoder as well. Dashed paths depict backpropagation dependencies, not measured gradients.
+</figcaption>
+</figure>
+</div>
+<p>Write the source memory as <span class="math inline">\(H=\operatorname{Enc}_{\theta_E}(\widetilde{x})\)</span> and a decoder state as <span class="math inline">\(s_t=\operatorname{Dec}_{\theta_D}(y_{&lt;t},H)\)</span>. If <span class="math inline">\(z_t\)</span> denotes its logits, then</p>
+<p><span id="eq-encoder-gradient"><span class="math display">\[
+\nabla_{\theta_E}\mathcal{L}_{\mathrm{T5}}
+=\frac{1}{m}\sum_{t=1}^{m}
+\left(\frac{\partial H}{\partial\theta_E}\right)^\top
+\left(\frac{\partial z_t}{\partial H}\right)^\top
+(p_t-q_t).
+\tag{14}\]</span></span></p>
+<p>The dependence of <span class="math inline">\(z_t\)</span> on <span class="math inline">\(H\)</span> includes decoder cross-attention. Consequently, an encoder can learn without an independent encoder-side prediction head. The formula isolates the encoder path for explanation; when parameters are shared between components, their gradients accumulate contributions from all uses.</p>
+</section>
+<section id="the-same-interface-can-support-a-different-supervision-source" class="level2" data-number="6.5">
+<h2 data-number="6.5" class="anchored" data-anchor-id="the-same-interface-can-support-a-different-supervision-source"><span class="header-section-number">6.5</span> The same interface can support a different supervision source</h2>
+<p>T5’s text-to-text formulation also represents supervised tasks using input and target strings <span class="citation" data-cites="raffel2020t5">(<a href="#ref-raffel2020t5" role="doc-biblioref">Raffel et al. 2020, sec. 2.4</a> and Fig. 1)</span>. For example, a sentiment task may pair <code>sst2 sentence: I loved this film.</code> with <code>positive</code>, while a translation task pairs an English input with its French target. These are task-format examples, not outputs measured from a span-pretrained model.</p>
+<p>The distinction is the source of supervision. Missing-span targets can be constructed from corpus text; sentiment and translation targets come from task annotations or paired data. A task prefix is a learned cue in the corresponding training setup, not a guarantee of zero-shot ability. These examples motivate reuse, while the detailed adaptation procedure is deferred to Session 2.</p>
+</section>
+</section>
+<section id="compare-the-recipes-without-conflating-their-losses" class="level1" data-number="7">
+<h1 data-number="7"><span class="header-section-number">7</span> Compare the recipes without conflating their losses</h1>
+<p>The following comparison uses precisely the boundary conventions above.</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 33%">
+<col style="width: 33%">
+<col style="width: 33%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Recipe</th>
+<th>Supplied input</th>
+<th>Scored targets</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>BERT MLM</td>
+<td><code>the [MASK] sat on the [MASK]</code></td>
+<td><code>cat</code> and <code>mat</code> at selected positions</td>
+</tr>
+<tr class="even">
+<td>GPT</td>
+<td><code>the cat sat on the</code> under causal visibility</td>
+<td><code>cat sat on the mat</code></td>
+</tr>
+<tr class="odd">
+<td>T5 encoder</td>
+<td><code>the S0 sat on the S1 EOS</code></td>
+<td>No independent encoder token loss</td>
+</tr>
+<tr class="even">
+<td>T5 decoder</td>
+<td><code>START S0 cat S1 mat S2</code> plus source memory</td>
+<td><code>S0 cat S1 mat S2 EOS</code></td>
+</tr>
+</tbody>
+</table>
+<p>The parameter sets differ, but in each case the learning signal trains a contextual backbone. Original BERT includes its additional NSP objective. GPT pretraining learns a causal backbone and output mapping. T5 trains both stacks through its conditional reconstruction objective.</p>
+<p>Do not rank these models by comparing the numerical mean loss of our toy examples. Their target sets, conditions, boundary symbols, and sometimes tokenizations differ. Even target counts are not measures of model quality. A meaningful comparison specifies data, model/compute budgets, evaluation splits, metrics, and the downstream or held-out prediction problem.</p>
+<p>Similarly, <strong>perplexity is tied to a defined probability model and evaluation convention</strong>. For a causal model on a fixed target set, exponentiating the mean negative log-likelihood yields perplexity under that convention. An exponentiated masked reconstruction loss does not become the same quantity merely because both losses contain logarithms.</p>
+</section>
+<section id="what-is-saved-and-what-remains-to-be-learned" class="level1" data-number="8">
+<h1 data-number="8"><span class="header-section-number">8</span> What is saved, and what remains to be learned?</h1>
+<p>A checkpoint stores learned parameter arrays. The tokenizer and model configuration must agree with those arrays. A contextual state is a result of applying the model to an input, not an alternative name for a weight. A retained token target or sentiment annotation is a supervision object, not a hidden-state vector.</p>
+<div id="fig-weights-states" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-weights-states-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="images/weights-and-states.png" class="img-fluid figure-img" style="width:100.0%">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-weights-states-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;4: The saved weights are reused across inputs, while a new sentence produces new contextual states. These states do not by themselves specify the sentiment decision rule.
+</figcaption>
+</figure>
+</div>
+<p>For the next session, consider “I loved this film.” with an annotated sentiment label <code>positive</code>. Pretraining has supplied parameters useful as a starting point. It has not, merely by doing so, specified the task’s output space, the mapping to those outputs, which parameters should update, or the held-out evaluation procedure. These are adaptation decisions.</p>
+<p>The question to carry forward is: <strong>we trained a word predictor; how can it become a sentiment classifier?</strong> Session 2 will answer it with task heads, frozen features versus full updates, concrete evaluation examples, and prompting.</p>
+</section>
+<section id="study-exercises-and-worked-answers" class="level1" data-number="9">
+<h1 data-number="9"><span class="header-section-number">9</span> Study exercises and worked answers</h1>
+<section id="exercises" class="level2" data-number="9.1">
+<h2 data-number="9.1" class="anchored" data-anchor-id="exercises"><span class="header-section-number">9.1</span> Exercises</h2>
+<ol type="1">
+<li><strong>Selection versus corruption.</strong> A BERT position is selected but left unchanged. Does it contribute an MLM loss? How does it differ from an unselected unchanged position?</li>
+<li><strong>Normalization.</strong> Two selected targets have illustrative probabilities 0.20 and 0.80. Compute their mean negative log-likelihood in nats. Explain why dividing by the full sentence length is wrong for this exercise.</li>
+<li><strong>Context gradients.</strong> A BERT context token has no direct loss term. Use <a href="#eq-context-gradient" class="quarto-xref">Equation&nbsp;10</a> to explain how its embedding can still receive a gradient.</li>
+<li><strong>Boundary conventions.</strong> Construct the GPT input and target for <code>the cat sat on the mat</code> under our no-START convention. What changes if a START token is introduced and the first observed word is also scored?</li>
+<li><strong>Multiword span.</strong> Remove <code>cat sat</code> and <code>mat</code>. Write T5’s source, decoder input, and target with our final-sentinel/EOS convention. Identify every scored target.</li>
+<li><strong>Objects in a workflow.</strong> Classify each item as parameter, activation, or supervision: an embedding-table row, the contextual state for <em>bank</em> in a sentence, the retained original <code>cat</code>, and the label <code>positive</code>.</li>
+<li><strong>Comparison claim.</strong> A student’s BERT mean MLM loss is below another student’s causal LM loss. Give two reasons why that alone cannot establish that BERT is the better pretrained model.</li>
+</ol>
+</section>
+<section id="worked-answers" class="level2" data-number="9.2">
+<h2 data-number="9.2" class="anchored" data-anchor-id="worked-answers"><span class="header-section-number">9.2</span> Worked answers</h2>
+<p><strong>1.</strong> The selected unchanged position contributes a loss against its original token. The unselected position has no direct MLM term, even though both appear unchanged to the encoder. The selection set is known to the data/loss computation, not passed as a separate input flag.</p>
+<p><strong>2.</strong> The contributions are <span class="math inline">\(-\ln0.20\approx1.6094\)</span> and <span class="math inline">\(-\ln0.80\approx0.2231\)</span>. The mean is <span class="math inline">\((1.6094+0.2231)/2\approx0.9163\)</span> nats. The denominator is the number of selected targets under this exercise’s definition, not the number of visible or original words.</p>
+<p><strong>3.</strong> A selected output can depend on that context embedding. Therefore <span class="math inline">\(\partial z_i/\partial e_j\)</span> can be nonzero even when <span class="math inline">\(j\notin M\)</span>. The chain rule transmits the selected-output error along that dependence.</p>
+<p><strong>4.</strong> Input: <code>the cat sat on the</code>; target: <code>cat sat on the mat</code>. There are five valid targets. With a START token and a scored first word, input becomes <code>START the cat sat on the</code> and target becomes <code>the cat sat on the mat</code>, yielding six. Neither convention should be silently mixed with the other.</p>
+<p><strong>5.</strong> Source: <code>the S0 on the S1 EOS</code>. Target: <code>S0 cat sat S1 mat S2 EOS</code>. Decoder input: <code>START S0 cat sat S1 mat S2</code>. All seven target tokens are scored, including sentinels and EOS. START is an input, and the source EOS has no separate decoder loss term. These are word-level teaching strings.</p>
+<p><strong>6.</strong> The embedding-table row is a parameter (a slice of a learned array). The contextual state is an activation computed for one input. <code>cat</code> and <code>positive</code> are supervision: the former is obtained from source text, the latter from a task annotation.</p>
+<p><strong>7.</strong> The models score different targets under different conditioning information. They may also use different tokenization, corruption rates, boundaries, data splits, and averaging rules. A lower loss on a different problem is not a controlled comparison of transfer usefulness.</p>
+</section>
+</section>
+<section id="a-guided-route-through-the-literature" class="level1" data-number="10">
+<h1 data-number="10"><span class="header-section-number">10</span> A guided route through the literature</h1>
+<p>Read the original papers with a notebook open. For each, reconstruct one training example, write its loss, and identify the transferred parameters. Do not begin by memorizing benchmark scores.</p>
+<ol type="1">
+<li><strong>ELMo — <span class="citation" data-cites="peters2018elmo">Peters et al. (<a href="#ref-peters2018elmo" role="doc-biblioref">2018</a>)</span>.</strong> Read §§3.1–3.2, particularly the bidirectional language model and task-specific layer mixture. Ask why one static word vector cannot express context dependence, and distinguish directional model states from the final task representation. Then inspect the analyses rather than inferring semantic understanding solely from a vector illustration.</li>
+<li><strong>BERT — <span class="citation" data-cites="devlin2019bert">Devlin et al. (<a href="#ref-devlin2019bert" role="doc-biblioref">2019</a>)</span>.</strong> Start with Figs. 1–2 and §3.1. Reconstruct selection, corruption, and the retained targets. Read §3.2 to see where supervised adaptation enters, without assuming that the pretraining head is already a classifier for every task. In the ablations, check which components and evaluation tasks are being compared.</li>
+<li><strong>Original GPT — <span class="citation" data-cites="radford2018generative">Radford et al. (<a href="#ref-radford2018generative" role="doc-biblioref">2018</a>)</span>.</strong> Focus on §3.1 versus §3.2: the familiar LM objective supplies initialization, then a task-specific supervised objective adapts it. Fig. 1 shows how structured tasks are represented. Read the transfer story before equating “generative” with “only useful for generation.”</li>
+<li><strong>T5 — <span class="citation" data-cites="raffel2020t5">Raffel et al. (<a href="#ref-raffel2020t5" role="doc-biblioref">2020</a>)</span>.</strong> Begin with Fig. 1 (task interface) and Fig. 2 (span construction). Then read §§3.3.1–3.3.4 on objective design, corruption rate, and span length. Distinguish the baseline construction, controlled comparisons, and final recipe. The paper is a systematic study, not just a model diagram.</li>
+<li><strong>Lecture companions.</strong> Stanford PDF pp.&nbsp;10–11 and 19 explain the move from embedding reuse to whole-model reuse; pp.&nbsp;27–28 cover BERT, and p.&nbsp;36 illustrates T5. Berkeley PDF pp.&nbsp;36/58 form a matched MLM/causal pair, p.&nbsp;38 explains corruption branches, pp.&nbsp;57–59 discuss generative pretraining, and p.&nbsp;66 illustrates T5 <span class="citation" data-cites="yang2026pretraining berkeley2026pretraining">(<a href="#ref-yang2026pretraining" role="doc-biblioref">Yang 2026</a>; <a href="#ref-berkeley2026pretraining" role="doc-biblioref">UC Berkeley CS 288 2026</a>)</span>. These are PDF viewer page numbers, not necessarily printed slide numbers.</li>
+</ol>
+<p>The papers use different historical settings and conventions. When translating an idea into code, verify tokenizer behavior, special IDs, loss masks, parameter sharing, and normalization against the intended implementation. The small examples in these notes explain the objective; they are not a substitute for a full reproduction specification.</p>
+</section>
+<section id="references" class="level1 unnumbered">
+<h1 class="unnumbered">References</h1>
+<div id="refs" class="references csl-bib-body hanging-indent" role="list">
+<div id="ref-devlin2019bert" class="csl-entry" role="listitem">
+Devlin, Jacob, Ming-Wei Chang, Kenton Lee, and Kristina Toutanova. 2019. <span>“<span>BERT</span>: Pre-Training of Deep Bidirectional Transformers for Language Understanding.”</span> <em>Proceedings of NAACL-HLT</em>, 4171–86. <a href="https://doi.org/10.18653/v1/N19-1423">https://doi.org/10.18653/v1/N19-1423</a>.
+</div>
+<div id="ref-kudo2018sentencepiece" class="csl-entry" role="listitem">
+Kudo, Taku, and John Richardson. 2018. <span>“<span>SentencePiece</span>: A Simple and Language Independent Subword Tokenizer and Detokenizer for Neural Text Processing.”</span> <em>Proceedings of the 2018 Conference on Empirical Methods in Natural Language Processing: System Demonstrations</em>, 66–71. <a href="https://doi.org/10.18653/v1/D18-2012">https://doi.org/10.18653/v1/D18-2012</a>.
+</div>
+<div id="ref-mikolov2013distributed" class="csl-entry" role="listitem">
+Mikolov, Tomas, Ilya Sutskever, Kai Chen, Greg S. Corrado, and Jeffrey Dean. 2013. <span>“Distributed Representations of Words and Phrases and Their Compositionality.”</span> <em>Advances in Neural Information Processing Systems</em> 26. <a href="https://papers.nips.cc/paper/5021-distributed-representations-of-words-and-phrases-and-their-compositionality">https://papers.nips.cc/paper/5021-distributed-representations-of-words-and-phrases-and-their-compositionality</a>.
+</div>
+<div id="ref-pennington2014glove" class="csl-entry" role="listitem">
+Pennington, Jeffrey, Richard Socher, and Christopher D. Manning. 2014. <span>“<span>GloVe</span>: Global Vectors for Word Representation.”</span> <em>Proceedings of the 2014 Conference on Empirical Methods in Natural Language Processing</em>, 1532–43. <a href="https://doi.org/10.3115/v1/D14-1162">https://doi.org/10.3115/v1/D14-1162</a>.
+</div>
+<div id="ref-peters2018elmo" class="csl-entry" role="listitem">
+Peters, Matthew E., Mark Neumann, Mohit Iyyer, et al. 2018. <span>“Deep Contextualized Word Representations.”</span> <em>Proceedings of NAACL-HLT</em>, 2227–37. <a href="https://doi.org/10.18653/v1/N18-1202">https://doi.org/10.18653/v1/N18-1202</a>.
+</div>
+<div id="ref-radford2018generative" class="csl-entry" role="listitem">
+Radford, Alec, Karthik Narasimhan, Tim Salimans, and Ilya Sutskever. 2018. <em>Improving Language Understanding by Generative Pre-Training</em>. OpenAI. <a href="https://cdn.openai.com/research-covers/language-unsupervised/language_understanding_paper.pdf">https://cdn.openai.com/research-covers/language-unsupervised/language_understanding_paper.pdf</a>.
+</div>
+<div id="ref-raffel2020t5" class="csl-entry" role="listitem">
+Raffel, Colin, Noam Shazeer, Adam Roberts, et al. 2020. <span>“Exploring the Limits of Transfer Learning with a Unified Text-to-Text Transformer.”</span> <em>Journal of Machine Learning Research</em> 21 (140): 1–67. <a href="https://jmlr.org/papers/v21/20-074.html">https://jmlr.org/papers/v21/20-074.html</a>.
+</div>
+<div id="ref-berkeley2026pretraining" class="csl-entry" role="listitem">
+UC Berkeley CS 288. 2026. <em>Pre-Training, Fine-Tuning, and Prompting</em>. Spring 2026 lecture slides. <a href="https://cal-cs288.github.io/sp26/assets/slides/CS288_sp26_08_Pretraining_Finetuning_Prompting.pdf">https://cal-cs288.github.io/sp26/assets/slides/CS288_sp26_08_Pretraining_Finetuning_Prompting.pdf</a>.
+</div>
+<div id="ref-vaswani2017attention" class="csl-entry" role="listitem">
+Vaswani, Ashish, Noam Shazeer, Niki Parmar, et al. 2017. <span>“Attention Is All You Need.”</span> <em>Advances in Neural Information Processing Systems</em> 30. <a href="https://arxiv.org/abs/1706.03762">https://arxiv.org/abs/1706.03762</a>.
+</div>
+<div id="ref-yang2026pretraining" class="csl-entry" role="listitem">
+Yang, Diyi. 2026. <em>Lecture 6: Pretraining</em>. Stanford CS224N/Ling284 lecture slides. <a href="https://web.stanford.edu/class/cs224n/slides_w26/cs224n-2026-lecture07-pretraining.pdf">https://web.stanford.edu/class/cs224n/slides_w26/cs224n-2026-lecture07-pretraining.pdf</a>.
+</div>
+</div>
+
+
+</section>
+
+</main> <!-- /main -->
+<script>
+(() => {
+  const padding = 24;
+
+  function cropMermaid(svg) {
+    const root = svg.querySelector(":scope > g, g.root");
+    if (!root) return;
+
+    let box;
+    try {
+      box = root.getBBox();
+    } catch (_) {
+      return;
+    }
+
+    if (!box.width || !box.height) return;
+
+    svg.setAttribute(
+      "viewBox",
+      `${box.x - padding} ${box.y - padding} ${box.width + 2 * padding} ${box.height + 2 * padding}`
+    );
+    svg.setAttribute("width", "100%");
+    svg.removeAttribute("height");
+    svg.style.width = "100%";
+    svg.style.height = "auto";
+    svg.style.maxWidth = "100%";
+    svg.style.display = "block";
+    svg.style.marginInline = "auto";
+    svg.dataset.cropped = "true";
+  }
+
+  function cropAllMermaid() {
+    document
+      .querySelectorAll("svg.mermaid-js:not([data-cropped])")
+      .forEach(cropMermaid);
+  }
+
+  const observer = new MutationObserver(cropAllMermaid);
+  observer.observe(document.documentElement, { childList: true, subtree: true });
+
+  window.addEventListener("load", () => {
+    cropAllMermaid();
+    window.setTimeout(cropAllMermaid, 250);
+    window.setTimeout(cropAllMermaid, 1000);
+  });
+})();
+</script>
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp("https:\/\/anassbelcaid\.github\.io\/nlp-course-2026\/");
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+            // target, if specified
+            link.setAttribute("target", "_blank");
+            if (link.getAttribute("rel") === null) {
+              link.setAttribute("rel", "noopener");
+            }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+</div> <!-- /content -->
+<footer class="footer">
+  <div class="nav-footer">
+    <div class="nav-footer-left">
+<p>Natural Language Processing · Université Abdelmalek Essaâdi</p>
+</div>   
+    <div class="nav-footer-center">
+      &nbsp;
+    </div>
+    <div class="nav-footer-right">
+<p>Built with Quarto</p>
+</div>
+  </div>
+</footer>
+
+
+
+
+<script src="../../site_libs/quarto-html/zenscroll-min.js"></script>
+</body></html>

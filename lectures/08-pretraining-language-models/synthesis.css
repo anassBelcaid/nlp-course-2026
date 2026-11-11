@@ -1,0 +1,50 @@
+/* Session 1 synthesis: prompt and solution are separate slides. */
+.reveal .syn-slide h2 { font-size: 46px; line-height: 1.12; margin: 0 0 25px; }
+.reveal .syn-source { background: #e7eee8; padding: 20px 25px; font-size: 35px; line-height: 1.3; margin: 0 0 24px; }
+.syn-source span { display: block; font-size: 20px; letter-spacing: .05em; color: #526873; margin-bottom: 14px; }
+.reveal .syn-source-compact { font-size: 33px; padding: 17px 25px; }
+.syn-source-compact span { display: inline-block; margin: 0 30px 0 0; }
+.syn-pause-panel { background: #17364a; color: white; border-left: 7px solid #d6a734; padding: 24px 30px; margin: 24px 0; }
+.syn-pause-badge { color: #eed58e; font-size: 24px; font-weight: bold; letter-spacing: .05em; }
+.reveal .syn-pause-panel h3 { color: white; font-size: 34px; line-height: 1.25; margin: 18px 0; }
+.reveal .syn-pause-panel p { font-size: 28px; line-height: 1.3; margin: 0; }
+.syn-rules { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 35px; margin: 30px 0; }
+.syn-rules > div { border-top: 4px solid #0f7881; padding: 20px 12px 0; }
+.syn-rules > div:nth-child(2) { border-color: #a34832; }
+.syn-rules > div:nth-child(3) { border-color: #496e87; }
+.syn-rules b { font-size: 31px; }
+.reveal .syn-rules p { font-size: 28px; line-height: 1.4; margin: 18px 0 0; }
+.reveal .syn-conventions { font-size: 25px; line-height: 1.4; margin: 25px 0; }
+.reveal .syn-recipe-table { width: 100%; table-layout: fixed; margin: 24px 0; font-size: 28px; }
+.reveal .syn-recipe-table th, .reveal .syn-recipe-table td { padding: 23px 18px; line-height: 1.4; vertical-align: middle; border-color: #bacfcb; }
+.reveal .syn-recipe-table thead { background: #17364a; color: white; }
+.reveal .syn-recipe-table th:first-child { width: 13%; }
+.reveal .syn-recipe-table th:nth-child(2) { width: 44%; }
+.reveal .syn-recipe-table small { display: inline; font-size: 22px; }
+.syn-recipe-table td b { color: #a34832; }
+.syn-row-label { display: block; font-size: 18px; font-weight: bold; letter-spacing: .04em; color: #526873; margin: 8px 0 3px; }
+.reveal .syn-takeaway { font-size: 31px; line-height: 1.35; border-left: 5px solid var(--gold); padding: 17px 24px; margin: 24px 0; }
+.reveal .syn-caption { font-size: 26px; line-height: 1.35; color: #526873; margin: 20px 0; }
+.syn-family-cards { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 35px; margin: 25px 0; }
+.syn-family-cards > div { padding: 30px 25px; background: #e7eee8; border-top: 5px solid #0f7881; }
+.syn-family-cards > div:nth-child(2) { background: #f3e9df; border-color: #a34832; }
+.syn-family-cards > div:nth-child(3) { background: #e4ebf0; border-color: #496e87; }
+.reveal .syn-family-cards h3 { font-size: 43px; margin: 0 0 25px; }
+.syn-label { display: block; font-size: 20px; color: #526873; letter-spacing: .04em; font-weight: bold; }
+.reveal .syn-family-cards p { font-size: 29px; line-height: 1.35; margin: 16px 0 32px; min-height: 80px; }
+.syn-family-foot { display: block; border-top: 1px solid #a9c1bf; padding-top: 22px; font-size: 25px; line-height: 1.35; }
+.syn-weights-diagram { width: 100%; height: 370px; display: block; margin: 28px 0; }
+.syn-target-sources { display: grid; grid-template-columns: 1fr 1fr; gap: 50px; margin: 30px 0; }
+.syn-target-sources > div { border-top: 4px solid #0f7881; padding: 20px 25px 0; }
+.syn-target-sources > div:last-child { border-color: #a34832; }
+.syn-target-sources strong { display: block; font-size: 41px; color: #a34832; margin: 17px 0; }
+.reveal .syn-target-sources p { font-size: 28px; line-height: 1.3; margin: 15px 0; }
+.reveal .syn-ending, .reveal .syn-ending h2 { color: #fbfaf6; }
+.reveal .syn-ending-kicker { font-size: 23px; letter-spacing: .08em; color: #e3c578; margin: 18px 0; }
+.syn-closing-diagram { width: 100%; height: 510px; display: block; margin: 24px 0; }
+.syn-closing-flow { fill: none; stroke: #e3c578; stroke-width: 4; stroke-dasharray: 10 7; marker-end: url(#sc-arrow); }
+.present .syn-closing-flow { animation: syn-flow 2.5s linear infinite; }
+@keyframes syn-flow { to { stroke-dashoffset: -68; } }
+.reveal .syn-final-question { font-size: 44px; line-height: 1.25; border-left: 5px solid #e3c578; padding: 12px 25px; margin: 20px 0; }
+.reveal .syn-ending-caption { font-size: 24px; line-height: 1.35; color: #c4d9d5; margin: 20px 0; }
+@media (prefers-reduced-motion: reduce) { .present .syn-closing-flow { animation: none; } }

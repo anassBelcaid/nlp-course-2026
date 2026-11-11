@@ -1,0 +1,483 @@
+{
+  "pretrained_model": "prajjwal1/bert-tiny",
+  "revision": "6f75de8b60a9f8a2fdf7b69cbd86d9e64bcb3837",
+  "pretrained_sha256": "dab2c2bddcfb48ea430ef63fd76d46d67d704487844d967256a50dd7d7fd0a66",
+  "classifier_state_sha256": "c056b96799b60789d798106392157aa2d4dc551134983da6ee57de8a6e727b81",
+  "torch": "2.14.0+cu130",
+  "transformers": "4.57.6",
+  "classifier_protocol": "Exact reconstruction of Section 4 pretrained branch seed 351, step 80; held-out probability vector verified at atol 1e-6. Before is pretrained encoder plus random task head.",
+  "inference": "CPU eval/inference_mode; no updates during interventions; MLM is original pretrained checkpoint, not sentiment model",
+  "classifier": [
+    {
+      "kind": "original",
+      "sentence": "i loved this movie",
+      "expected_label": 1,
+      "tokens": [
+        "i",
+        "loved",
+        "this",
+        "movie"
+      ],
+      "ids": [
+        1045,
+        3866,
+        2023,
+        3185
+      ],
+      "before": 0.4534921944141388,
+      "after": 0.9253066778182983,
+      "prediction_before": 0,
+      "prediction_after": 1
+    },
+    {
+      "kind": "meaning change",
+      "sentence": "i hated this movie",
+      "expected_label": 0,
+      "tokens": [
+        "i",
+        "hated",
+        "this",
+        "movie"
+      ],
+      "ids": [
+        1045,
+        6283,
+        2023,
+        3185
+      ],
+      "before": 0.5619908571243286,
+      "after": 0.7694641351699829,
+      "prediction_before": 1,
+      "prediction_after": 1
+    },
+    {
+      "kind": "typo",
+      "sentence": "i lovde this movie",
+      "expected_label": 1,
+      "tokens": [
+        "i",
+        "lo",
+        "##vd",
+        "##e",
+        "this",
+        "movie"
+      ],
+      "ids": [
+        1045,
+        8840,
+        16872,
+        2063,
+        2023,
+        3185
+      ],
+      "before": 0.538812518119812,
+      "after": 0.6074309945106506,
+      "prediction_before": 1,
+      "prediction_after": 1
+    },
+    {
+      "kind": "negation",
+      "sentence": "i did not love this movie",
+      "expected_label": 0,
+      "tokens": [
+        "i",
+        "did",
+        "not",
+        "love",
+        "this",
+        "movie"
+      ],
+      "ids": [
+        1045,
+        2106,
+        2025,
+        2293,
+        2023,
+        3185
+      ],
+      "before": 0.4232049882411957,
+      "after": 0.16209453344345093,
+      "prediction_before": 0,
+      "prediction_after": 0
+    }
+  ],
+  "mlm": {
+    "syntax": [
+      {
+        "sentence": "the key to the cabinets [MASK] here.",
+        "expected": "is",
+        "tokens": [
+          "[CLS]",
+          "the",
+          "key",
+          "to",
+          "the",
+          "cabinets",
+          "[MASK]",
+          "here",
+          ".",
+          "[SEP]"
+        ],
+        "ids": [
+          101,
+          1996,
+          3145,
+          2000,
+          1996,
+          20053,
+          103,
+          2182,
+          1012,
+          102
+        ],
+        "mask_position": 6,
+        "candidates": [
+          {
+            "token": "is",
+            "id": 2003,
+            "probability": 0.03569503501057625,
+            "rank": 3
+          },
+          {
+            "token": "are",
+            "id": 2024,
+            "probability": 0.20846915245056152,
+            "rank": 1
+          }
+        ],
+        "top5": [
+          {
+            "token": "are",
+            "probability": 0.20846915245056152
+          },
+          {
+            "token": "were",
+            "probability": 0.12056941539049149
+          },
+          {
+            "token": "is",
+            "probability": 0.03569503501057625
+          },
+          {
+            "token": "was",
+            "probability": 0.026346435770392418
+          },
+          {
+            "token": "opened",
+            "probability": 0.017125576734542847
+          }
+        ]
+      },
+      {
+        "sentence": "the keys to the cabinets [MASK] here.",
+        "expected": "are",
+        "tokens": [
+          "[CLS]",
+          "the",
+          "keys",
+          "to",
+          "the",
+          "cabinets",
+          "[MASK]",
+          "here",
+          ".",
+          "[SEP]"
+        ],
+        "ids": [
+          101,
+          1996,
+          6309,
+          2000,
+          1996,
+          20053,
+          103,
+          2182,
+          1012,
+          102
+        ],
+        "mask_position": 6,
+        "candidates": [
+          {
+            "token": "is",
+            "id": 2003,
+            "probability": 0.0261194109916687,
+            "rank": 3
+          },
+          {
+            "token": "are",
+            "id": 2024,
+            "probability": 0.20744319260120392,
+            "rank": 1
+          }
+        ],
+        "top5": [
+          {
+            "token": "are",
+            "probability": 0.20744319260120392
+          },
+          {
+            "token": "were",
+            "probability": 0.10214690119028091
+          },
+          {
+            "token": "is",
+            "probability": 0.0261194109916687
+          },
+          {
+            "token": ",",
+            "probability": 0.019208434969186783
+          },
+          {
+            "token": "opened",
+            "probability": 0.017983684316277504
+          }
+        ]
+      }
+    ],
+    "context": [
+      {
+        "sentence": "she put money in the [MASK].",
+        "expected": "bank",
+        "tokens": [
+          "[CLS]",
+          "she",
+          "put",
+          "money",
+          "in",
+          "the",
+          "[MASK]",
+          ".",
+          "[SEP]"
+        ],
+        "ids": [
+          101,
+          2016,
+          2404,
+          2769,
+          1999,
+          1996,
+          103,
+          1012,
+          102
+        ],
+        "mask_position": 6,
+        "candidates": [
+          {
+            "token": "bank",
+            "id": 2924,
+            "probability": 0.0033645702060312033,
+            "rank": 45
+          },
+          {
+            "token": "glass",
+            "id": 3221,
+            "probability": 0.000689490872900933,
+            "rank": 213
+          }
+        ],
+        "top5": [
+          {
+            "token": "money",
+            "probability": 0.10516103357076645
+          },
+          {
+            "token": "world",
+            "probability": 0.041274718940258026
+          },
+          {
+            "token": "house",
+            "probability": 0.02549445815384388
+          },
+          {
+            "token": "time",
+            "probability": 0.01617462933063507
+          },
+          {
+            "token": "business",
+            "probability": 0.015903005376458168
+          }
+        ]
+      },
+      {
+        "sentence": "she put water in the [MASK].",
+        "expected": "glass",
+        "tokens": [
+          "[CLS]",
+          "she",
+          "put",
+          "water",
+          "in",
+          "the",
+          "[MASK]",
+          ".",
+          "[SEP]"
+        ],
+        "ids": [
+          101,
+          2016,
+          2404,
+          2300,
+          1999,
+          1996,
+          103,
+          1012,
+          102
+        ],
+        "mask_position": 6,
+        "candidates": [
+          {
+            "token": "bank",
+            "id": 2924,
+            "probability": 0.0005878275842405856,
+            "rank": 193
+          },
+          {
+            "token": "glass",
+            "id": 3221,
+            "probability": 0.002944519044831395,
+            "rank": 49
+          }
+        ],
+        "top5": [
+          {
+            "token": "water",
+            "probability": 0.22578920423984528
+          },
+          {
+            "token": "kitchen",
+            "probability": 0.0365142785012722
+          },
+          {
+            "token": "bed",
+            "probability": 0.02777695655822754
+          },
+          {
+            "token": "room",
+            "probability": 0.022602306678891182
+          },
+          {
+            "token": "sink",
+            "probability": 0.02009062096476555
+          }
+        ]
+      }
+    ],
+    "fact": [
+      {
+        "sentence": "the capital of france is [MASK].",
+        "expected": "paris",
+        "tokens": [
+          "[CLS]",
+          "the",
+          "capital",
+          "of",
+          "france",
+          "is",
+          "[MASK]",
+          ".",
+          "[SEP]"
+        ],
+        "ids": [
+          101,
+          1996,
+          3007,
+          1997,
+          2605,
+          2003,
+          103,
+          1012,
+          102
+        ],
+        "mask_position": 6,
+        "candidates": [
+          {
+            "token": "paris",
+            "id": 3000,
+            "probability": 0.0038695926778018475,
+            "rank": 29
+          }
+        ],
+        "top5": [
+          {
+            "token": "france",
+            "probability": 0.301422119140625
+          },
+          {
+            "token": "spain",
+            "probability": 0.1264014095067978
+          },
+          {
+            "token": "germany",
+            "probability": 0.03269034996628761
+          },
+          {
+            "token": "algeria",
+            "probability": 0.032069895416498184
+          },
+          {
+            "token": "canada",
+            "probability": 0.02138659730553627
+          }
+        ]
+      },
+      {
+        "sentence": "france has its capital in [MASK].",
+        "expected": "paris",
+        "tokens": [
+          "[CLS]",
+          "france",
+          "has",
+          "its",
+          "capital",
+          "in",
+          "[MASK]",
+          ".",
+          "[SEP]"
+        ],
+        "ids": [
+          101,
+          2605,
+          2038,
+          2049,
+          3007,
+          1999,
+          103,
+          1012,
+          102
+        ],
+        "mask_position": 6,
+        "candidates": [
+          {
+            "token": "paris",
+            "id": 3000,
+            "probability": 0.009128516539931297,
+            "rank": 16
+          }
+        ],
+        "top5": [
+          {
+            "token": "france",
+            "probability": 0.39065295457839966
+          },
+          {
+            "token": "spain",
+            "probability": 0.07019729167222977
+          },
+          {
+            "token": "europe",
+            "probability": 0.039953142404556274
+          },
+          {
+            "token": "germany",
+            "probability": 0.025862837210297585
+          },
+          {
+            "token": "canada",
+            "probability": 0.018265454098582268
+          }
+        ]
+      }
+    ]
+  },
+  "limitations": "Four sentiment examples and three two-prompt MLM diagnostics, predeclared and unfiltered; not a benchmark or proof of semantics, robust syntax, factual grounding, or memorization. No candidate renormalization. Context target choices are illustrative plausible completions, not exclusive grammatical answers."
+}
