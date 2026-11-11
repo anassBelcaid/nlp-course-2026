@@ -99,3 +99,37 @@
   thumbnail_alt: >-
     Assorted foods surrounding the words Writing for Food on Amazon.
   status: "Proposal approved"
+
+- title: "Do Multilingual Sentence Models Find Duplicate Football Questions? A French-English Study"
+  students:
+    - "Ismail Rachidi"
+    - "Haytham El Harraq"
+  description: >-
+    Football supporters often ask the same question in different words or
+    languages. We will build a small tool that flags likely duplicate questions in
+    a football FAQ. We will compare word overlap with a multilingual sentence
+    model and test whether cross-language pairs are harder than same-language
+    pairs. We will inspect errors before claiming the tool is useful.
+  thumbnail: "images/football_faq_thumbnail.png"
+  thumbnail_alt: "Two football FAQ questions are compared and identified as likely duplicates."
+  thumbnail_credit: "AI-generated illustration created by the team for this proposal."
+  status: "Proposal approved"
+
+- title: "DarijaScript: Moroccan Arabizi to Arabic Script Transliteration"
+  students:
+    - "Said Jadli"
+    - "Adnane Qassiri"
+    - "Yasser Nadi"
+  description: >-
+    Moroccan Darija is frequently written using Latin characters
+    and digits (Arabizi), creating challenges for automatic text
+    processing. This project aims to develop a system that converts
+    Moroccan Arabizi into Arabic-script Darija while preserving
+    the original dialect and meaning. We will investigate and
+    compare rule-based and neural sequence modeling approaches,
+    exploring how different architectures handle spelling
+    variations, character ambiguity, and unseen expressions.
+  thumbnail: "images/darijascript.png"
+  thumbnail_alt: "Illustration of Darija transliteration from Latin to Arabic script."
+  thumbnail_credit: "AI-generated using OpenAI ChatGPT."
+  status: "Proposal approved"
