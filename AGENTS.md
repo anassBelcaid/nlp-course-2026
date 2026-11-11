@@ -38,3 +38,8 @@
 - Make the final visual expose the structure of the upcoming idea while leaving its central mechanism open for discussion.
 - When the presentation technology supports animation, use motion to reveal information flow, state changes, dependencies, or another conceptually meaningful transition; do not animate merely for decoration.
 - Finish with one concise question that students should carry into the next lecture.
+
+## Written notes and PDFs
+
+- Make notes standalone and more detailed than the slides, with defined symbols, formula explanations, and worked calculations.
+- Prefer static diagrams and inspectable intermediate steps over animations in PDFs. Cite primary papers throughout and include a bibliography and useful reading guidance.

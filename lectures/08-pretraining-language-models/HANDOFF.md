@@ -1,5 +1,24 @@
 # Pretraining lecture — resume here
 
+## Latest checkpoint — Session 1 written notes, 11 November 2026
+
+Created `notes/08-pretraining-language-models/index.qmd` for the completed Session 1,
+with HTML and PDF outputs. Notes expand the objective formulas, softmax gradients,
+BERT corruption and context gradients, GPT target alignment, and T5 span/decoder
+conventions. Four static diagrams, worked exercises, ten bibliography entries,
+and a guided paper-reading list replace reliance on slide animations.
+
+The instructor prefers detailed formula explanations and more bibliography
+citations in PDFs; this preference is saved in the root authoring guide.
+The schedule now links Session 1 slides, notes, and PDF. Its earlier-draft link
+is removed; the draft itself and both reference PDFs in `tmp/` are preserved.
+The schedule’s pretraining row also includes BERT, T5, GPT, and ELMo papers,
+the Stanford/Berkeley lectures, and four coding/documentation links for masked
+LM training, causal LM training from scratch, and T5.
+Session 2 is still not authored. Continue only after instructor review.
+
+---
+
 ## Latest checkpoint — Session 1 ending, 11 November 2026
 
 T5 was accepted (“excellent”). The instructor approved and requested the final
