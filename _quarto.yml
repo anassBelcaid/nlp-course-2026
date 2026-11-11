@@ -21,6 +21,7 @@ project:
     - "projects/**/pyproject.toml"
     - "projects/**/uv.lock"
     - "projects/**/*.zip"
+    - "!projects/**/.venv/**"
 
 website:
   title: "CS 351 · NLP"
