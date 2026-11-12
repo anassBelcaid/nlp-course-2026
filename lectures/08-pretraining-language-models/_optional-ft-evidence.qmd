@@ -1,0 +1,27 @@
+## Can fixed BERT features compete with fine-tuning? {#ft-evidence .ft-slide}
+
+<p class="ft-lead"><strong>CoNLL-2003 named-entity recognition</strong> · BERT-base · development F1 ↑</p>
+<table class="ft-research"><thead><tr><th>Adaptation strategy</th><th>Task model / features</th><th>Dev F1</th></tr></thead><tbody><tr><th>Frozen BERT</th><td>Last hidden layer → BiLSTM + classifier</td><td>94.9</td></tr><tr><th>Frozen BERT</th><td>Concatenated last four layers → BiLSTM + classifier</td><td>96.1</td></tr><tr><th>Full fine-tuning</th><td>BERT-base + token classifier</td><td>96.4</td></tr></tbody></table>
+<div class="ft-evidence-points"><p><strong>Finding:</strong> useful pretrained features can support a strong task model without updating BERT.</p><p><strong>Comparison:</strong> the task architectures differ. Frozen features here use a two-layer, 768-dimensional BiLSTM.</p><p><strong>Scope:</strong> these are NER development scores, not sentiment results or proof that full fine-tuning always wins.</p></div>
+<p class="s1-source">Selected rows transcribed from <a href="https://aclanthology.org/N19-1423.pdf#page=9">Devlin et al. (2019), §5.3, Table 7</a>. Mean over five random restarts; hyperparameters selected on development data. The selected rows report no uncertainty intervals. Cased WordPiece and maximal available document context.</p>
+
+::: {.notes}
+TIME: 5 minutes. Start with the setting, not with the largest number. NER attaches
+entity labels to words; later we will build that output interface. F1 evaluates entity
+recognition, not binary sentiment accuracy. All three values come from the Dev F1
+column. Do not compare 96.1 dev F1 with 92.4 test F1 from another column.
+The frozen approach extracts states without changing BERT, then learns a two-layer
+768-dimensional BiLSTM and classifier. It is not our head-only linear probe. The
+fine-tuned model uses a token-level classifier on the first subtoken and no CRF.
+Both conditions use task labels, cased WordPiece, and available document context.
+The best displayed frozen configuration concatenates four layers; comparing 94.9
+with 96.1 shows that the feature choice matters too. All reported scores are means
+of five restarts. No uncertainty intervals are supplied in this table, so do not
+assert statistical significance from the small gap. Development data also selected
+hyperparameters; this is not an independent final test comparison of all strategies.
+Ask: what does this establish? Both reuse strategies are viable in this setting.
+What does it not isolate? Updating the encoder alone, because task heads differ.
+Practical implication: freezing can permit precomputed representations, but caching
+assumes a fixed input, encoder, and deterministic feature-extraction settings.
+:::
+

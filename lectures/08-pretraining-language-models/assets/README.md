@@ -192,3 +192,15 @@ not train. Static MLM tables round the saved full-vocabulary probabilities.
 The robustness exercise and contamination diagram are explicitly illustrative.
 Published ByT5, GPT-2 extraction and CrowS-Pairs results cite their primary
 papers and specify evaluation scope. The ending animation respects reduced motion.
+
+
+## Session 2 practical reuse (12 November 2026)
+
+`practical-controls.html` reuses the recorded Section 4 learning-curve controls;
+all six existing runs are preserved. `_practical.qmd` quotes saved SST-2 validation
+IDs183,510,256,435 from pretrained seed351 at step80. Cases were selected after
+inspection for discussion, not as a representative random sample. Probabilities
+are read from `positive_probabilities`, matched by each record’s `validation` order.
+The source is unchanged `evidence/section4.json`; the original reproducible training
+script remains `build_section4.py`. No new inference, training, or calibration was
+performed for this section. Score/label consistency and all final counts were checked.

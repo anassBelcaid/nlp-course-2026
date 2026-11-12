@@ -1,0 +1,15 @@
+<script>
+(() => {
+  const byId = id => document.getElementById(id);
+  const modeButtons = [...document.querySelectorAll('[data-s4-mode]')];
+  modeButtons.forEach(button => button.addEventListener('click', () => {
+    const full = button.dataset.s4Mode === 'full';
+    byId('s4-update-graph').dataset.mode = full ? 'full' : 'frozen';
+    modeButtons.forEach(b => b.setAttribute('aria-pressed', String(b === button)));
+    byId('s4-backbone-status').textContent = full ? 'UPDATED' : 'FROZEN';
+    byId('s4-backbone-gradient').textContent = full ? '← gradient continues into the encoder' : 'STOP: no encoder parameter updates';
+    byId('s4-update-rule').textContent = full ? 'Update θ, W and b using the task loss.' : 'Keep θ fixed; update only the new head W and b.';
+    byId('s4-update-takeaway').textContent = full ? 'Pretrained describes the starting values—not a rule that those values must stay fixed.' : 'The frozen reader still computes contextual states; the task head learns to use them.';
+  }));
+})();
+</script>

@@ -5,14 +5,12 @@ and stop for instructor review after each requested section.
 
 ## Current review stage
 
-Read `HANDOFF.md` first when resuming. Opening, BERT, GPT, and T5 have been
-reviewed. The final synthesis and Session 1 closing bridge (slides 35–39) are
-now authored for review. All planned Session 1 content is present; stop at
-`#/session-1-closing`. Do not start Session 2 automatically.
-
-The Session 2 plan is preserved in `_session2-plan.qmd` and must appear only
-AFTER Session 1's closing bridge when that next increment is requested. It is
-not included yet. The schedule links to the preview and preserved earlier draft.
+Read `HANDOFF.md` first. The active deck contains65slides and ends with the15
+original Stanford reference slides (printed44–58 / PDF42–56), reproduced with
+attribution. They replace the rejected seven-slide GPT rewrite and cover GPT,
+GPT-2 generation, GPT-3, scaling, compute allocation, capabilities and limitations.
+Do not append duplicate planned sections. Earlier detailed NER/QA and practical
+sections remain optional. The original PDFs in tmp must be preserved.
 
 ## Session 1 — How does pretraining work?
 
@@ -30,22 +28,30 @@ End with a visual bridge: how does a pretrained word predictor become a sentimen
 classifier? Introduce abstractions through a visible example. Keep the first
 calculation in a PAUSE panel with the solution on the following slide.
 
-## Session 2 — How do we use the model?
+## Session 2 — From model reuse to scale (revised 12 November)
 
 | Part | Minutes |
 |---|---:|
-| Recall the three recipes and the learned parameters | 10 |
-| Sentiment fine-tuning: head, backbone, frozen features versus full updates | 25 |
-| Token labeling and extractive QA: different output interfaces | 20 |
-| A small practical example: data, predictions, and held-out errors | 15 |
-| Zero-shot / few-shot prompting versus fine-tuning | 20 |
-| Data, scale, and limitations | 15 |
-| Visual bridge from base predictor to instruction-following assistant | 5 |
+| From pretraining to reuse | 10 |
+| Encoder task context + sentiment as the only worked application | 20 |
+| GPT → GPT-2 → GPT-3: research trajectory and changing use | 20 |
+| Zero-shot / few-shot prompting and in-context learning | 20 |
+| Scaling laws and compute allocation: parameters versus training tokens | 25 |
+| What pretraining learns, memorization, bias, and limitations | 10 |
+| Visual bridge to instruction-following assistants | 5 |
 | Questions / break / pacing margin | 10 |
 
-Instruction tuning, preference optimization, LoRA, adapters, and quantization
-remain in Lecture 09. The second session's date and any calendar adjustment have
-not been assigned. Do not silently replace or renumber subsequent lectures.
+Source route: Stanford PDF viewer pages 42–56 (printed 44 onward). Use original
+GPT, GPT-2, GPT-3 papers, Kaplan et al. (2020), and Hoffmann et al. (2022).
+Avoid repeating AR prediction and attention. Treat early scaling recommendations
+and later compute-optimal findings as a developing empirical story, not universal
+laws. Chinchilla uses fewer parameters and more training tokens at the same
+training-compute budget as Gopher; distinguish total compute from compute allocation.
+
+Retain `_token-span.qmd`, `_practical.qmd`, their assets and recorded results, and
+`_optional-ft-evidence.qmd` for optional use. Do not silently reinsert them. The
+current active deck contains reuse, sentiment, and the original Stanford research sequence.
+Instruction tuning and efficient adaptation stay in Lecture 09. Dates remain unset.
 
 ## Preserved material
 

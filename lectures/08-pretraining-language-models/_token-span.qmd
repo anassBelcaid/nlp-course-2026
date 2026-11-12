@@ -1,0 +1,176 @@
+## Token labeling: one shared head, many decisions {#ts-ner .ts-slide}
+
+<p class="ts-lead">Named-entity recognition identifies <strong>entity boundaries and types</strong>.</p>
+<table class="ts-token-table"><thead><tr><th>Word</th><th>Lina</th><th>studies</th><th>at</th><th>New</th><th>York</th><th>University</th><th>.</th></tr></thead><tbody><tr><th>Gold BIO tag</th><td class="ts-person">B-PER</td><td>O</td><td>O</td><td class="ts-org">B-ORG</td><td class="ts-org">I-ORG</td><td class="ts-org">I-ORG</td><td>O</td></tr><tr><th>Contextual state</th><td>h₀</td><td>h₁</td><td>h₂</td><td>h₃</td><td>h₄</td><td>h₅</td><td>h₆</td></tr></tbody></table>
+<div class="ts-formula">
+
+$$p_i=\operatorname{softmax}(W_{\rm tag}h_i+b_{\rm tag}),\qquad
+W_{\rm tag}\in\mathbb R^{K\times d}$$
+
+</div>
+<div class="ts-two"><div><strong>B / I / O</strong><p>Begin an entity, continue its type, or remain outside an entity.</p></div><div><strong>The same W and b at every position</strong><p>Different contextual states produce different distributions over K tags.</p></div></div>
+<p class="ts-takeaway">“New York University” is one organization here—not three independent entities.</p>
+<p class="s1-source">Authored annotation in a BIO convention; no model predictions shown. <a href="https://aclanthology.org/W03-0419/">CoNLL-2003: Tjong Kim Sang &amp; De Meulder (2003)</a>; <a href="https://aclanthology.org/N19-1423.pdf#page=9">BERT, §5.3</a>. Word-level states shown before subword alignment.</p>
+
+::: {.notes}
+TIME: 3 minutes. Contrast with one sentiment label for a review. NER labels entity
+extent and type. PER denotes person, ORG organization, and O outside. Other task
+labels such as location may exist; K is the size of the complete tag inventory,
+not merely the tags occurring in this sentence. This is an authored BIO example,
+not a claim about the exact serialization of a particular corpus release.
+A shared head is applied at every selected word state. BERT still contextualizes
+all positions. The tag at New begins an organization and York/University continue
+it, even though New York alone could refer to a location in another context.
+Independent token decisions can yield invalid BIO sequences; a CRF or constrained
+decoding can add structure, but the BERT paper's §5.3 setup does not use a CRF.
+Entity-level F1 requires correct span and type; token accuracy can hide boundary
+errors. The next slide explains what a word state means when WordPiece splits it.
+:::
+
+## Word annotations must align with subword states {#ts-alignment .ts-slide}
+
+<p class="ts-lead">Illustrative alignment: suppose “Lina” occupies two subword positions u₁, u₂.</p>
+<table class="ts-align-table"><thead><tr><th>Encoder position</th><th>[CLS]</th><th>u₁</th><th>u₂</th><th>studies</th><th>…</th><th>[SEP]</th><th>[PAD]</th></tr></thead><tbody><tr><th>Original word</th><td>—</td><td colspan="2">Lina</td><td>studies</td><td>…</td><td>—</td><td>—</td></tr><tr><th>Scored target</th><td>ignore</td><td class="ts-person">B-PER</td><td>ignore</td><td>O</td><td>…</td><td>ignore</td><td>ignore</td></tr></tbody></table>
+<div class="ts-formula">
+
+$$\mathcal L_{\rm NER}=-\frac{1}{|I|}\sum_{i\in I}\log p_i(y_i),\qquad
+I=\{\text{first subword of each labeled word}\}$$
+
+</div>
+<div class="ts-two"><div><strong>One annotation → one scored state</strong><p>Recover word boundaries using the tokenizer’s alignment metadata.</p></div><div><strong>Ignore a loss term ≠ remove context</strong><p>Continuation pieces remain encoder inputs and can affect scored states.</p></div></div>
+<p class="ts-takeaway">Choose and document an alignment policy; duplicating labels changes the training objective.</p>
+<p class="s1-source">First-subtoken policy follows <a href="https://aclanthology.org/N19-1423.pdf#page=9">Devlin et al. (2019), §5.3</a>. u₁/u₂ denote a hypothetical split, not an asserted tokenizer trace. Mean normalization is our explicit convention.</p>
+
+::: {.notes}
+TIME: 3 minutes. Start from word labels, then map them to subword positions. Never
+zip labels with token IDs without checking alignment and special tokens. u1/u2 are
+abstract pieces chosen to make a split visible; we do not report tokenization by
+an installed model. The actual tokenizer supplies word IDs or character offsets.
+The displayed policy scores only the first piece, as in BERT's NER setup. Another
+policy may supervise all pieces with adjusted BIO continuation labels, but it changes
+weighting and must be stated. Special tokens and padding have no tag loss here.
+Ignore is a mask, not an extra label class. Continuation pieces still influence
+context, so their paths can receive gradients through scored states during full
+fine-tuning. Map predictions back to words before entity-span evaluation.
+:::
+
+## Extractive QA: condition on the question, locate the answer {#ts-qa .ts-slide}
+
+<div class="s4-question"><b>QUESTION</b> Where does Lina study?<span><b>PASSAGE</b> Lina studies at <strong>New York University</strong>.</span></div>
+
+{{< include assets/section4-diagrams/qa.html >}}
+
+<p class="ts-takeaway">[CLS] question [SEP] passage [SEP] → question-conditioned passage states</p>
+<p class="s1-source">Reuses the preserved QA diagram. Authored answerable example; displayed passage word indices 0–6. <a href="https://aclanthology.org/N19-1423.pdf#page=6">BERT, §4.2</a>. Real boundary labels use token positions and map back to source offsets.</p>
+
+::: {.notes}
+TIME: 3 minutes. Reuse the NER sentence but change the supervision: now a question
+selects a contiguous span. Entity types alone cannot answer which span the question
+asks about, and a QA answer need not be a named entity. The packed input lets the
+passage states depend on the question. Only passage states are drawn, not the full
+input sequence. Different questions can yield different contextual states for the
+same passage. Two learned scoring vectors are shared across positions; they are not
+per-position parameters. The diagram's edges are schematic dependencies, not learned
+attention strengths or measured scores. Normalize over allowed passage positions.
+This is answerable extraction as in SQuAD 1.1, not generation and not the QNLI
+sentence-selection interface introduced in the encoder task overview.
+:::
+
+## Boundary supervision and constrained span decoding {#ts-span .ts-slide}
+
+<p class="ts-source">Annotated answer: <strong>New York University</strong> · start a = 3, end b = 5 (word display)</p>
+<div class="ts-formula ts-qa-math">
+
+$$s_i=w_s^\top h_i,\quad e_i=w_e^\top h_i,\qquad
+p_s(i)=\frac{e^{s_i}}{\sum_{k\in P}e^{s_k}},\quad
+p_e(i)=\frac{e^{e_i}}{\sum_{k\in P}e^{e_k}}$$
+
+$$\mathcal L_{\rm QA}=-\log p_s(a)-\log p_e(b)$$
+
+</div>
+<div class="ts-decode">
+
+$$(\hat a,\hat b)=\underset{i,j\in P,\ i\le j,\ j-i+1\le L}{\operatorname{argmax}}\ (s_i+e_j)$$
+
+<p>P: permitted passage positions · L: configured maximum answer length</p>
+</div>
+<p class="ts-takeaway">Independent maxima can give an invalid span. Decode a valid pair, then recover the passage substring.</p>
+<p class="s1-source">Start/end model and ordered-span decoding: <a href="https://aclanthology.org/N19-1423.pdf#page=6">Devlin et al. (2019), §4.2</a>. Length bound is an explicit implementation constraint. No fabricated logits or numerical exercise.</p>
+
+::: {.notes}
+TIME: 4 minutes. Read s_i and e_i as scalar start/end logits at the same contextual
+state h_i. Their softmax distributions are over positions, not the tag vocabulary
+and not the language-model vocabulary. Gold boundaries derive from answer offsets;
+our word-display indices must be remapped in a real subword tokenizer. All input
+states can influence the boundary loss. A common implementation averages the two
+negative log probabilities; our displayed sum differs only by a constant factor.
+Maximizing s_i+e_j is equivalent to maximizing log p_s(i)+log p_e(j) for this fixed
+input. The product of the two marginals is not normalized over only the valid spans.
+L is a maximum number of token positions, not characters. Sliding windows and
+truncated answers need explicit labeling policies for long passages. We do not
+pretend that a truncated answer is present. For SQuAD 2.0, unanswerable questions
+need a null-answer decision; BERT uses CLS as a null candidate and a tuned threshold.
+That is a distinct setting, and its scores must not be mixed with SQuAD 1.1.
+:::
+
+## What does a SQuAD score measure? {#ts-metrics .ts-slide}
+
+<p class="ts-source">Reference answer: <strong>New York University</strong> · a boundary error can retain partial overlap.</p>
+<div class="ts-two ts-metric-cards"><div><span class="ts-label">EXACT MATCH · EM</span><strong>Complete answer agreement</strong><p>Does the normalized prediction match any reference answer?</p><p>Useful for detecting answer-boundary errors.</p></div><div><span class="ts-label">TOKEN-OVERLAP F1</span><strong>Partial lexical agreement</strong><p>Compute precision and recall from answer-token overlap; use the best reference.</p><p>Average question-level F1 across the dataset.</p></div></div>
+<div class="ts-formula">
+
+$$F_1=\frac{2PR}{P+R},\qquad
+P=\frac{|A\cap G|}{|A|},\quad R=\frac{|A\cap G|}{|G|}$$
+
+</div>
+<p class="ts-takeaway">Neither metric proves reasoning quality. A high score still needs error analysis.</p>
+<p class="s1-source"><a href="https://aclanthology.org/D16-1264.pdf#page=7">Rajpurkar et al. (2016), §6.1</a>. A/G are predicted/reference token multisets; intersection counts repeated tokens. Zero overlap yields F1 = 0. These are QA overlap metrics, not NER entity F1.</p>
+
+::: {.notes}
+TIME: 2 minutes. Define A as predicted answer tokens, G as a reference token multiset,
+and P/R as precision/recall. Normalization precedes scoring. SQuAD evaluation
+normalizes case, punctuation, articles, and whitespace. EM takes the best exact
+match across references; F1 takes the best token-overlap F1 for each question and
+then averages. This is not one global micro-F1 over all answer tokens. Explain the
+qualitative effect of a prediction such as New York without turning this into an
+arithmetic exercise: overlap remains but exact match fails against the full name.
+Overlapping words do not establish semantic equivalence, and the benchmark does
+not measure correctness of an external explanation. The next table reports both
+metrics and keeps development and test splits separate.
+:::
+
+## Read the result together with its training conditions {#ts-results .ts-slide}
+
+<p class="ts-lead"><strong>SQuAD 1.1</strong> · published BERT results · EM / F1 on a 0–100 scale ↑</p>
+<table class="ts-results-table"><thead><tr><th>System</th><th>Dev EM</th><th>Dev F1</th><th>Test EM</th><th>Test F1</th></tr></thead><tbody><tr><th>BERT-base · single</th><td>80.8</td><td>88.5</td><td>—</td><td>—</td></tr><tr><th>BERT-large · single</th><td>84.1</td><td>90.9</td><td>—</td><td>—</td></tr><tr><th>BERT-large · single<br><small>+ TriviaQA adaptation</small></th><td>84.2</td><td>91.1</td><td>85.1</td><td>91.8</td></tr><tr><th>BERT-large · 7-model ensemble<br><small>+ TriviaQA adaptation</small></th><td>86.2</td><td>92.2</td><td>87.4</td><td>93.2</td></tr></tbody></table>
+<p class="ts-takeaway">The 93.2 test F1 headline includes extra QA training and an ensemble—not a single plain BERT model.</p>
+<p class="ts-limit">Model size, additional data, and aggregation differ. This table does not isolate the causal effect of pretraining.</p>
+<p class="s1-source">Selected rows from <a href="https://aclanthology.org/N19-1423.pdf#page=7">Devlin et al. (2019), Table 2</a>. TriviaQA adaptation precedes SQuAD fine-tuning. Ensemble: seven systems with different pretraining checkpoints and fine-tuning seeds. “—” means not reported; no uncertainty intervals in this table.</p>
+
+::: {.notes}
+TIME: 2 minutes. Historical significance: a pretrained encoder with a small boundary
+head was competitive on reading comprehension. Do not translate this into a claim
+that the model understands all questions. First compare like splits and like metrics;
+for example, the base/large single-model development columns. The enhanced test
+rows must not be compared with development scores in the first two rows. The result
+with 93.2 test F1 is a seven-system ensemble with prior TriviaQA adaptation. Do not
+claim that 91.8 is the test result of the plain single model: that test number is
+reported only for the extra-data condition. No error bars are available here.
+:::
+
+## Same encoder, different locations for supervision {#ts-bridge .ts-slide}
+
+<table class="ts-summary-table"><thead><tr><th>Task</th><th>State(s) read</th><th>Target</th><th>Evaluation</th></tr></thead><tbody><tr><th>Sentiment</th><td>Sentence state</td><td>One class</td><td>Classification score</td></tr><tr><th>NER</th><td>Aligned token states</td><td>Entity tags</td><td>Entity spans + types</td></tr><tr><th>Extractive QA</th><td>Question-aware passage states</td><td>Start / end positions</td><td>Answer EM / F1</td></tr></tbody></table>
+<div class="ts-audit-flow"><div><strong>Inputs + annotations</strong><p>Check alignment and splits.</p></div><b aria-hidden="true">→</b><div><strong>Adapted model</strong><p>Inspect actual predictions.</p></div><b aria-hidden="true">→</b><div><strong>Held-out errors</strong><p>Explain successes and failures.</p></div></div>
+<p class="ts-next">What would convince us that the adapted model generalizes beyond its training examples?</p>
+<p class="s1-source">Synthesis of the three output interfaces. The next section inspects a small recorded experiment; it is not presented as a general benchmark.</p>
+
+::: {.notes}
+TIME: 3 minutes. Ask which positions receive direct supervision in each row. The
+backbone can receive gradients through each interface; loss masking is not the
+same as freezing parameters. Reiterate that changing the head also changes the
+label construction, evaluation unit, and potential failure modes. The practical
+bridge proposes inspecting predictions, split membership, and errors rather than
+using a low training loss as evidence of success. Stop here for instructor review;
+do not add the practical experiment or prompting section until requested.
+:::

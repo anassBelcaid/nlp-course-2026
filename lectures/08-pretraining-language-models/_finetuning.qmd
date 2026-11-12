@@ -1,0 +1,148 @@
+## Where does a pretrained encoder help? {#ft-encoder-tasks .ft-slide}
+
+<p class="ft-lead">One pretrained backbone → task-specific adaptation across language understanding</p>
+<table class="ft-task-map"><thead><tr><th>Benchmark</th><th>What must the model decide?</th><th>Output / reference</th></tr></thead><tbody>
+<tr><th>SST-2<small>Stanford Sentiment Treebank</small></th><td>What sentiment does a review express?</td><td>Positive / negative<br><a href="https://aclanthology.org/D13-1170/">Socher et al., 2013</a></td></tr>
+<tr><th>CoLA<small>Corpus of Linguistic Acceptability</small></th><td>Is this sentence linguistically acceptable?</td><td>Acceptable / unacceptable<br><a href="https://aclanthology.org/Q19-1040/">Warstadt et al., 2019</a></td></tr>
+<tr><th>QQP / MRPC<small>Question pairs / paraphrase corpus</small></th><td>Do the two texts convey the same meaning?</td><td>Paraphrase / not paraphrase<br><a href="https://aclanthology.org/I05-5002/">Dolan &amp; Brockett, 2005 (MRPC)</a></td></tr>
+<tr><th>STS-B<small>Semantic Textual Similarity Benchmark</small></th><td>How similar are the meanings of two sentences?</td><td>Continuous similarity score<br><a href="https://aclanthology.org/S17-2001/">Cer et al., 2017</a></td></tr>
+<tr><th>MNLI / QNLI / RTE<small>Inference / question NLI / entailment</small></th><td>Does one text support the other’s claim, or contain an answer?</td><td>Task-specific inference labels<br><a href="https://aclanthology.org/W18-5446/">Wang et al., 2018 (GLUE)</a></td></tr>
+</tbody></table>
+<p class="ft-map-takeaway">Sentiment is one instance of encoder reuse. The task determines the labels, head, loss, and evaluation metric.</p>
+<p class="s1-source">Adapted from Stanford CS224N pretraining, PDF p. 30 (printed 32). Task definitions: linked dataset papers and <a href="https://aclanthology.org/W18-5446/">GLUE</a>; transfer results: <a href="https://aclanthology.org/N19-1423.pdf#page=5">Devlin et al. (2019), §4.1 / Table 1</a>. Each task is adapted separately; this is not one jointly trained universal classifier.</p>
+
+::: {.notes}
+TIME: 5 minutes. Orient the task before showing the sentiment mechanism. Stanford’s
+page 30 is printed slide 32 in the supplied PDF. Its table motivates the breadth
+of transfer; this slide expands task meanings and adds clickable research sources.
+SST-2 is the binary sentiment subset of the Stanford Sentiment Treebank. CoLA tests
+linguistic acceptability, not whether a sentence is factually true. QQP means Quora
+Question Pairs; MRPC means Microsoft Research Paraphrase Corpus. Their domains differ.
+STS-B is a regression task: similarity is graded rather than a binary paraphrase label.
+MNLI means Multi-Genre Natural Language Inference, with entailment, neutral, and
+contradiction labels. RTE means Recognizing Textual Entailment and uses a binary
+entailment decision in GLUE. QNLI converts question-answering data into question–
+sentence classification: whether the sentence contains the answer. It is not span
+extraction. Do not imply that all three inference tasks have the same label set.
+BERT Table 1 uses different metrics across tasks: accuracy, F1, Matthews correlation,
+and correlations for similarity. These task names are not interchangeable benchmarks.
+The pretrained checkpoint is the shared starting point; separately adapted parameters
+and heads differ by task. Other tasks remain context only; sentiment is our sole worked application.
+Transition: sentiment lets us isolate the change of supervision and the new task head.
+:::
+
+## Sentiment: read one state, predict one label {#ft-sentiment .ft-slide}
+
+<p class="s1-lead">Every token can inform <b>[CLS]</b>. The new head reads its final contextual state.</p>
+
+{{< include assets/sentiment-diagram.html >}}
+
+<p class="s1-takeaway">The encoder builds the representation; the head converts it into task scores.</p>
+<p class="s1-source"><a href="https://aclanthology.org/N19-1423.pdf#page=5">BERT §4.1 and Appendix A.5</a> · original schematic; edges indicate permitted attention, not measured weights.</p>
+
+::: {.notes}
+TIME: 3 minutes. Use “Uneven, yet moving.” with the authored positive label.
+Trace bottom to top. The visible token strings are a teaching sequence, not a claim about exact production tokenization. Embeddings enter bidirectional Transformer layers. All supplied tokens can affect the final CLS vector. The diagram shows one representative mixing stage, not BERT's full depth. The highlighted lines focus on CLS, but all other contextual states are also computed. CLS is a learned input symbol at position zero; its final representation is context-dependent, not a fixed sentence embedding and not an arithmetic mean. Supervised training makes the classifier use this state for sentiment.
+
+Preview W and b as newly initialized task parameters; the next slide defines their shapes. For two classes, W has two rows and as many columns as the hidden-state dimension; b has two entries. The vector z contains scores, not probabilities. Softmax turns the scores into probabilities over the two classes. We use a direct linear head on final CLS for this lesson and the recorded comparison; implementations may use a pretrained pooler or dropout before the head. A pretrained encoder with a random sentiment head is not already a trained sentiment classifier. No measured sentiment probabilities are shown here.
+:::
+
+## The new head defines the label space {#ft-head .ft-slide}
+
+<p class="ft-source">“Uneven, yet moving.” · annotation: <strong>positive</strong></p>
+<div class="ft-two"><div><span class="ft-label">REUSED ENCODER</span>
+
+$$h=\operatorname{BERT}_{\theta}(x)_{\rm CLS}\in\mathbb R^d$$
+
+<p>A contextual state computed for this review.</p><p>For BERT-base, <strong>d = 768</strong>.</p></div><div><span class="ft-label">NEW SENTIMENT HEAD</span>
+
+$$z=Wh+b,\qquad p=\operatorname{softmax}(z)$$
+
+<p>Two rows of W: <strong>negative, positive</strong>.</p><p>W ∈ ℝ<sup>2×d</sup> · b ∈ ℝ<sup>2</sup> · z, p ∈ ℝ<sup>2</sup></p></div></div>
+<div class="ft-contract"><strong>Two sentiment classes ≠ the pretraining vocabulary.</strong><p>The tokenizer and encoder are reused. The sentiment head is newly initialized and trained with annotated reviews.</p></div>
+<p class="ft-takeaway">Keep the class order explicit: y = 0 for negative, y = 1 for positive.</p>
+<p class="s1-source">Direct linear head on final [CLS] for teaching; implementations may add a pooler or dropout. <a href="https://aclanthology.org/N19-1423.pdf#page=5">Devlin et al. (2019), §4.1</a>. No measured probabilities on this slide.</p>
+
+::: {.notes}
+TIME: 3 minutes. First define x as the tokenized input with special tokens, θ as
+encoder parameters, and h as the contextual state at CLS. W and b belong to the
+new classifier. Token IDs, class IDs, and hidden coordinates have different roles.
+A positive class ID is an annotation, not the vocabulary ID of the word positive.
+An input CLS embedding and a final contextual CLS state are not the same vector.
+The existing pretraining vocabulary head does not serve as our two-class head.
+The architecture and input conventions remain useful even though the output task
+changes. No review is masked for this supervised classification example.
+:::
+
+## Fine-tuning changes the reader as well as the head {#ft-updates .ft-slide}
+
+<div class="lab-toolbar"><button data-s4-mode="full" aria-pressed="true">Full fine-tuning</button><button data-s4-mode="frozen" aria-pressed="false">Frozen features</button><span>Same architecture and labels.<br>Change which parameters may update.</span></div>
+<div id="s4-update-graph" class="s4-update-graph" data-mode="full">
+<div class="s4-update-input">tokens<br><small>fixed tokenizer</small></div><i>→</i>
+<div class="s4-update-backbone"><span class="lab-label">LOADED FROM PRETRAINING</span><b>Embeddings +<br>Transformer layers θ</b><span id="s4-backbone-status" class="s4-update-status">UPDATED</span></div><i>→</i>
+<div class="s4-update-head"><span class="lab-label">NEW PARAMETERS</span><b>Task head<br>W, b</b><span class="s4-update-status">UPDATED</span></div><i>→</i>
+<div class="s4-update-loss">prediction<br>+ gold label<br><b>→ loss</b></div>
+<div class="s4-gradient-to-head">← gradient to head</div><div class="s4-gradient-to-backbone" id="s4-backbone-gradient">← gradient continues into the encoder</div>
+</div>
+<div class="s4-equation" id="s4-update-rule">Update θ, W and b using the task loss.</div>
+<p class="s1-takeaway" id="s4-update-takeaway">Pretrained describes the starting values—not a rule that those values must stay fixed.</p>
+<p class="s1-source">Schematic optimizer paths · full fine-tuning is the BERT paper’s main setup; frozen features are a distinct alternative (§5.3).</p>
+
+::: {.notes}
+TIME: 4 minutes. Ask which groups are eligible for updates before switching modes.
+Click full fine-tuning and trace the loss backward through the head into the encoder and its embedding table. All three parameter groups are eligible to update; this does not mean every scalar changes on every step (unused embedding rows may have zero gradients). The tokenizer is a fixed preprocessing rule, not optimized here. SGD would subtract learning rate times gradient; practical optimizers such as AdamW transform gradients differently but still update permitted parameters.
+
+Switch to frozen features. The encoder still performs its full forward computation and produces contextual vectors. Its parameters do not receive optimizer updates; only the new task head learns. Freezing is not removing layers or using static word embeddings. At evaluation on a fixed example, a frozen encoder's representation is unchanged, while full fine-tuning can change that representation. Training may disable dropout for feature extraction; eval mode alone is not parameter freezing. No real optimizer runs in this browser control. This is a deterministic diagram control, not a live training run.
+:::
+
+## One loss, two choices of trainable parameters {#ft-gradients .ft-slide}
+
+<p class="ft-source">Task objective: annotated class y · head parameters φ = (W, b)</p>
+<div class="ft-gradient-rule">
+
+$$\mathcal L(x,y)=-\log [\operatorname{softmax}(Wh+b)]_y,\qquad
+\nabla_h\mathcal L=W^\top(p-e_y)$$
+
+</div>
+<div class="ft-two"><div><span class="ft-label">FROZEN FEATURES</span>
+
+$$\theta^{+}=\theta,\qquad
+\phi^{+}=\phi-\eta\nabla_{\phi}\mathcal L$$
+
+<p>Only the new head φ = (W, b) is updated.</p></div><div><span class="ft-label">FULL FINE-TUNING</span>
+
+$$\theta^{+}=\theta-\eta\nabla_{\theta}\mathcal L,\qquad
+\phi^{+}=\phi-\eta\nabla_{\phi}\mathcal L$$
+
+<p>The task loss can change the representation itself.</p></div></div>
+<p class="ft-takeaway">Freezing is an optimizer decision. The encoder still computes contextual states.</p>
+<p class="s1-source">Illustrative SGD update with learning rate η; practical BERT training commonly uses Adam-family optimizers. Here e_y is the one-hot target distribution; h is the contextual [CLS] state.</p>
+
+::: {.notes}
+TIME: 2 minutes. The plus superscript denotes after one update, not a positive class.
+Use φ to group the new head parameters. The same differentiable model can be trained
+with different parameter groups. In a frozen implementation, one can detach h and
+avoid constructing the encoder backward graph. The mathematical dependency remains;
+we simply do not update θ. The head weights mix the class-level errors into the hidden coordinates. Do not treat the
+negative logit gradient as a guarantee that every parameter must increase or decrease
+in that direction. Dropout makes training activations stochastic: fixed θ means the
+same deterministic representation only for fixed input and evaluation settings.
+:::
+
+## Fine-tuning is one route to model reuse {#ft-bridge .ft-slide}
+
+<p class="ft-source">“Uneven, yet moving.” → <strong>positive</strong></p>
+<div class="ft-bridge-flow"><div><span>PRETRAINED</span><strong>Encoder θ</strong><p>Initialize from text training.</p></div><b aria-hidden="true">→</b><div><span>TASK-SPECIFIC</span><strong>Head W, b</strong><p>Map one state to two labels.</p></div><b aria-hidden="true">→</b><div><span>SUPERVISED</span><strong>Loss from y</strong><p>Update the head, optionally θ.</p></div></div>
+<div class="ft-output-map"><div><span>THIS SECTION</span><strong>Task labels → parameter updates</strong></div><div><span>NEXT QUESTION</span><strong>What changes with a pretrained decoder?</strong></div></div>
+<p class="ft-next">How did GPT evolve from a reusable decoder into a model that takes tasks through its input?</p>
+<p class="s1-source">Synthesis of the classification workflow. Schematic fine-tuning workflow. The next section follows GPT, GPT-2, and GPT-3; detailed token-label and QA applications are optional material.</p>
+
+::: {.notes}
+TIME: 3 minutes. Ask for the label source, new parameters, and trainable parameter
+choices in sentiment adaptation. This is the only worked application retained in
+the active session. The broad encoder task map already established other uses.
+Transition to the research trajectory: original GPT transfers a causal decoder,
+GPT-2 investigates larger-scale generation and zero-shot behavior, and GPT-3
+systematizes in-context examples without gradient updates. Do not reteach the
+AR prediction objective already covered in Session 1. Continue into the GPT story.
+:::

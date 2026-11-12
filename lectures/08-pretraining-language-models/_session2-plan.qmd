@@ -1,33 +1,36 @@
-## Session 2 · How do we use the model? {#session-2 .session-contents}
+## Session 2 · From model reuse to scale {#session-2 .session-contents}
 
-<p class="session-lead">When do we change the weights—and when do we only change the input?</p>
+<p class="session-lead">What changes when we scale the model—and how should we spend the compute?</p>
 <div class="session-agenda">
-<div><b>01</b><strong>Retrieve the three recipes</strong><span>What did we train, and what do we keep?</span><em>10 min</em></div>
-<div><b>02</b><strong>Fine-tune for sentiment</strong><span>A new head; frozen features versus full fine-tuning.</span><em>25 min</em></div>
-<div><b>03</b><strong>Change the task’s output</strong><span>Token labels and answer spans for extractive QA.</span><em>20 min</em></div>
-<div><b>04</b><strong>Inspect a small experiment</strong><span>Training examples, predictions, and held-out errors.</span><em>15 min</em></div>
-<div><b>05</b><strong>Prompt instead of fine-tuning</strong><span>Zero-shot and few-shot examples; weights stay fixed.</span><em>20 min</em></div>
-<div><b>06</b><strong>Data, scale, and limits</strong><span>What shapes learning? From base model to assistant.</span><em>20 min</em></div>
+<div><b>01</b><strong>From pretraining to reuse</strong><span>Learned weights and evidence of transfer.</span><em>10 min</em></div>
+<div><b>02</b><strong>One task: sentiment</strong><span>Encoder applications, a task head, and update choices.</span><em>20 min</em></div>
+<div><b>03</b><strong>The GPT trajectory</strong><span>GPT → GPT-2 → GPT-3: changing how models are used.</span><em>20 min</em></div>
+<div><b>04</b><strong>In-context learning</strong><span>Zero-shot and few-shot tasks with fixed parameters.</span><em>20 min</em></div>
+<div><b>05</b><strong>Scaling and compute</strong><span>Parameters, tokens, loss, and the Chinchilla result.</span><em>25 min</em></div>
+<div><b>06</b><strong>Capabilities and limits</strong><span>Knowledge, memorization, bias; bridge to instruction following.</span><em>15 min</em></div>
 </div>
-<p class="session-budget">110 minutes including a 5-minute closing bridge + 10 minutes for questions or a break.</p>
-<p class="route-question">Predicting text is useful—but what teaches a model to follow our instructions?</p>
+<p class="session-budget">110 minutes of material, including a 5-minute closing bridge + 10 minutes for discussion or a break.</p>
+<p class="route-question">Is a larger model the best use of a fixed training-compute budget?</p>
 
 ::: {.notes}
-The last 20-minute item contains 15 minutes on data, scale, and limitations and
-5 minutes for the closing bridge. Keep instruction tuning, preference optimization,
-LoRA, adapters, and quantization for Lecture 09.
+TIME: 1 minute, included in the first 10-minute section. Revised with the instructor
+on 12 November: sentiment is the sole worked application. Detailed NER/QA and the
+small BERT-tiny experiment are removed from the active deck but retained as optional
+source material. The NER-based frozen-feature comparison is also optional.
 
-Use Berkeley PDF pages 45–46 for classification versus token labeling, page 44
-for the extractive-QA interface, and page 77 for fine-tuning versus in-context
-learning. Use one legible historical evidence figure and Stanford PDF page 49
-for the data/compute/parameter discussion, rather than a catalogue of models.
-Retain original paper attribution when reusing figures from the base lectures.
+The remaining agenda is a proposal, not authored slides. Follow the supplied
+Stanford PDF viewer pages 42–56 (printed slides 44 onward): GPT transfer, GPT-2,
+GPT-3 and in-context learning, scaling laws, compute allocation, and what models
+learn or memorize. Use primary-paper figures, with readable axes and stated settings.
+Correct historical source metadata rather than copying slide typos (GPT-2 is 2019).
 
-Reuse the current draft's sentiment diagrams, full/frozen update control, and QA
-span diagram where they help. Keep the recorded diagnostic experiments intact
-as optional material; select the practical demonstration during section review.
-Do not conceal their failures or present a small experiment as a general benchmark.
+Distinguish Kaplan et al. (2020) from Hoffmann et al. (2022): empirical scaling
+studies lead to different allocation recommendations. Chinchilla compares fewer
+parameters and more tokens under approximately the same training-compute budget
+as Gopher; this is not a claim that it used more total training compute. Training
+and inference efficiency are distinct, and a compute-optimal rule is not universal.
 
-This is the proposed table of contents, not an authored second session. The full
-session will end with a purposeful visual bridge to instruction following.
+Final item: 10 minutes on capabilities, memorization, bias, and limitations, then
+5 minutes bridging to instruction following. Instruction tuning, preference
+optimization, LoRA, adapters, and quantization remain in Lecture 09.
 :::

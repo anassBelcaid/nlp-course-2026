@@ -1,0 +1,32 @@
+/* Recorded practical experiment: no model training in the browser. */
+.reveal .pr-slide h2 {font-size:44px;line-height:1.12;margin:0 0 25px;}
+.reveal .pr-lead,.reveal .pr-slide .s1-lead {font-size:30px;line-height:1.35;margin:20px 0 28px;}
+.reveal .pr-slide .s1-source {font-size:18px;line-height:1.35;margin:24px 0 0;}
+.reveal .pr-slide .s1-takeaway,.reveal .pr-takeaway {font-size:29px;line-height:1.35;border-left:5px solid #d6a734;padding:16px 24px;margin:25px 0 16px;}
+.pr-slide .s4-control-branches {margin:25px 0;}
+.pr-slide .s4-control-branches>div {padding:24px 27px;min-height:145px;}
+.pr-slide .s4-protocol-grid {gap:24px 40px;margin:28px 0;}
+.pr-slide .lab-toolbar button {font-family:inherit;font-size:24px;line-height:1.3;padding:12px 18px;border:2px solid #0f7881;border-radius:8px;color:#17364a;background:#fbfaf6;cursor:pointer;}
+.pr-slide .lab-toolbar button[aria-pressed="true"] {background:#0f7881;color:white;}
+.pr-slide .lab-toolbar button:focus-visible {outline:3px solid #d6a734;outline-offset:4px;}
+.pr-slide .lab-toolbar button:disabled {opacity:.55;cursor:not-allowed;}
+.pr-slide .s4-evidence-layout {margin:25px 0;}
+.reveal .pr-slide #s4-learning-chart {height:350px;}
+.reveal .pr-slide .s4-seed-table {font-size:26px;margin:22px 0;}
+.reveal .pr-slide .s4-seed-table th,.reveal .pr-slide .s4-seed-table td {padding:14px 18px;}
+.pr-cases {display:grid;grid-template-columns:1fr 1fr;gap:35px;align-items:stretch;margin:30px 0;}
+.pr-case {background:#edf1eb;padding:25px 28px;border-top:4px solid #0f7881;}
+#pr-errors .pr-case {border-color:#a34832;}
+.pr-case-id {font-size:20px;color:#526873;letter-spacing:.03em;}
+.reveal .pr-case blockquote {font-size:31px;line-height:1.4;font-style:normal;text-align:left;box-shadow:none;background:none;width:auto;padding:0;margin:24px 0;min-height:175px;}
+.pr-labels {display:flex;flex-wrap:wrap;gap:15px 30px;border-top:1px solid #bacfcb;padding-top:20px;font-size:26px;line-height:1.35;}
+.reveal .pr-prob {font-size:28px;line-height:1.3;margin:25px 0;}
+.reveal .pr-observation {font-size:27px;line-height:1.4;margin:25px 0 0;}
+.reveal .pr-conclusions p {font-size:30px;line-height:1.4;margin:25px 0;}
+.pr-bridge-flow {display:grid;grid-template-columns:1fr 50px 1fr;gap:28px;align-items:center;margin:45px 0;}
+.pr-bridge-flow>div {padding:30px;background:#e7eee8;min-height:230px;}
+.pr-bridge-flow>div:last-child {background:#f3e9df;border:2px dashed #a34832;}
+.pr-bridge-flow span {display:block;font-size:21px;letter-spacing:.05em;margin-bottom:24px;}
+.pr-bridge-flow strong {display:block;font-size:33px;line-height:1.35;}
+.reveal .pr-bridge-flow p {font-size:28px;line-height:1.4;margin:25px 0 0;}
+.reveal .pr-next {font-size:36px;line-height:1.35;border-left:5px solid #d6a734;padding:16px 24px;margin:30px 0;}

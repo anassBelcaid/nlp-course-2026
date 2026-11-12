@@ -1,0 +1,89 @@
+## Does the pretrained starting point help? {#pr-setup .pr-slide}
+
+<p class="s1-lead">Change the encoder’s initialization. Hold the downstream experiment fixed.</p>
+<div class="s4-control-branches"><div><span class="lab-label">BRANCH A</span><b>Pretrained BERT-tiny</b><span>+ new sentiment head</span></div><strong>vs.</strong><div><span class="lab-label">BRANCH B</span><b>Same architecture, random weights</b><span>+ identically initialized sentiment head</span></div></div>
+<div class="s4-protocol-grid"><div><b>Same data</b><span>256 labeled SST-2 training examples<br>128 held-out validation examples</span></div><div><b>Same training budget</b><span>80 AdamW steps · batch 16<br>All encoder + head parameters trainable</span></div><div><b>Paired runs</b><span>Seeds 351, 352, 353<br>Same minibatch order within each pair</span></div><div><b>Fixed reporting rule</b><span>Evaluate step 80 for every run<br>No selection of a “best” checkpoint</span></div></div>
+<p class="s1-takeaway">Equal fine-tuning budgets do not include the earlier cost of pretraining.</p>
+<p class="s1-source"><a href="assets/evidence/section4.json">Recorded CPU classroom experiment</a> · 2 layers, hidden width 128 · AdamW lr 2×10⁻⁴, weight decay .01, dropout 0, max 64 tokens · not a full SST-2 benchmark.</p>
+
+::: {.notes}
+TIME: 4 minutes. This protocol has already been run; inspect the saved record.
+Ask students to predict the direction before revealing the result. This tests a particular initialization choice under a fixed small downstream budget, not whether pretraining always wins. BERT-tiny is the same architecture family used earlier in the lecture, not BERT-base. A fresh direct linear head on final CLS is initialized identically within each seed pair. Both branches have exactly the same architecture, tokenizer, parameter count, dropout policy, optimizer, minibatches and training steps. Only encoder initialization changes. The model's pooler is omitted in both branches.
+
+We use class-balanced samples drawn deterministically: 128 training examples per class and 64 original validation examples per class. Exact normalized text overlaps with the selected validation set are removed from the training pool before sampling. This does not rule out related phrases or original pretraining overlap. Original validation labels are held out from updates and no hyperparameters or checkpoint were selected on these results. The experiment uses one learning rate and one budget rather than separately tuning each branch. At 80 steps, 1,280 minibatch examples have been processed, reusing the same 256 labels over five passes. Three seeds are not enough for a broad significance claim. Record all outputs, including failures. Sources: pinned prajjwal1/bert-tiny and stanfordnlp/sst2; exact revisions and sample IDs are in the evidence JSON and builder.
+:::
+
+## The average advantage does not hold for every seed {#pr-results .pr-slide}
+
+<div class="lab-toolbar"><button data-s4-run="mean" aria-pressed="true">Mean of 3 seeds</button><button data-s4-run="351" aria-pressed="false">Seed 351</button><button data-s4-run="352" aria-pressed="false">Seed 352</button><button data-s4-run="353" aria-pressed="false">Seed 353</button><span>Recorded held-out accuracy<br>Same 128 examples at every checkpoint</span></div>
+<div class="s4-evidence-layout"><div><svg id="s4-learning-chart" viewBox="0 0 760 370" role="img" aria-label="Held-out accuracy versus fine-tuning steps"> </svg><div class="s4-chart-key"><span>━ pretrained encoder</span><span>┄ random encoder</span></div></div><div class="s4-evidence-summary"><span class="lab-label">AT STEP 80</span><strong id="s4-result-pretrained">Loading recorded evidence…</strong><p id="s4-result-random"></p><p id="s4-result-gap"></p><p id="s4-result-caveat"></p></div></div>
+<table class="s4-seed-table"><thead><tr><th>Final correct / 128</th><th>Seed 351</th><th>Seed 352</th><th>Seed 353</th></tr></thead><tbody><tr><th>Pretrained</th><td>84</td><td>76</td><td>83</td></tr><tr><th>Random</th><td>74</td><td>74</td><td>84</td></tr></tbody></table>
+<p class="s1-source">Actual recorded runs · balanced SST-2 subsets, 80 CPU updates · three seeds, one fixed budget, no tuning. Lines connect recorded checkpoints; they are not continuous measurements. Seed 353 favors random initialization at the final step.</p>
+
+::: {.notes}
+TIME: 4 minutes. Compare the mean and all three paired runs with the controls.
+All six runs are retained. The mean final accuracies are 63.28% for pretrained and 60.42% for random: a difference of 2.86 percentage points on this selected subset. These are averages over runs, not a count of 384 distinct held-out examples. The same 128 examples are reused for every seed. Seed 353 slightly reverses the final comparison, so do not narrate the chart as universal dominance or proof of statistically significant improvement. The dashed 50% line is the balanced-label baseline, not an estimate of every random classifier's exact realized accuracy. At step zero, both conditions have a new random head.
+
+The early and late comparisons differ: training dynamics matter. Accuracy and cross-entropy need not improve together; the saved evidence includes losses, and several runs become more confidently wrong on some held-out examples. The modest scores are intentionally retained; we did not rerun a hyperparameter search to obtain a prettier pretraining story. More data, better hyperparameters and repeated evaluation are needed for stronger conclusions. Clicking seed buttons switches recorded data only; the browser does not train. If evidence fails to load, controls are disabled and an explicit error appears. Next inspect individual predictions from the first recorded seed. Their linguistic patterns generate hypotheses, not causal explanations of model internals.
+:::
+
+## Correct decisions: what do they establish? {#pr-correct .pr-slide}
+
+<p class="pr-lead">Pretrained branch · seed 351 · step 80 · actual saved predictions</p>
+<div class="pr-cases"><article class="pr-case"><span class="pr-case-id">SST-2 validation ID 183</span><blockquote>the lower your expectations , the more you &#x27;ll enjoy it .</blockquote><div class="pr-labels"><span>Gold: <b>negative</b></span><span>Prediction: <b>negative</b></span></div><p class="pr-prob">Model p(positive) = <strong>0.025</strong></p><p class="pr-observation">The negative label is recovered despite the word “enjoy”.</p></article><article class="pr-case"><span class="pr-case-id">SST-2 validation ID 510</span><blockquote>the vivid lead performances sustain interest and empathy , but the journey is far more interesting than the final destination .</blockquote><div class="pr-labels"><span>Gold: <b>positive</b></span><span>Prediction: <b>positive</b></span></div><p class="pr-prob">Model p(positive) = <strong>0.963</strong></p><p class="pr-observation">The positive label is recovered despite a qualification introduced by “but”.</p></article></div>
+<p class="pr-takeaway">These successes motivate a hypothesis about composition; they do not prove systematic handling of contrast.</p>
+<p class="s1-source">Selected after inspection for linguistic discussion, not a random sample. Scores and text come from <a href="assets/evidence/section4.json">the recorded SST-2 subset</a>. Positive probabilities are model scores, not verified probabilities of correctness.</p>
+
+::: {.notes}
+TIME: 2 minutes. Use the lowest recorded seed, 351, fixed before choosing examples.
+The two correct cases are selected to illustrate qualified sentiment, not to estimate
+how common this success is. ID183 has negative gold sentiment and a low positive score;
+ID510 has positive gold sentiment despite its concluding reservation. Ask students
+which clauses they would rely on. The model agreeing with the annotation does not
+show that it used those clauses. We have outputs, not causal attribution evidence.
+Inputs were tokenized with max_length 64; this slide displays the saved original
+text, not a reconstructed tokenizer trace. The cases are short, but the general
+pipeline can truncate longer inputs. Do not claim attention or token influence from
+a single output. No new model runs or perturbed-input predictions are invented.
+:::
+
+## Confident mistakes are more informative than a success story {#pr-errors .pr-slide}
+
+<p class="pr-lead">Same branch, seed, and checkpoint · two different error directions</p>
+<div class="pr-cases"><article class="pr-case"><span class="pr-case-id">SST-2 validation ID 256</span><blockquote>rarely has so much money delivered so little entertainment .</blockquote><div class="pr-labels"><span>Gold: <b>negative</b></span><span>Prediction: <b>positive</b></span></div><p class="pr-prob">Model p(positive) = <strong>0.830</strong></p><p class="pr-observation">False positive. Candidate issue: the scope of “rarely”, “so much”, and “so little”.</p></article><article class="pr-case"><span class="pr-case-id">SST-2 validation ID 435</span><blockquote>a marvel like none you &#x27;ve seen .</blockquote><div class="pr-labels"><span>Gold: <b>positive</b></span><span>Prediction: <b>negative</b></span></div><p class="pr-prob">Model p(positive) = <strong>0.062</strong></p><p class="pr-observation">False negative. Candidate issue: “none” occurs inside a positive comparison.</p></article></div>
+<p class="pr-takeaway">Treat these as hypotheses to test with matched examples—not explanations established by the scores.</p>
+<p class="s1-source">Actual saved errors, selected for discussion. <a href="assets/evidence/section4.json">Full record: labels, predictions, probabilities, and all six runs</a>. A large probability for the predicted class is compatible with a wrong answer.</p>
+
+::: {.notes}
+TIME: 3 minutes. ID256 is negative but predicted positive, while ID435 is positive
+but predicted negative. The displayed p is always p(positive), so a small value on
+the second card means strong preference for the negative class, not low confidence
+in the predicted class. Do not label these numbers calibrated confidence estimates.
+Negation and scope are plausible linguistic issues, but lexical shortcuts, sparse
+data, optimization, and annotation/context effects remain alternatives. Propose
+matched paraphrases that preserve the human label, and check them across seeds and
+with human review; those tests are not run on this slide. Once examples inspire a
+new design choice, evaluate that choice on untouched data rather than repeatedly
+using these same 128 examples as an independent test. Error analysis is a development
+activity. Accuracy and cross-entropy need not rank models identically: the saved
+pretrained seed351 run has higher accuracy but higher held-out loss than its random
+counterpart. A confident mistake is heavily penalized by cross-entropy.
+:::
+
+## From changing parameters to conditioning on examples {#pr-bridge .pr-slide}
+
+<div class="pr-conclusions"><p><strong>Observed:</strong> a modest mean advantage under one fixed downstream budget.</p><p><strong>Unresolved:</strong> stability across seeds, data sizes, hyperparameters, and linguistic patterns.</p><p><strong>Next evidence:</strong> controlled error probes and an untouched evaluation set.</p></div>
+<div class="pr-bridge-flow"><div><span>FINE-TUNING</span><strong>Labeled examples → task loss</strong><p>Optimizer updates model parameters.</p></div><b aria-hidden="true">→</b><div><span>ANOTHER POSSIBLE ROUTE</span><strong>Examples inside the input?</strong><p>Saved parameters remain fixed.</p></div></div>
+<p class="pr-next">Can examples guide a pretrained model without an optimizer step?</p>
+<p class="s1-source">Conceptual bridge to zero-shot and few-shot prompting. This experiment evaluated fine-tuning only; it supplies no evidence about prompting performance.</p>
+
+::: {.notes}
+TIME: 2 minutes. Distinguish the bounded empirical conclusion from a general claim
+about pretraining. The matched budget is downstream-only, so the comparison does
+not equalize total compute. Neither the three-seed average nor selected reviews is
+a full SST-2 benchmark. The next section asks whether examples can be supplied as
+context rather than optimizer supervision. Do not imply that our BERT-tiny sentiment
+classifier is an instruction-following model or that prompting has already been
+measured here. Leave prompt construction and model-family distinctions for the next
+section. Stop for instructor review; no prompting section is authored yet.
+:::

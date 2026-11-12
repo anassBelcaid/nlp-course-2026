@@ -1,0 +1,35 @@
+/* Session 2, section 1: reuse and historical transfer evidence. */
+.reveal .reuse-slide h2 {font-size:46px;line-height:1.12;margin:0 0 24px;}
+.reveal .reuse-lead {font-size:31px;line-height:1.35;margin:15px 0 26px;}
+.reveal .reuse-slide .syn-weights-diagram {height:300px;margin:15px 0;}
+.reuse-pair {display:grid;grid-template-columns:1fr 1fr;gap:40px;}
+.reuse-pair>div {background:#e7eee8;padding:20px 26px;}
+.reuse-label {font-size:19px;letter-spacing:.05em;color:#526873;}
+.reveal .reuse-pair p {font-size:28px;margin:12px 0;line-height:1.3;}
+.reuse-pair strong {font-size:30px;}
+.reveal .reuse-summary {font-size:29px;line-height:1.35;border-left:5px solid #d6a734;padding:15px 22px;margin:24px 0 16px;}
+.reveal .reuse-table {width:100%;font-size:31px;margin:28px 0;table-layout:fixed;}
+.reveal .reuse-table th,.reveal .reuse-table td {padding:25px 20px;vertical-align:middle;line-height:1.35;border-color:#bacfcb;}
+.reveal .reuse-table th:first-child {width:15%;}.reveal .reuse-table th:nth-child(2){width:31%;}
+.reuse-table thead,.reuse-results thead {background:#17364a;color:white;}
+.reuse-question {background:#e7eee8;padding:25px 30px;margin-top:30px;}
+.reuse-question span {font-size:20px;display:block;letter-spacing:.06em;}
+.reuse-question strong {display:block;font-size:38px;margin-top:16px;}
+.reveal .reuse-question p {font-size:29px;line-height:1.4;margin:18px 0 0;}
+.reuse-evidence-grid {display:grid;grid-template-columns:1fr 1fr;gap:30px;align-items:center;min-height:410px;}
+.reveal .reuse-results {width:100%;font-size:29px;table-layout:fixed;}
+.reveal .reuse-results th,.reveal .reuse-results td {padding:18px 12px;line-height:1.3;vertical-align:middle;border-color:#bacfcb;}
+.reveal .reuse-results th:first-child {width:39%;}
+.reveal .reuse-results small {font-size:21px;line-height:1.25;display:inline-block;margin-top:8px;}
+.reveal .reuse-chart {width:100%;height:410px;margin:0;max-height:none;}
+.reveal .reuse-limit {font-size:26px;line-height:1.35;margin:15px 0;}
+.reuse-bridge-flow {display:grid;grid-template-columns:1fr 45px 1.2fr 45px 1fr;align-items:center;gap:12px;margin:38px 0;}
+.reuse-bridge-flow>div {padding:28px 24px;background:#e7eee8;min-height:205px;display:flex;flex-direction:column;justify-content:center;}
+.reuse-bridge-flow span {font-size:19px;letter-spacing:.04em;}
+.reuse-bridge-flow strong {font-size:33px;line-height:1.3;display:block;margin-top:20px;}
+.reveal .reuse-bridge-flow p {font-size:25px;line-height:1.3;margin:20px 0 0;}
+.reuse-bridge-flow .reuse-unknown {background:#f3e9df;border:2px dashed #a34832;}
+.reuse-unknown strong {font-size:62px;color:#a34832;}
+.reveal .reuse-synthesis p {font-size:29px;line-height:1.35;margin:18px 0;}
+.reveal .reuse-next {font-size:35px;line-height:1.35;border-left:5px solid #d6a734;padding:15px 24px;margin:28px 0 16px;}
+.reveal .reuse-slide .s1-source {font-size:18px;line-height:1.35;}

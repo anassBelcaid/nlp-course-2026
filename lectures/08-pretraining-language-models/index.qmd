@@ -8,13 +8,14 @@ title-slide-attributes:
 format:
   revealjs:
     theme: [default, theme.scss]
-    css: [slides.css, opening.css, why-pretrain.css, self-supervision.css, bert.css, gpt.css, t5.css, synthesis.css]
+    css: [slides.css, opening.css, why-pretrain.css, self-supervision.css, bert.css, gpt.css, t5.css, synthesis.css, reuse.css, finetuning.css, stanford-ending.css]
     include-after-body:
       - assets/why-pretrain-controls.html
       - assets/self-supervision-controls.html
       - assets/bert-controls.html
       - assets/gpt-controls.html
       - assets/t5-controls.html
+      - assets/finetuning-controls.html
     slide-number: c/t
     progress: true
     controls: true
@@ -67,7 +68,7 @@ introduces T5's missing-span recipe, which is not separately drawn in the image.
 
 Then point to the applications. They are examples of possible uses, not immediate
 capabilities guaranteed by pretraining. Session 2 follows the learned weights into
-classification, token labeling, question answering, and prompted generation.
+sentiment classification, prompted generation, and the research story of scaling.
 Document search is shown as an application in the overview, but its full pipeline
 belongs to the later RAG lecture. This artwork is schematic, not measured evidence.
 :::
@@ -122,5 +123,10 @@ the BERT section and a focused GPT pretraining increment. T5 and the synthesis n
 
 {{< include _synthesis.qmd >}}
 
-<!-- Session 1 ends here. After instructor review, include _session2-plan.qmd
-to open Session 2; it must not appear in the opening sequence. -->
+{{< include _session2-plan.qmd >}}
+
+{{< include _reuse.qmd >}}
+
+{{< include _finetuning.qmd >}}
+
+{{< include _stanford-ending.qmd >}}

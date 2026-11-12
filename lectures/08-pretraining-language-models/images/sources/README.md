@@ -68,3 +68,86 @@ The span control reuses the previous draft's cat/mat construction and multiword
 extension. It performs deterministic text manipulation, not tokenizer/model
 inference. The final-sentinel convention follows T5 Figure 2; visible S₀/S₁/S₂
 are aliases for the extra_id vocabulary tokens.
+
+
+## Session 2 opening: GPT ablation chart
+
+`../gpt-pretraining-ablation.svg` is redrawn from exact reported SST-2 values
+in Radford et al. (2018), *Improving Language Understanding by Generative
+Pre-Training*, Table 5, PDF page 8:
+https://cdn.openai.com/research-covers/language-unsupervised/language_understanding_paper.pdf
+
+No pretraining: 84.0; full pretrained model: 91.3 (accuracy, percent).
+The slide also transcribes MNLI 75.7/81.8 and QNLI 71.2/88.1 in the same order.
+Source rows: “Transformer w/o pre-training” and “Transformer w/ aux LM (full)”.
+Generated with Matplotlib by `../../assets/build_reuse_chart.py`; no invented
+measurements or digitized curves. Axes start at zero; no uncertainty estimates
+were supplied by Table 5. Both conditions use downstream task supervision.
+
+
+## Session 2 sentiment: feature extraction versus fine-tuning
+
+The table in `_finetuning.qmd#ft-evidence` transcribes three rows of Devlin et al.
+(2019), §5.3, Table 7, PDF p. 9, https://aclanthology.org/N19-1423.pdf .
+BERT-base, CoNLL-2003 NER development F1, mean of five restarts:
+last hidden layer features 94.9; concatenated last-four features 96.1;
+full fine-tuning 96.4. Frozen conditions train a two-layer 768-dimensional BiLSTM
+and classifier; full fine-tuning uses a token classifier. The slide states these
+architectural differences, development-set tuning, and the absence of uncertainty
+intervals. These are not sentiment results. No new model experiment was run.
+
+
+## Encoder task overview revision
+
+`_finetuning.qmd#ft-encoder-tasks` adapts the conceptual task list from the supplied
+Stanford CS224N pretraining PDF, viewer page 30 / printed slide 32. It is an
+editable task map, not a copied screenshot or new benchmark result. Dataset and
+benchmark papers are linked per row. The numerical toy exercise is removed;
+the general supervised loss and parameter-update equations remain.
+
+
+## Token labeling and extractive QA
+
+`_token-span.qmd` reuses the preserved QA SVG. The NER sentence/BIO labels are
+authored; u1/u2 explicitly denote a hypothetical subword split. No model was run.
+The results table transcribes Devlin et al. (2019), Table 2, PDF p. 7:
+https://aclanthology.org/N19-1423.pdf
+Columns are Dev EM, Dev F1, Test EM, Test F1:
+- BERT-base single: 80.8, 88.5, not reported, not reported.
+- BERT-large single: 84.1, 90.9, not reported, not reported.
+- BERT-large single + TriviaQA: 84.2, 91.1, 85.1, 91.8.
+- BERT-large seven-model ensemble + TriviaQA: 86.2, 92.2, 87.4, 93.2.
+Metrics are defined using Rajpurkar et al. (2016), §6.1:
+https://aclanthology.org/D16-1264.pdf
+
+## GPT trajectory (12 November 2026)
+
+`../gpt3-figure-1-3.png`: original Brown et al. (2020), *Language Models are
+Few-Shot Learners*, Figure 1.3, PDF page 5.
+Source: https://arxiv.org/pdf/2005.14165
+Extracted with Poppler (no curve changes or digitization):
+
+```sh
+pdftoppm -f 5 -singlefile -scale-to 2400 -x 420 -y 205 -W 1020 -H 630 -png gpt3-paper.pdf gpt3-figure-1-3
+```
+
+Original paper figure, not an original course illustration. Crop excludes caption;
+attribution, metric, aggregate caveat and training setting are supplied in slide
+`gt-gpt3-evidence`. The plot aggregates 42 accuracy evaluations; the authors caution
+against treating the aggregate as a rigorous benchmark. Model sizes share a 300B
+training-token budget, not equal compute. Preserve original figure labels.
+
+GPT-2 table: exact PTB and 1BW columns of Radford et al. (2019), Table 3, p. 5.
+https://cdn.openai.com/better-language-models/language_models_are_unsupervised_multitask_learners.pdf
+No new experiments; baseline conditions vary. GPT sentiment ablation chart reuses
+`../gpt-pretraining-ablation.svg` and its existing provenance.
+
+## Direct Stanford reference slides (authoritative replacement)
+
+`../stanford-pretraining/slide-42.png` through `slide-56.png` reproduce PDF pages
+42–56 (printed44–58) of the instructor-supplied
+`tmp/cs224n-2026-lecture07-pretraining.pdf`. Original Stanford CS224N artwork and
+text, not course-original figures. Attribution remains visible on every slide.
+Extraction: `pdftoppm -f 42 -l 56 -scale-to 1920 -png SOURCE.pdf slide`.
+No page content altered. Corrections are separate editable captions. Original
+text is also included in speaker notes. These replace the authored GPT sequence.
