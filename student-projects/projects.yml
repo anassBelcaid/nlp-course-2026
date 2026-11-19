@@ -205,7 +205,7 @@
     test whether changes in the retrieved evidence affect the final verdict and
     show the source behind each supported or contradicted prediction.
 
-  thumbnail: ""
-  thumbnail_alt: ""
-  thumbnail_credit: ""
+  thumbnail: "images/groundcheck.png"
+  thumbnail_alt: "GroundCheck workflow: a scientific claim passes through BM25 evidence retrieval to retrieved abstracts and a supported, contradicted, or not-enough-evidence verdict."
+  thumbnail_credit: "Thumbnail supplied by the project team"
   status: "Proposal approved"
