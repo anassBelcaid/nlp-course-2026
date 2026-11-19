@@ -205,7 +205,7 @@
     test whether changes in the retrieved evidence affect the final verdict and
     show the source behind each supported or contradicted prediction.
 
-  thumbnail: ""
-  thumbnail_alt: ""
+  thumbnail: "images/groundcheck_thumbnail.png"
+  thumbnail_alt: "GroundCheck pipeline: a scientific claim passes through BM25 retrieval to scientific abstracts and a verdict of Supported, Contradicted, or Not Enough Evidence."
   thumbnail_credit: ""
   status: "Proposal approved"
